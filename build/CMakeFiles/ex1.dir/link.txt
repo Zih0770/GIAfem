@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/ex1.dir/ex1.cpp.o -o ex1  -Wl,-rpath,/home/sssou/local/mfem/lib libgiafem_lib.a /home/sssou/local/mfem/lib/libmfem.so /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so 

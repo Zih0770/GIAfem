@@ -1,0 +1,2 @@
+/usr/bin/ar qc libgiafem_lib.a CMakeFiles/giafem_lib.dir/src/giafem.cpp.o
+/usr/bin/ranlib libgiafem_lib.a

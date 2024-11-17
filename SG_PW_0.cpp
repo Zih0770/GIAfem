@@ -137,16 +137,16 @@ int main(int argc, char *argv[])
    //
 
 
-   double G = 6.6743e-11 * 1e+18;
-   double R = 6.38;
-   double rho0 = 13000 * 1e-18;
-   double rho1 = 2835 * 1e-18;
+   double G = 6.6743e-11;
+   double R = 6.38e+6;
+   double rho0 = 13000;
+   double rho1 = 2835;
 
    auto inside_coef = [=](const Vector &x) -> double
    {
-      double r = sqrt(x[0] * x[0] + x[1] * x[1] + (x.Size() == 3 ? x[2] * x[2] : 0.0));
+      double r = sqrt(x[0] * x[0] + x[1] * x[1] + (x.Size() == 3 ? x[2] * x[2] : 0.0)) * 1e+6;
       double rho = rho0 - (rho0 - rho1) * r / R;
-      return -4.0 * M_PI * G * rho;
+      return 4.0 * M_PI * G * rho;
    };
 
    LinearForm b(&fespace);
@@ -325,16 +325,16 @@ int main(int argc, char *argv[])
       sol_sock << "solution\n" << mesh << x << flush;
    }
 
+   if (delete_fec)
+   {
+      delete fec;
+   }
+
    int num_samples = 100;
    double min_radius = 0.0;
    double max_radius = 10.0;
    giafem::plot data_proc (x, mesh);
    data_proc.SaveRadialSolution("radial_solution_data.txt", num_samples, min_radius, max_radius);
-   
-   if (delete_fec)
-   {
-      delete fec;
-   }
 
    return 0;
 }
