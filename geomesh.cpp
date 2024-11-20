@@ -21,35 +21,50 @@ void createConcentricSphericalLayers(const std::vector<double> &radii, double me
 
     // Tagging scheme starting from 301
     int layerTag = 301;
-    int innestSphereTag = gmsh::model::occ::addSphere(0, 0, 0, radii[0]);
+    int surfaceTag = 1;
+    for (int i = 0; i < numLayers; ++i) {
+        gmsh::model::occ::addSphere(0, 0, 0, radii[i]);
+    } 
     gmsh::model::occ::synchronize();
-    gmsh::model::addPhysicalGroup(3, {innestSphereTag}, layerTag);
-    gmsh::model::setPhysicalName(3, layerTag, "SphericalLayer" + std::to_string(1));
+    gmsh::model::addPhysicalGroup(3, {1}, layerTag);
+    gmsh::model::setPhysicalName(3, layerTag, "sphericalLayer_1");
+    std::vector<std::pair<int, int>> surfaceEntities;
+    gmsh::model::getBoundary({{3, 1}}, surfaceEntities, false, false, false);
+    std::pair<int, int> surface = surfaceEntities[0];
+    if (surface.first == 2) {
+        gmsh::model::addPhysicalGroup(2, {surface.second}, surfaceTag);
+        gmsh::model::setPhysicalName(2, surfaceTag,
+                                     "sphericalSurface_" + std::to_string(1));
+    }
     for (int i = 1; i < numLayers; ++i) {
-        double innerRadius = radii[i - 1];
-        double outerRadius = radii[i];
-
-	// Define the outer sphere of the layer
-	int innerSphereTag = gmsh::model::occ::addSphere(0, 0, 0, innerRadius);
-	int outerSphereTag = gmsh::model::occ::addSphere(0, 0, 0, outerRadius);
         std::vector<std::pair<int, int> > ov;
         std::vector<std::vector<std::pair<int, int> > > ovv;
 
-	gmsh::model::occ::cut({{3, outerSphereTag}}, {{3, innerSphereTag}},  ov, ovv, -1, true, true);
+        gmsh::model::occ::cut({{3, i+1}}, {{3, i}},  ov, ovv, -1, false, false); 
+	gmsh::model::occ::synchronize();
 
-        // Synchronize to update the model
-        gmsh::model::occ::synchronize();
-        
-	std::vector<int> tags;
+	std::vector<int> volumeTags;
         for (const auto &entity : ov) {
-        tags.push_back(entity.second);  // Extract only the tag part
-        }
-        // Create a physical group for each layer with tags starting from 301
+            volumeTags.push_back(entity.second);  // Extract only the tag part
+	}
         ++layerTag;
-        gmsh::model::addPhysicalGroup(3, tags, layerTag);
-        gmsh::model::setPhysicalName(3, layerTag, "SphericalLayer" + std::to_string(i + 1));
+        gmsh::model::addPhysicalGroup(3, volumeTags, layerTag);
+        gmsh::model::setPhysicalName(3, layerTag, "sphericalLayer_" + std::to_string(i + 1));
+        for (const auto &volumeTag : volumeTags) {
+            std::vector<std::pair<int, int>> surfaceEntities;
+            gmsh::model::getBoundary({{3, volumeTag}}, surfaceEntities, false, false, false);	
+	    std::pair<int, int> surface = surfaceEntities[0];
+            if (surface.first == 2) {
+                ++surfaceTag;
+                gmsh::model::addPhysicalGroup(2, {surface.second}, surfaceTag);
+                gmsh::model::setPhysicalName(2, surfaceTag, 
+                                             "sphericalSurface_" + std::to_string(i + 1));
+            }
+	}
     }
-
+    for (int i = 1; i < numLayers; ++i) {
+        gmsh::model::occ::remove({{3, i+1}});
+    }
     gmsh::model::occ::synchronize();
 
     // Generate 3D mesh
