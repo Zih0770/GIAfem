@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
    //bool algebraic_ceed = false;
    int order = 1;
    int adaptive_int = 0;
+   string output_file = "output.txt";
 
    OptionsParser args(argc, argv);
    args.AddOption(&mesh_file, "-m", "--mesh", "Mesh file to use.");
@@ -31,6 +32,8 @@ int main(int argc, char *argv[])
 //#endif
    args.AddOption(&visualization, "-vis", "--visualization", "-no-vis", "--no-visualization",
                   "Enable or disable GLVis visualization.");
+   args.AddOption(&output_file, "-f", "--output-file",
+               "Output file name for saving data");
    args.ParseCheck();
    //if (!args.Good())
    //{
@@ -62,7 +65,19 @@ int main(int argc, char *argv[])
       }
    }
 
-   
+   cout << "Volume attributes in the mesh: ";
+   for (int i = 0; i < mesh.attributes.Size(); i++)
+   {
+       cout << mesh.attributes[i] << " ";
+   }
+   cout << endl;
+   cout << "Boundary attributes: ";
+   for (int i = 0; i < mesh.bdr_attributes.Size(); i++)
+   {
+       cout << mesh.bdr_attributes[i] << " ";
+   }
+   cout << endl;
+ 
    
    FiniteElementCollection *fec;
    bool delete_fec;
@@ -107,18 +122,31 @@ int main(int argc, char *argv[])
    if (mesh.bdr_attributes.Size())
    {
       Array<int> ess_bdr(mesh.bdr_attributes.Max());
-      ess_bdr = 1;
-      //
-      //ess_bdr = 0;
-      //ess_bdr[0] = 1;
+      ess_bdr = 0;
+      //ess_bdr[0] = 0;
+      ess_bdr[1] = 1;
       //
       fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
+      
+      std::cout << "Marked boundaries (ess_bdr): ";
+      for (int i = 0; i < ess_bdr.Size(); i++)
+      {
+          std::cout << ess_bdr[i] << " ";
+      }
+      std::cout << std::endl;
+      //std::cout << "Essential DOFs: ";
+      //for (int i = 0; i < ess_tdof_list.Size(); i++)
+      //{
+      //    std::cout << ess_tdof_list[i] << " ";
+      //}
+      //std::cout << std::endl;
    }
 
    //
    GridFunction x(&fespace);
    x = 0.0;
-
+   //ConstantCoefficient u_dirichlet(1.0);
+   //x.ProjectBdrCoefficient(u_dirichlet, ess_bdr);
    //
    ConstantCoefficient one(1.0);
    ConstantCoefficient zero(0.0);
@@ -191,6 +219,8 @@ int main(int argc, char *argv[])
    refiner.SetTotalErrorFraction(0.7);
    
    a.Assemble();
+  
+   //a.EliminateEssentialBC(ess_tdof_list, x, *b);
    //
    //Vector lambda(mesh->attributes.Max());
    //lambda = 1.0;
@@ -329,7 +359,7 @@ int main(int argc, char *argv[])
    double min_radius = 0.0;
    double max_radius = 10.0;
    giafem::plot data_proc (x, mesh);
-   data_proc.SaveRadialSolution("radial_solution_data.txt", num_samples, min_radius, max_radius);
+   data_proc.SaveRadialSolution(output_file, num_samples, min_radius, max_radius);
    
    if (delete_fec)
    {
