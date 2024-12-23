@@ -130,19 +130,6 @@ giafem_lib/fast:
 .PHONY : giafem_lib/fast
 
 #=============================================================================
-# Target rules for targets named ex1
-
-# Build rule for target.
-ex1: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ex1
-.PHONY : ex1
-
-# fast build rule for target.
-ex1/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ex1.dir/build.make CMakeFiles/ex1.dir/build
-.PHONY : ex1/fast
-
-#=============================================================================
 # Target rules for targets named SG_PW
 
 # Build rule for target.
@@ -155,53 +142,103 @@ SG_PW/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW.dir/build.make CMakeFiles/SG_PW.dir/build
 .PHONY : SG_PW/fast
 
-SG_PW.o: SG_PW.cpp.o
-.PHONY : SG_PW.o
+#=============================================================================
+# Target rules for targets named SG_PW_theta
+
+# Build rule for target.
+SG_PW_theta: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 SG_PW_theta
+.PHONY : SG_PW_theta
+
+# fast build rule for target.
+SG_PW_theta/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW_theta.dir/build.make CMakeFiles/SG_PW_theta.dir/build
+.PHONY : SG_PW_theta/fast
+
+#=============================================================================
+# Target rules for targets named SG_PW_p
+
+# Build rule for target.
+SG_PW_p: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 SG_PW_p
+.PHONY : SG_PW_p
+
+# fast build rule for target.
+SG_PW_p/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW_p.dir/build.make CMakeFiles/SG_PW_p.dir/build
+.PHONY : SG_PW_p/fast
+
+demos/SG_PW.o: demos/SG_PW.cpp.o
+.PHONY : demos/SG_PW.o
 
 # target to build an object file
-SG_PW.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW.dir/build.make CMakeFiles/SG_PW.dir/SG_PW.cpp.o
-.PHONY : SG_PW.cpp.o
+demos/SG_PW.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW.dir/build.make CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o
+.PHONY : demos/SG_PW.cpp.o
 
-SG_PW.i: SG_PW.cpp.i
-.PHONY : SG_PW.i
+demos/SG_PW.i: demos/SG_PW.cpp.i
+.PHONY : demos/SG_PW.i
 
 # target to preprocess a source file
-SG_PW.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW.dir/build.make CMakeFiles/SG_PW.dir/SG_PW.cpp.i
-.PHONY : SG_PW.cpp.i
+demos/SG_PW.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW.dir/build.make CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.i
+.PHONY : demos/SG_PW.cpp.i
 
-SG_PW.s: SG_PW.cpp.s
-.PHONY : SG_PW.s
+demos/SG_PW.s: demos/SG_PW.cpp.s
+.PHONY : demos/SG_PW.s
 
 # target to generate assembly for a file
-SG_PW.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW.dir/build.make CMakeFiles/SG_PW.dir/SG_PW.cpp.s
-.PHONY : SG_PW.cpp.s
+demos/SG_PW.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW.dir/build.make CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.s
+.PHONY : demos/SG_PW.cpp.s
 
-ex1.o: ex1.cpp.o
-.PHONY : ex1.o
+demos/SG_PW_p.o: demos/SG_PW_p.cpp.o
+.PHONY : demos/SG_PW_p.o
 
 # target to build an object file
-ex1.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ex1.dir/build.make CMakeFiles/ex1.dir/ex1.cpp.o
-.PHONY : ex1.cpp.o
+demos/SG_PW_p.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW_p.dir/build.make CMakeFiles/SG_PW_p.dir/demos/SG_PW_p.cpp.o
+.PHONY : demos/SG_PW_p.cpp.o
 
-ex1.i: ex1.cpp.i
-.PHONY : ex1.i
+demos/SG_PW_p.i: demos/SG_PW_p.cpp.i
+.PHONY : demos/SG_PW_p.i
 
 # target to preprocess a source file
-ex1.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ex1.dir/build.make CMakeFiles/ex1.dir/ex1.cpp.i
-.PHONY : ex1.cpp.i
+demos/SG_PW_p.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW_p.dir/build.make CMakeFiles/SG_PW_p.dir/demos/SG_PW_p.cpp.i
+.PHONY : demos/SG_PW_p.cpp.i
 
-ex1.s: ex1.cpp.s
-.PHONY : ex1.s
+demos/SG_PW_p.s: demos/SG_PW_p.cpp.s
+.PHONY : demos/SG_PW_p.s
 
 # target to generate assembly for a file
-ex1.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ex1.dir/build.make CMakeFiles/ex1.dir/ex1.cpp.s
-.PHONY : ex1.cpp.s
+demos/SG_PW_p.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW_p.dir/build.make CMakeFiles/SG_PW_p.dir/demos/SG_PW_p.cpp.s
+.PHONY : demos/SG_PW_p.cpp.s
+
+demos/SG_PW_theta.o: demos/SG_PW_theta.cpp.o
+.PHONY : demos/SG_PW_theta.o
+
+# target to build an object file
+demos/SG_PW_theta.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW_theta.dir/build.make CMakeFiles/SG_PW_theta.dir/demos/SG_PW_theta.cpp.o
+.PHONY : demos/SG_PW_theta.cpp.o
+
+demos/SG_PW_theta.i: demos/SG_PW_theta.cpp.i
+.PHONY : demos/SG_PW_theta.i
+
+# target to preprocess a source file
+demos/SG_PW_theta.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW_theta.dir/build.make CMakeFiles/SG_PW_theta.dir/demos/SG_PW_theta.cpp.i
+.PHONY : demos/SG_PW_theta.cpp.i
+
+demos/SG_PW_theta.s: demos/SG_PW_theta.cpp.s
+.PHONY : demos/SG_PW_theta.s
+
+# target to generate assembly for a file
+demos/SG_PW_theta.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW_theta.dir/build.make CMakeFiles/SG_PW_theta.dir/demos/SG_PW_theta.cpp.s
+.PHONY : demos/SG_PW_theta.cpp.s
 
 src/giafem.o: src/giafem.cpp.o
 .PHONY : src/giafem.o
@@ -236,14 +273,18 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... SG_PW"
-	@echo "... ex1"
+	@echo "... SG_PW_p"
+	@echo "... SG_PW_theta"
 	@echo "... giafem_lib"
-	@echo "... SG_PW.o"
-	@echo "... SG_PW.i"
-	@echo "... SG_PW.s"
-	@echo "... ex1.o"
-	@echo "... ex1.i"
-	@echo "... ex1.s"
+	@echo "... demos/SG_PW.o"
+	@echo "... demos/SG_PW.i"
+	@echo "... demos/SG_PW.s"
+	@echo "... demos/SG_PW_p.o"
+	@echo "... demos/SG_PW_p.i"
+	@echo "... demos/SG_PW_p.s"
+	@echo "... demos/SG_PW_theta.o"
+	@echo "... demos/SG_PW_theta.i"
+	@echo "... demos/SG_PW_theta.s"
 	@echo "... src/giafem.o"
 	@echo "... src/giafem.i"
 	@echo "... src/giafem.s"

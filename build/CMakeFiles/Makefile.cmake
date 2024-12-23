@@ -48,6 +48,7 @@ set(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/giafem_lib.dir/DependInfo.cmake"
-  "CMakeFiles/ex1.dir/DependInfo.cmake"
   "CMakeFiles/SG_PW.dir/DependInfo.cmake"
+  "CMakeFiles/SG_PW_theta.dir/DependInfo.cmake"
+  "CMakeFiles/SG_PW_p.dir/DependInfo.cmake"
   )

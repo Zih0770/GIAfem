@@ -4,6 +4,7 @@
 #include "mfem.hpp"  // Include MFEM for GridFunction, Mesh, etc.
 #include <vector>
 #include <string>
+#include <utility>
 
 namespace giafem
 {
@@ -25,6 +26,25 @@ namespace giafem
     private:
         const GridFunction &solution;  // Reference to the solution GridFunction
         Mesh &mesh;              // Reference to the mesh
+    };
+
+
+    class parse
+    {
+    public:
+        // Function to parse 1D properties from a file with dynamic columns
+        std::vector<std::vector<double>> properties_1d(const std::string &filename);
+    };
+
+
+    class interp
+    {
+    public:
+        // Function to interpolate a 1D property from dynamic data
+        mfem::Array<mfem::FunctionCoefficient *>
+        PWCoef_1D(const std::vector<std::pair<double, double>> &radius_property,
+                                 int num_attributes,
+                                 const std::string &method = "linear");
     };
 
 } // namespace giafem

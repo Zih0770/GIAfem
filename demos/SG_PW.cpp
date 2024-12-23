@@ -1,55 +1,61 @@
 #include "mfem.hpp"
 #include "giafem.hpp"
 #include <fstream>
+#include <vector>
+#include <string>
+#include <sstream>
 #include <iostream>
 
 using namespace std;
 using namespace mfem;
 
+
 int main(int argc, char *argv[])
 {
-   string mesh_file = "data/2S.msh";
-   //bool static_cond = false;
-   //bool pa = false;
-   //bool fa = false;
-   //const char *device_config = "cpu";
+   string mesh_file = "mesh/2S.msh";
+   bool static_cond = false;
+   bool pa = false;
+   bool fa = false;
+   const char *device_config = "cpu";
    bool visualization = true;
-   //bool algebraic_ceed = false;
+   bool algebraic_ceed = false;
    int order = 1;
    int adaptive_int = 0;
-   string output_file = "output.txt";
+   string parameter_file = "data/prem.200.noiso";
+   string output_file = "data/output.txt";
 
    OptionsParser args(argc, argv);
    args.AddOption(&mesh_file, "-m", "--mesh", "Mesh file to use.");
    args.AddOption(&order, "-o", "--order", "Finite element polynomial degree");
-   //args.AddOption(&static_cond, "-sc", "--static-condensation", "-no-sc", "--no-static-condensation", "Enable static condensation.");
+   args.AddOption(&static_cond, "-sc", "--static-condensation", "-no-sc", "--no-static-condensation", "Enable static condensation.");
    args.AddOption(&adaptive_int, "-a", "--adaptive", "Adaptive meshing");
-   //args.AddOption(&pa, "-pa", "--partial-assembly", "-no-pa", "--no-partial-assembly", "Enable Partial Assembly.");
-   //args.AddOption(&fa, "-fa", "--full-assembly", "-no-fa", "--no-full-assembly", "Enable Full Assembly.");
-   //args.AddOption(&device_config, "-d", "--device", "Device configuration string, see Device::Configure().");
-//#ifdef MFEM_USE_CEED
-//   args.AddOption(&algebraic_ceed, "-a", "--algebraic", "-no-a", "--no-algebraic", "Use algebraic Ceed solver");
-//#endif
+   args.AddOption(&pa, "-pa", "--partial-assembly", "-no-pa", "--no-partial-assembly", "Enable Partial Assembly.");
+   args.AddOption(&fa, "-fa", "--full-assembly", "-no-fa", "--no-full-assembly", "Enable Full Assembly.");
+   args.AddOption(&device_config, "-d", "--device", "Device configuration string, see Device::Configure().");
+#ifdef MFEM_USE_CEED
+   args.AddOption(&algebraic_ceed, "-a", "--algebraic", "-no-a", "--no-algebraic", "Use algebraic Ceed solver");
+#endif
    args.AddOption(&visualization, "-vis", "--visualization", "-no-vis", "--no-visualization",
                   "Enable or disable GLVis visualization.");
+   args.AddOption(&parameter_file, "-p", "--para", "Parameter file to use.");
    args.AddOption(&output_file, "-f", "--output-file",
                "Output file name for saving data");
-   args.ParseCheck();
-   //if (!args.Good())
-   //{
-   //   args.PrintUsage(cout);
-   //   return 1;
-   //}
+   args.Parse();
+   if (!args.Good())
+   {
+      args.PrintUsage(cout);
+      return 1;
+   }
    args.PrintOptions(cout);
    bool adaptive = static_cast<bool>(adaptive_int);
-   //Device device(device_config);
-   //device.Print(); 
+   Device device(device_config);
+   device.Print(); 
 
 
 
    Mesh mesh(mesh_file, 1, 1);
    int dim = mesh.Dimension();
-
+   int num_attributes = mesh.attributes.Max();
    //if (mesh->NURBSext)
    //{
    //   mesh->DegreeElevate(order, order);
@@ -124,27 +130,15 @@ int main(int argc, char *argv[])
       Array<int> ess_bdr(mesh.bdr_attributes.Max());
       ess_bdr = 0;
       //ess_bdr[0] = 0;
-      ess_bdr[1] = 1;
+      ess_bdr[num_attributes - 1] = 1;
       //
       fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
-      
-      std::cout << "Marked boundaries (ess_bdr): ";
-      for (int i = 0; i < ess_bdr.Size(); i++)
-      {
-          std::cout << ess_bdr[i] << " ";
-      }
-      std::cout << std::endl;
-      //std::cout << "Essential DOFs: ";
-      //for (int i = 0; i < ess_tdof_list.Size(); i++)
-      //{
-      //    std::cout << ess_tdof_list[i] << " ";
-      //}
-      //std::cout << std::endl;
    }
 
    //
    GridFunction x(&fespace);
    x = 0.0;
+
    //ConstantCoefficient u_dirichlet(1.0);
    //x.ProjectBdrCoefficient(u_dirichlet, ess_bdr);
    //
@@ -177,17 +171,33 @@ int main(int argc, char *argv[])
       return -4.0 * M_PI * G * rho;
    };
 
-   LinearForm b(&fespace);
-   FunctionCoefficient f_in(inside_coef);
-   ConstantCoefficient f_out(0.0);
+   giafem::parse parser;
+   std::vector<std::vector<double>> data = parser.properties_1d(parameter_file);
 
+   std::vector<std::pair<double, double>> radius_property;
+   for (const auto &row : data)
+   {
+      radius_property.emplace_back(row[0] * 1e-6, -4.0 * M_PI * G * row[1] * 1e-18); // First column: radius, Second column: property (e.g., density)
+   }
+
+   giafem::interp interpolator;
+   mfem::Array<mfem::FunctionCoefficient *> property_coefficients =
+      interpolator.PWCoef_1D(radius_property, num_attributes - 1, "linear");
+
+
+   LinearForm b(&fespace);
+   //FunctionCoefficient f_in(inside_coef);
+   ConstantCoefficient f_out(0.0);
+  
    Array<int> pw_attributes;
-   pw_attributes.Append(301);
-   pw_attributes.Append(302);
    Array<Coefficient *> pw_coefficients;
-   pw_coefficients.Append(&f_in);
+   for (int i = 1; i < num_attributes - 1; i++){
+       pw_attributes.Append(i);
+       pw_coefficients.Append(property_coefficients[i - 1]);
+   }
+   pw_attributes.Append(num_attributes);
    pw_coefficients.Append(&f_out);
-   
+      
    PWCoefficient source_func(pw_attributes, pw_coefficients);
 
    b.AddDomainIntegrator(new DomainLFIntegrator(source_func));
@@ -201,15 +211,15 @@ int main(int argc, char *argv[])
 
 
    BilinearForm a(&fespace);
-   //if (pa) { a.SetAssemblyLevel(AssemblyLevel::PARTIAL); }
-   //if (fa)
-   //{
-   //   a.SetAssemblyLevel(AssemblyLevel::FULL);
-   //   a.EnableSparseMatrixSorting(Device::IsEnabled());
-   //}
+   if (pa) { a.SetAssemblyLevel(AssemblyLevel::PARTIAL); }
+   if (fa)
+   {
+      a.SetAssemblyLevel(AssemblyLevel::FULL);
+      a.EnableSparseMatrixSorting(Device::IsEnabled());
+   }
    BilinearFormIntegrator *integ = new DiffusionIntegrator(one);
    a.AddDomainIntegrator(integ);
-   //if (static_cond) { a.EnableStaticCondensation(); }
+   if (static_cond) { a.EnableStaticCondensation(); }
   
    const int tdim = dim*(dim+1)/2;
    FiniteElementSpace flux_fespace(&mesh, fec, tdim);
@@ -242,91 +252,94 @@ int main(int argc, char *argv[])
    //
    //GSSmoother M(A);
    //PCG(A, M, B, X, 1, 200, 1e-12, 0.0);
-   //if (!pa)
-   //{
-//#ifndef MFEM_USE_SUITESPARSE
-      //GSSmoother M((SparseMatrix&)(*A));
-      //PCG(*A, M, B, X, 1, 200, 1e-12, 0.0);
-//#else
-      //UMFPackSolver umf_solver;
-      //umf_solver.Control[UMFPACK_ORDERING] = UMFPACK_ORDERING_METIS;
-      //umf_solver.SetOperator(*A);
-      //umf_solver.Mult(B, X);
-//#endif
-   //}
-   //else
-   //{
-      //if (UsesTensorBasis(fespace))
-      //{
-         //if (algebraic_ceed)
-         //{
-            //ceed::AlgebraicSolver M(a, ess_tdof_list);
-            //PCG(*A, M, B, X, 1, 400, 1e-12, 0.0);
-         //}
-         //else
-         //{
-            //OperatorJacobiSmoother M(a, ess_tdof_list);
-            //PCG(*A, M, B, X, 1, 400, 1e-12, 0.0);
-         //}
-      //}
-      //else
-      //{
-   GSSmoother M((SparseMatrix&)(*A));
-   PCG(*A, M, B, X, 1, 200, 1e-12, 0.0);
-   //CG(*A, B, X, 1, 400, 1e-12, 0.0);
-   cout << "Solution done" << endl;
-   a.RecoverFEMSolution(X, b, x);
-   
-   if (adaptive)
+   if (!pa)
    {
-      // Adaptive meshing parameters
-      double desired_error = 0.05; // Desired error threshold
-      int max_refinements = 5;     // Max number of adaptive refinement steps
-      int refinement_step = 0;
-      double error = std::numeric_limits<double>::max();
-     
-      std::cout << "Refinement step " << refinement_step << ", Total Error: " << error << std::endl;
+#ifndef MFEM_USE_SUITESPARSE
+      GSSmoother M((SparseMatrix&)(*A));
+      PCG(*A, M, B, X, 1, 200, 1e-12, 0.0);
 
-      for (int refinement_step = 1; refinement_step <= max_refinements; refinement_step++)
+
+      if (adaptive)
       {
-         refiner.Apply(mesh);
-         if (refiner.Stop())
-         {
-            cout << "Stopping criterion satisfied. Stop." << endl;
-            break;
-         }
-         // Adaptive refinement based on error estimates
-
-         // Update the finite element space and solution for the new, refined mesh
-         fespace.Update();
-         x.Update(); // Project the old solution onto the new, refined space
-         
-         a.Update();
-         b.Update();
-
-         b.Assemble();
-	 a.Assemble();
-
-	 Array<int> ess_bdr(mesh.bdr_attributes.Max());
-         ess_bdr = 1;
-         Array<int> ess_tdof_list;
-         x.ProjectBdrCoefficient(zero, ess_bdr);
-         fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
-
-	 OperatorPtr A;
-         Vector B, X;
-         a.FormLinearSystem(ess_tdof_list, x, b, A, X, B);
-         GSSmoother M((SparseMatrix&)(*A));
-         PCG(*A, M, B, X, 1, 200, 1e-12, 0.0);
-         //CG(*A, B, X, 1, 400, 1e-12, 0.0);
-         cout << "Solution done" << endl;
-         a.RecoverFEMSolution(X, b, x);
-
+         // Adaptive meshing parameters
+         double desired_error = 0.05; // Desired error threshold
+         int max_refinements = 5;     // Max number of adaptive refinement steps
+         int refinement_step = 0;
+         double error = std::numeric_limits<double>::max();
+     
          std::cout << "Refinement step " << refinement_step << ", Total Error: " << error << std::endl;
 
-      }    
+         for (int refinement_step = 1; refinement_step <= max_refinements; refinement_step++)
+         {
+            refiner.Apply(mesh);
+            if (refiner.Stop())
+            {
+               cout << "Stopping criterion satisfied. Stop." << endl;
+               break;
+            }
+            // Adaptive refinement based on error estimates
+
+            // Update the finite element space and solution for the new, refined mesh
+            fespace.Update();
+            x.Update(); // Project the old solution onto the new, refined space
+         
+            a.Update();
+            b.Update();
+
+            b.Assemble();
+	    a.Assemble();
+
+	    Array<int> ess_bdr(mesh.bdr_attributes.Max());
+            ess_bdr = 1;
+            Array<int> ess_tdof_list;
+            x.ProjectBdrCoefficient(zero, ess_bdr);
+            fespace.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
+
+	    OperatorPtr A;
+            Vector B, X;
+            a.FormLinearSystem(ess_tdof_list, x, b, A, X, B);
+            GSSmoother M((SparseMatrix&)(*A));
+
+            PCG(*A, M, B, X, 1, 200, 1e-12, 0.0);
+            cout << "Solution done" << endl;
+            a.RecoverFEMSolution(X, b, x);
+
+            std::cout << "Refinement step " << refinement_step << ", Total Error: " << error << std::endl;
+	 }
+      }
+#else
+      UMFPackSolver umf_solver;
+      umf_solver.Control[UMFPACK_ORDERING] = UMFPACK_ORDERING_METIS;
+      umf_solver.SetOperator(*A);
+      umf_solver.Mult(B, X);
+#endif
+   }
+   else
+   {
+      if (UsesTensorBasis(fespace))
+      {
+         if (algebraic_ceed)
+         {
+            ceed::AlgebraicSolver M(a, ess_tdof_list);
+            PCG(*A, M, B, X, 1, 400, 1e-12, 0.0);
+         }
+         else
+         {
+            OperatorJacobiSmoother M(a, ess_tdof_list);
+            PCG(*A, M, B, X, 1, 400, 1e-12, 0.0);
+         }
+      }
+      else
+      {
+   //GSSmoother M((SparseMatrix&)(*A));
+   //PCG(*A, M, B, X, 1, 200, 1e-12, 0.0);
+         CG(*A, B, X, 1, 400, 1e-12, 0.0);
+      }
    }
    
+
+   cout << "Solution done" << endl;
+   a.RecoverFEMSolution(X, b, x);
    
    //
    //if (!mesh->NURBSext)
@@ -339,7 +352,7 @@ int main(int argc, char *argv[])
    //*nodes += x;
    //x *= -1;
    //
-   ofstream mesh_ofs("mesh.mesh");
+   ofstream mesh_ofs("sg.mesh");
    mesh_ofs.precision(8);
    mesh.Print(mesh_ofs);
    ofstream sol_ofs("sol.gf");
@@ -354,11 +367,12 @@ int main(int argc, char *argv[])
       sol_sock.precision(8);
       sol_sock << "solution\n" << mesh << x << flush;
    }
-
+   
    int num_samples = 100;
    double min_radius = 0.0;
    double max_radius = 10.0;
    giafem::plot data_proc (x, mesh);
+   
    data_proc.SaveRadialSolution(output_file, num_samples, min_radius, max_radius);
    
    if (delete_fec)

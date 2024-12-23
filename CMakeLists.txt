@@ -22,11 +22,14 @@ add_library(giafem_lib src/giafem.cpp)
 target_include_directories(giafem_lib PUBLIC include ${MFEM_INCLUDE})
 target_link_libraries(giafem_lib PUBLIC ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
-add_executable(ex1 ex1.cpp)
-target_link_libraries(ex1 PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
-
-add_executable(SG_PW SG_PW.cpp)
+add_executable(SG_PW demos/SG_PW.cpp)
 target_link_libraries(SG_PW PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(SG_PW_theta demos/SG_PW_theta.cpp)
+target_link_libraries(SG_PW_theta PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(SG_PW_p demos/SG_PW_p.cpp)
+target_link_libraries(SG_PW_p PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

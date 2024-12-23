@@ -1,5 +1,6 @@
 /home/sssou/giafem/build/CMakeFiles/giafem_lib.dir
-/home/sssou/giafem/build/CMakeFiles/ex1.dir
 /home/sssou/giafem/build/CMakeFiles/SG_PW.dir
+/home/sssou/giafem/build/CMakeFiles/SG_PW_theta.dir
+/home/sssou/giafem/build/CMakeFiles/SG_PW_p.dir
 /home/sssou/giafem/build/CMakeFiles/edit_cache.dir
 /home/sssou/giafem/build/CMakeFiles/rebuild_cache.dir
