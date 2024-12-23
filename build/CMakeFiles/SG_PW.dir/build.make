@@ -69,28 +69,28 @@ include CMakeFiles/SG_PW.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/SG_PW.dir/flags.make
 
-CMakeFiles/SG_PW.dir/SG_PW.cpp.o: CMakeFiles/SG_PW.dir/flags.make
-CMakeFiles/SG_PW.dir/SG_PW.cpp.o: ../SG_PW.cpp
-CMakeFiles/SG_PW.dir/SG_PW.cpp.o: CMakeFiles/SG_PW.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/SG_PW.dir/SG_PW.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SG_PW.dir/SG_PW.cpp.o -MF CMakeFiles/SG_PW.dir/SG_PW.cpp.o.d -o CMakeFiles/SG_PW.dir/SG_PW.cpp.o -c /home/sssou/giafem/SG_PW.cpp
+CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o: CMakeFiles/SG_PW.dir/flags.make
+CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o: ../demos/SG_PW.cpp
+CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o: CMakeFiles/SG_PW.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o -MF CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o.d -o CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o -c /home/sssou/giafem/demos/SG_PW.cpp
 
-CMakeFiles/SG_PW.dir/SG_PW.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/SG_PW.dir/SG_PW.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sssou/giafem/SG_PW.cpp > CMakeFiles/SG_PW.dir/SG_PW.cpp.i
+CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sssou/giafem/demos/SG_PW.cpp > CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.i
 
-CMakeFiles/SG_PW.dir/SG_PW.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/SG_PW.dir/SG_PW.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sssou/giafem/SG_PW.cpp -o CMakeFiles/SG_PW.dir/SG_PW.cpp.s
+CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sssou/giafem/demos/SG_PW.cpp -o CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.s
 
 # Object files for target SG_PW
 SG_PW_OBJECTS = \
-"CMakeFiles/SG_PW.dir/SG_PW.cpp.o"
+"CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o"
 
 # External object files for target SG_PW
 SG_PW_EXTERNAL_OBJECTS =
 
-SG_PW: CMakeFiles/SG_PW.dir/SG_PW.cpp.o
+SG_PW: CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o
 SG_PW: CMakeFiles/SG_PW.dir/build.make
 SG_PW: libgiafem_lib.a
 SG_PW: /home/sssou/local/mfem/lib/libmfem.so

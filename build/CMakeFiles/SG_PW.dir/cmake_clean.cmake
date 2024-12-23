@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/SG_PW.dir/SG_PW.cpp.o"
-  "CMakeFiles/SG_PW.dir/SG_PW.cpp.o.d"
+  "CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o"
+  "CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o.d"
   "SG_PW"
   "SG_PW.pdb"
 )
