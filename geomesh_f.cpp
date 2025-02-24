@@ -37,7 +37,7 @@ std::vector<double> extractLayerBoundaries(const std::string &fileName) {
             previousRadius = radius;
         }
     }
-    //radii.push_back(previousRadius / 1e6);
+    radii.push_back(previousRadius / 1e6);
     radii.push_back(10.0);
 
     file.close();

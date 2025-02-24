@@ -1,0 +1,445 @@
+// giafem.cpp
+#include "giafem.hpp"
+#include <cmath>
+#include <functional>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <stdexcept>
+
+namespace giafem
+{
+
+void FieldUtils::Strain(const mfem::GridFunction &u,
+                        mfem::ElementTransformation &Tr,
+                        const mfem::IntegrationPoint &ip,
+                        mfem::DenseMatrix &strain)
+{
+    int dim = Tr.GetSpaceDim();
+    strain.SetSize(dim, dim);
+    strain = 0.0;
+
+    mfem::DenseMatrix grad_u(dim, dim);  
+    grad_u = 0.0;
+
+    Tr.SetIntPoint(&ip); // Set integration point for Jacobian & transformations
+    const mfem::FiniteElement *el = u.FESpace()->GetFE(Tr.ElementNo);
+
+    mfem::Vector u_val(dim);
+    u.GetVectorValue(Tr, ip, u_val);
+
+    mfem::DenseMatrix dshape(el->GetDof(), dim);
+    el->CalcDShape(ip, dshape);
+
+    mfem::DenseMatrix Jinv(dim, dim);
+    Tr.InverseJacobian().Mult(dshape, Jinv); // Convert to physical-space derivatives
+
+    // Compute grad_u
+    for (int i = 0; i < dim; i++)
+    {
+        for (int j = 0; j < dim; j++)
+        {
+            for (int k = 0; k < el->GetDof(); k++)
+            {
+                grad_u(i, j) += u_val(i) * Jinv(j, k); // Compute gradient
+            }
+        }
+    }
+
+    // Compute the symmetric part of grad_u (strain tensor)
+    for (int i = 0; i < dim; i++)
+    {
+        for (int j = 0; j < dim; j++)
+        {
+            strain(i, j) = 0.5 * (grad_u(i, j) + grad_u(j, i));
+        }
+    }
+}
+
+void FieldUtils::DevStrain(const mfem::GridFunction &u,
+                           mfem::ElementTransformation &Tr,
+                           const mfem::IntegrationPoint &ip,
+                           mfem::DenseMatrix &deviatoric_strain)
+{
+    mfem::DenseMatrix strain;
+    Strain(u, Tr, el, strain); // Compute the strain tensor first
+
+    int dim = strain.Width();
+    deviatoric_strain.SetSize(dim, dim);
+    deviatoric_strain = strain;
+
+    // Compute the trace (volumetric part)
+    double trace = 0.0;
+    for (int i = 0; i < dim; i++)
+    {
+        trace += strain(i, i);
+    }
+    trace /= dim;
+
+    // Subtract the trace/dim from the diagonal entries
+    for (int i = 0; i < dim; i++)
+    {
+        deviatoric_strain(i, i) -= trace;
+    }
+}
+/*
+void ViscoelasticIntegrator::AssembleElementMatrix(const mfem::FiniteElement &el,
+                                                   mfem::ElementTransformation &Tr,
+                                                   mfem::DenseMatrix &elmat)
+{
+    int dof = el.GetDof();
+    int dim = el.GetDim();
+    const IntegrationRule *ir = &mfem::IntRules.Get(el.GetGeomType(), 2 * el.GetOrder() + 2);
+
+    elmat.SetSize(dof * dim, dof * dim);
+    elmat = 0.0;
+
+    DenseMatrix shape(dof), dshape_dx(dof, dim);
+    DenseMatrix m_mat(dim), d_mat(dim), test_grad(dim), contrib(dim, dim);
+    Vector stress_vec(dim), test_func(dim);
+
+    for (int q = 0; q < ir->GetNPoints(); q++)
+    {
+        const IntegrationPoint &ip = ir->IntPoint(q);
+        Tr.SetIntPoint(&ip);
+
+        double weight = ip.weight * Tr.Weight();
+
+        el.CalcPhysShape(Tr, shape);       // Shape functions
+        el.CalcPhysDShape(Tr, dshape_dx); // Gradients of shape functions
+
+        // Access the current values of m and d at the integration point
+        m.GetVectorValue(Tr, ip, stress_vec);
+        for (int i = 0; i < dim; i++)      // Convert stress_vec to matrix
+            for (int j = 0; j < dim; j++)
+                m_mat(i, j) = stress_vec[i * dim + j];
+
+        d.GetVectorValue(Tr, ip, stress_vec);
+        for (int i = 0; i < dim; i++)      // Convert stress_vec to matrix
+            for (int j = 0; j < dim; j++)
+                d_mat(i, j) = stress_vec[i * dim + j];
+
+        // Contribution from the term -2 * mu * m : d'
+        contrib.Set(0.0);
+        for (int i = 0; i < dim; i++)
+        {
+            for (int j = 0; j < dim; j++)
+            {
+                contrib(i, j) += -2.0 * mu.Eval(Tr, ip) * m_mat(i, j);
+            }
+        }
+
+        // Contribution from the term 2 * mu * (tau * \dot{m} + m - d) : m'
+        DenseMatrix relaxation_term(dim, dim);
+        relaxation_term.Set(0.0);
+        for (int i = 0; i < dim; i++)
+        {
+            for (int j = 0; j < dim; j++)
+            {
+                relaxation_term(i, j) += mu.Eval(Tr, ip) * (m_mat(i, j) - d_mat(i, j));
+            }
+        }
+
+        for (int i = 0; i < dof; i++)
+        {
+            for (int j = 0; j < dof; j++)
+            {
+                for (int k = 0; k < dim; k++)
+                {
+                    for (int l = 0; l < dim; l++)
+                    {
+                        elmat(i * dim + k, j * dim + l) += weight * contrib(k, l) * dshape_dx(i, k) * dshape_dx(j, l);
+                        elmat(i * dim + k, j * dim + l) += weight * relaxation_term(k, l) * dshape_dx(i, k) * dshape_dx(j, l);
+                    }
+                }
+            }
+        }
+    }
+}
+*/
+/*
+void ViscoelasticRHSIntegrator::AssembleRHSElementVector(const mfem::FiniteElement &el,
+                                                         mfem::ElementTransformation &Tr,
+                                                         mfem::Vector &elvec)
+{
+    int dof = el.GetDof();
+    int dim = el.GetDim();
+    const IntegrationRule *ir = &mfem::IntRules.Get(el.GetGeomType(), 2 * el.GetOrder() + 2);
+
+    elvec.SetSize(dof * dim);
+    elvec = 0.0;
+
+    DenseMatrix shape(dof), dshape_dx(dof, dim);
+    DenseMatrix m_mat(dim), d_mat(dim), rhs_term(dim, dim);
+    Vector stress_vec(dim);
+
+    for (int q = 0; q < ir->GetNPoints(); q++)
+    {
+        const IntegrationPoint &ip = ir->IntPoint(q);
+        Tr.SetIntPoint(&ip);
+
+        double weight = ip.weight * Tr.Weight();
+
+        el.CalcPhysShape(Tr, shape); // Shape functions
+
+        // Access the current values of m and d at the integration point
+        m.GetVectorValue(Tr, ip, stress_vec);
+        for (int i = 0; i < dim; i++)      // Convert stress_vec to matrix
+            for (int j = 0; j < dim; j++)
+                m_mat(i, j) = stress_vec[i * dim + j];
+
+        d.GetVectorValue(Tr, ip, stress_vec);
+        for (int i = 0; i < dim; i++)      // Convert stress_vec to matrix
+            for (int j = 0; j < dim; j++)
+                d_mat(i, j) = stress_vec[i * dim + j];
+
+        // Compute RHS term: 2 * mu * (tau * \dot{m} + m - d)
+        rhs_term.Set(0.0);
+        for (int i = 0; i < dim; i++)
+        {
+            for (int j = 0; j < dim; j++)
+            {
+                rhs_term(i, j) += 2.0 * mu.Eval(Tr, ip) * (m_mat(i, j) - d_mat(i, j));
+            }
+        }
+
+        for (int i = 0; i < dof; i++)
+        {
+            for (int k = 0; k < dim; k++)
+            {
+                double val = 0.0;
+                for (int l = 0; l < dim; l++)
+                {
+                    val += rhs_term(k, l) * shape(i);
+                }
+                elvec(i * dim + k) += weight * val;
+            }
+        }
+    }
+}
+*/
+    plot::plot(const GridFunction &sol, Mesh &msh)
+        : solution(sol), mesh(msh) {}
+
+    plot::~plot()
+    {
+        //delete[] data;
+        std::cout << "Destroying plot object and releasing data." << std::endl;
+    }
+
+    parse::~parse()
+    {
+        std::cout << "Destroying parse object." << std::endl;
+    }
+
+    interp::~interp()
+    {
+        std::cout << "Destroying interp object." << std::endl;
+    }
+
+
+    void plot::EvaluateRadialSolution(int num_samples, double min_radius, double max_radius, 
+		                        std::vector<double> &radii, std::vector<double> &values)
+    {
+        double mesh_max_radius = 0.0;
+        
+	for (int i = 0; i < mesh.GetNV(); i++)
+        {
+            Vector node;
+            //mesh.GetVertex(i, node);
+            const double* vertex_coords = mesh.GetVertex(i);
+            node.SetSize(mesh.Dimension());
+            for (int d = 0; d < mesh.Dimension(); d++)
+            {
+                node(d) = vertex_coords[d];
+            }
+
+	    double radius = node.Norml2();
+            if (radius > mesh_max_radius)
+                mesh_max_radius = radius;
+        }
+	max_radius = std::min(max_radius, mesh_max_radius);
+
+
+	DenseMatrix points(mesh.Dimension(), num_samples);
+        for (int i = 0; i < num_samples; i++)
+        {
+            double radius = min_radius + i * (max_radius - min_radius) / num_samples;
+            points(0, i) = radius;
+            if (mesh.Dimension() > 1) points(1, i) = 0.0;
+            if (mesh.Dimension() > 2) points(2, i) = 0.0; 
+	}
+       
+
+        Array<int> elem_ids(num_samples);
+	Array<IntegrationPoint> ips(num_samples);
+        
+        mesh.FindPoints(points, elem_ids, ips);
+        
+	for (int i = 0; i < num_samples; i++)
+        {
+            double value = 0.0;
+            int elem_id = elem_ids[i];
+            if (elem_id >= 0) // Check if the point was found
+            {
+                ElementTransformation *trans = mesh.GetElementTransformation(elem_id);
+                
+		value = solution.GetValue(*trans, ips[i]);
+                std::cout << "Point (" << points(0, i) << ", "
+                          << (mesh.Dimension() > 1 ? points(1, i) : 0.0) << ") "
+                          << "has value " << value << " in element " << elem_id << ".\n";
+            }
+            else
+            {
+                std::cerr << "Warning: Point (" << points(0, i) << ", "
+                          << (mesh.Dimension() > 1 ? points(1, i) : 0.0) << ") "
+                          << "is outside the mesh.\n";
+            }
+
+            radii.push_back(points(0, i));
+            values.push_back(value);
+	}
+    }
+
+    void plot::SaveRadialSolution(const std::string &filename, int num_samples, double min_radius, double max_radius)
+    {
+        std::vector<double> radii;
+        std::vector<double> values;
+        EvaluateRadialSolution(num_samples, min_radius, max_radius, radii, values);
+
+        std::ofstream ofs(filename);
+        //if (!outfile.is_open()) {
+        //    std::cerr << "Error: Could not open the file " << filename << " for writing.\n";
+        //    return;
+        //}
+	
+	ofs << filename<<"\n";
+        for (size_t i = 0; i < radii.size(); i++)
+        {
+            ofs << radii[i] << " " << values[i] << "\n";
+        }
+        ofs.close();
+    }
+
+    
+
+    std::vector<std::vector<double>> parse::properties_1d(const std::string &filename)
+    {
+        std::ifstream infile(filename);
+        if (!infile.is_open())
+        {
+            throw std::runtime_error("Unable to open file: " + filename);
+        }
+
+        std::vector<std::vector<double>> properties;
+        std::string line;
+
+        int num_columns = 0; // Local variable to track the number of columns
+
+        std::getline(infile, line);
+        std::getline(infile, line);
+        std::getline(infile, line);
+
+        // Parse the file
+        while (std::getline(infile, line))
+        {
+            std::istringstream iss(line);
+            std::vector<double> row;
+            double value;
+
+            // Read all columns in the row
+            while (iss >> value)
+            {
+                row.push_back(value);
+            }
+
+            // Determine the number of columns from the first valid row
+            if (properties.empty() && !row.empty())
+            {
+                num_columns = row.size();
+            }
+
+            // Ensure all rows have the same number of columns
+            if (!row.empty() && row.size() != num_columns)
+            {
+                throw std::runtime_error("Inconsistent number of columns in file: " + filename);
+            }
+
+            if (!row.empty())
+            {
+                properties.push_back(row);
+            }
+        }
+
+        infile.close();
+
+        return properties;
+    }
+
+
+    mfem::Array<mfem::FunctionCoefficient *>
+    interp::PWCoef_1D(const std::vector<std::pair<double, double>> &radius_property,
+                                     int num_attributes,
+                                     const std::string &method)
+    {
+        if (radius_property.empty())
+        {
+            throw std::runtime_error("Radius-property array is empty.");
+        }
+
+        // Define the interpolation function
+        std::function<double(double)> interpolate;
+
+        if (method == "linear")
+        {
+            interpolate = [radius_property](double radius) -> double {
+                if (radius > radius_property.back().first)
+                {
+                    return 0.0; // Return zero outside the range
+                }
+
+                for (size_t i = 1; i < radius_property.size(); ++i)
+                {
+                    if (radius <= radius_property[i].first)
+                    {
+                        double r1 = radius_property[i - 1].first;
+                        double r2 = radius_property[i].first;
+                        double v1 = radius_property[i - 1].second;
+                        double v2 = radius_property[i].second;
+
+                        // Linear interpolation
+                        return v1 + (v2 - v1) * (radius - r1) / (r2 - r1);
+                    }
+                }
+                return 0.0; 
+            };
+        }
+        else if (method == "spline")
+        {
+            throw std::runtime_error("Spline interpolation is not implemented yet.");
+        }
+        else
+        {
+            throw std::runtime_error("Unsupported interpolation method: " + method);
+        }
+
+        // Create FunctionCoefficients for each attribute
+        mfem::Array<mfem::FunctionCoefficient *> coefficients;
+        for (int i = 1; i <= num_attributes; ++i)
+        {
+            // Create a FunctionCoefficient for this attribute
+            mfem::FunctionCoefficient *fc = new mfem::FunctionCoefficient([interpolate](const mfem::Vector &x) -> double {
+                double r = x.Norml2();
+                return interpolate(r);
+            });
+
+            coefficients.Append(fc);
+        }
+
+        return coefficients;
+    }
+
+
+
+} // namespace giafem
+

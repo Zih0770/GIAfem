@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 
    auto inside_coef = [=](const Vector &x) -> double
    {
-      double r = sqrt(x[0] * x[0] + x[1] * x[1] + (x.Size() == 3 ? x[2] * x[2] : 0.0));
+      double r = x.Norml2();
       double rho = rho0 - (rho0 - rho1) * r / R;
       return -4.0 * M_PI * G * rho;
    };

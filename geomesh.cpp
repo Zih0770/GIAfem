@@ -20,7 +20,7 @@ void createConcentricSphericalLayers(const std::vector<double> &radii, double me
     gmsh::option::setNumber("Mesh.MeshSizeMax", meshSizeMax);
 
     // Tagging scheme starting from 301
-    int layerTag = 301;
+    int layerTag = 1;
     int surfaceTag = 1;
     for (int i = 0; i < numLayers; ++i) {
         gmsh::model::occ::addSphere(0, 0, 0, radii[i]);
