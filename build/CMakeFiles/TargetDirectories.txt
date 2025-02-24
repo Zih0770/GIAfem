@@ -1,6 +1,14 @@
 /home/sssou/giafem/build/CMakeFiles/giafem_lib.dir
+/home/sssou/giafem/build/CMakeFiles/test.dir
+/home/sssou/giafem/build/CMakeFiles/test_field.dir
+/home/sssou/giafem/build/CMakeFiles/test_time_oper.dir
+/home/sssou/giafem/build/CMakeFiles/test_field_2.dir
 /home/sssou/giafem/build/CMakeFiles/SG_PW.dir
 /home/sssou/giafem/build/CMakeFiles/SG_PW_theta.dir
 /home/sssou/giafem/build/CMakeFiles/SG_PW_p.dir
+/home/sssou/giafem/build/CMakeFiles/elastostatic.dir
+/home/sssou/giafem/build/CMakeFiles/beam.dir
+/home/sssou/giafem/build/CMakeFiles/beam_t.dir
+/home/sssou/giafem/build/CMakeFiles/MatrixLinearForm.dir
 /home/sssou/giafem/build/CMakeFiles/edit_cache.dir
 /home/sssou/giafem/build/CMakeFiles/rebuild_cache.dir

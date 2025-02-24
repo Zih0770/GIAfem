@@ -22,6 +22,18 @@ add_library(giafem_lib src/giafem.cpp)
 target_include_directories(giafem_lib PUBLIC include ${MFEM_INCLUDE})
 target_link_libraries(giafem_lib PUBLIC ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
+add_executable(test demos/test.cpp)
+target_link_libraries(test PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(test_field demos/test_field.cpp)
+target_link_libraries(test_field PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(test_time_oper demos/test_time_oper.cpp)
+target_link_libraries(test_time_oper PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(test_field_2 demos/test_field_2.cpp)
+target_link_libraries(test_field_2 PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
 add_executable(SG_PW demos/SG_PW.cpp)
 target_link_libraries(SG_PW PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
@@ -30,6 +42,21 @@ target_link_libraries(SG_PW_theta PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_
 
 add_executable(SG_PW_p demos/SG_PW_p.cpp)
 target_link_libraries(SG_PW_p PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(elastostatic demos/elastostatic.cpp)
+target_link_libraries(elastostatic PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+#add_executable(viscoelastic_beam demos/viscoelastic_beam.cpp)
+#target_link_libraries(viscoelastic_beam PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(beam demos/beam.cpp)
+target_link_libraries(beam PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(beam_t demos/beam_t.cpp)
+target_link_libraries(beam_t PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(MatrixLinearForm demos/MatrixLinearForm.cpp)
+target_link_libraries(MatrixLinearForm PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

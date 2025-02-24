@@ -130,6 +130,58 @@ giafem_lib/fast:
 .PHONY : giafem_lib/fast
 
 #=============================================================================
+# Target rules for targets named test
+
+# Build rule for target.
+test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test
+.PHONY : test
+
+# fast build rule for target.
+test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/build
+.PHONY : test/fast
+
+#=============================================================================
+# Target rules for targets named test_field
+
+# Build rule for target.
+test_field: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_field
+.PHONY : test_field
+
+# fast build rule for target.
+test_field/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_field.dir/build.make CMakeFiles/test_field.dir/build
+.PHONY : test_field/fast
+
+#=============================================================================
+# Target rules for targets named test_time_oper
+
+# Build rule for target.
+test_time_oper: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_time_oper
+.PHONY : test_time_oper
+
+# fast build rule for target.
+test_time_oper/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_time_oper.dir/build.make CMakeFiles/test_time_oper.dir/build
+.PHONY : test_time_oper/fast
+
+#=============================================================================
+# Target rules for targets named test_field_2
+
+# Build rule for target.
+test_field_2: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_field_2
+.PHONY : test_field_2
+
+# fast build rule for target.
+test_field_2/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_field_2.dir/build.make CMakeFiles/test_field_2.dir/build
+.PHONY : test_field_2/fast
+
+#=============================================================================
 # Target rules for targets named SG_PW
 
 # Build rule for target.
@@ -167,6 +219,82 @@ SG_PW_p: cmake_check_build_system
 SG_PW_p/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW_p.dir/build.make CMakeFiles/SG_PW_p.dir/build
 .PHONY : SG_PW_p/fast
+
+#=============================================================================
+# Target rules for targets named elastostatic
+
+# Build rule for target.
+elastostatic: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 elastostatic
+.PHONY : elastostatic
+
+# fast build rule for target.
+elastostatic/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/elastostatic.dir/build.make CMakeFiles/elastostatic.dir/build
+.PHONY : elastostatic/fast
+
+#=============================================================================
+# Target rules for targets named beam
+
+# Build rule for target.
+beam: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 beam
+.PHONY : beam
+
+# fast build rule for target.
+beam/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/beam.dir/build.make CMakeFiles/beam.dir/build
+.PHONY : beam/fast
+
+#=============================================================================
+# Target rules for targets named beam_t
+
+# Build rule for target.
+beam_t: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 beam_t
+.PHONY : beam_t
+
+# fast build rule for target.
+beam_t/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/beam_t.dir/build.make CMakeFiles/beam_t.dir/build
+.PHONY : beam_t/fast
+
+#=============================================================================
+# Target rules for targets named MatrixLinearForm
+
+# Build rule for target.
+MatrixLinearForm: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 MatrixLinearForm
+.PHONY : MatrixLinearForm
+
+# fast build rule for target.
+MatrixLinearForm/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MatrixLinearForm.dir/build.make CMakeFiles/MatrixLinearForm.dir/build
+.PHONY : MatrixLinearForm/fast
+
+demos/MatrixLinearForm.o: demos/MatrixLinearForm.cpp.o
+.PHONY : demos/MatrixLinearForm.o
+
+# target to build an object file
+demos/MatrixLinearForm.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MatrixLinearForm.dir/build.make CMakeFiles/MatrixLinearForm.dir/demos/MatrixLinearForm.cpp.o
+.PHONY : demos/MatrixLinearForm.cpp.o
+
+demos/MatrixLinearForm.i: demos/MatrixLinearForm.cpp.i
+.PHONY : demos/MatrixLinearForm.i
+
+# target to preprocess a source file
+demos/MatrixLinearForm.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MatrixLinearForm.dir/build.make CMakeFiles/MatrixLinearForm.dir/demos/MatrixLinearForm.cpp.i
+.PHONY : demos/MatrixLinearForm.cpp.i
+
+demos/MatrixLinearForm.s: demos/MatrixLinearForm.cpp.s
+.PHONY : demos/MatrixLinearForm.s
+
+# target to generate assembly for a file
+demos/MatrixLinearForm.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/MatrixLinearForm.dir/build.make CMakeFiles/MatrixLinearForm.dir/demos/MatrixLinearForm.cpp.s
+.PHONY : demos/MatrixLinearForm.cpp.s
 
 demos/SG_PW.o: demos/SG_PW.cpp.o
 .PHONY : demos/SG_PW.o
@@ -240,6 +368,174 @@ demos/SG_PW_theta.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SG_PW_theta.dir/build.make CMakeFiles/SG_PW_theta.dir/demos/SG_PW_theta.cpp.s
 .PHONY : demos/SG_PW_theta.cpp.s
 
+demos/beam.o: demos/beam.cpp.o
+.PHONY : demos/beam.o
+
+# target to build an object file
+demos/beam.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/beam.dir/build.make CMakeFiles/beam.dir/demos/beam.cpp.o
+.PHONY : demos/beam.cpp.o
+
+demos/beam.i: demos/beam.cpp.i
+.PHONY : demos/beam.i
+
+# target to preprocess a source file
+demos/beam.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/beam.dir/build.make CMakeFiles/beam.dir/demos/beam.cpp.i
+.PHONY : demos/beam.cpp.i
+
+demos/beam.s: demos/beam.cpp.s
+.PHONY : demos/beam.s
+
+# target to generate assembly for a file
+demos/beam.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/beam.dir/build.make CMakeFiles/beam.dir/demos/beam.cpp.s
+.PHONY : demos/beam.cpp.s
+
+demos/beam_t.o: demos/beam_t.cpp.o
+.PHONY : demos/beam_t.o
+
+# target to build an object file
+demos/beam_t.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/beam_t.dir/build.make CMakeFiles/beam_t.dir/demos/beam_t.cpp.o
+.PHONY : demos/beam_t.cpp.o
+
+demos/beam_t.i: demos/beam_t.cpp.i
+.PHONY : demos/beam_t.i
+
+# target to preprocess a source file
+demos/beam_t.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/beam_t.dir/build.make CMakeFiles/beam_t.dir/demos/beam_t.cpp.i
+.PHONY : demos/beam_t.cpp.i
+
+demos/beam_t.s: demos/beam_t.cpp.s
+.PHONY : demos/beam_t.s
+
+# target to generate assembly for a file
+demos/beam_t.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/beam_t.dir/build.make CMakeFiles/beam_t.dir/demos/beam_t.cpp.s
+.PHONY : demos/beam_t.cpp.s
+
+demos/elastostatic.o: demos/elastostatic.cpp.o
+.PHONY : demos/elastostatic.o
+
+# target to build an object file
+demos/elastostatic.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/elastostatic.dir/build.make CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o
+.PHONY : demos/elastostatic.cpp.o
+
+demos/elastostatic.i: demos/elastostatic.cpp.i
+.PHONY : demos/elastostatic.i
+
+# target to preprocess a source file
+demos/elastostatic.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/elastostatic.dir/build.make CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.i
+.PHONY : demos/elastostatic.cpp.i
+
+demos/elastostatic.s: demos/elastostatic.cpp.s
+.PHONY : demos/elastostatic.s
+
+# target to generate assembly for a file
+demos/elastostatic.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/elastostatic.dir/build.make CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.s
+.PHONY : demos/elastostatic.cpp.s
+
+demos/test.o: demos/test.cpp.o
+.PHONY : demos/test.o
+
+# target to build an object file
+demos/test.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/demos/test.cpp.o
+.PHONY : demos/test.cpp.o
+
+demos/test.i: demos/test.cpp.i
+.PHONY : demos/test.i
+
+# target to preprocess a source file
+demos/test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/demos/test.cpp.i
+.PHONY : demos/test.cpp.i
+
+demos/test.s: demos/test.cpp.s
+.PHONY : demos/test.s
+
+# target to generate assembly for a file
+demos/test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/demos/test.cpp.s
+.PHONY : demos/test.cpp.s
+
+demos/test_field.o: demos/test_field.cpp.o
+.PHONY : demos/test_field.o
+
+# target to build an object file
+demos/test_field.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_field.dir/build.make CMakeFiles/test_field.dir/demos/test_field.cpp.o
+.PHONY : demos/test_field.cpp.o
+
+demos/test_field.i: demos/test_field.cpp.i
+.PHONY : demos/test_field.i
+
+# target to preprocess a source file
+demos/test_field.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_field.dir/build.make CMakeFiles/test_field.dir/demos/test_field.cpp.i
+.PHONY : demos/test_field.cpp.i
+
+demos/test_field.s: demos/test_field.cpp.s
+.PHONY : demos/test_field.s
+
+# target to generate assembly for a file
+demos/test_field.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_field.dir/build.make CMakeFiles/test_field.dir/demos/test_field.cpp.s
+.PHONY : demos/test_field.cpp.s
+
+demos/test_field_2.o: demos/test_field_2.cpp.o
+.PHONY : demos/test_field_2.o
+
+# target to build an object file
+demos/test_field_2.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_field_2.dir/build.make CMakeFiles/test_field_2.dir/demos/test_field_2.cpp.o
+.PHONY : demos/test_field_2.cpp.o
+
+demos/test_field_2.i: demos/test_field_2.cpp.i
+.PHONY : demos/test_field_2.i
+
+# target to preprocess a source file
+demos/test_field_2.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_field_2.dir/build.make CMakeFiles/test_field_2.dir/demos/test_field_2.cpp.i
+.PHONY : demos/test_field_2.cpp.i
+
+demos/test_field_2.s: demos/test_field_2.cpp.s
+.PHONY : demos/test_field_2.s
+
+# target to generate assembly for a file
+demos/test_field_2.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_field_2.dir/build.make CMakeFiles/test_field_2.dir/demos/test_field_2.cpp.s
+.PHONY : demos/test_field_2.cpp.s
+
+demos/test_time_oper.o: demos/test_time_oper.cpp.o
+.PHONY : demos/test_time_oper.o
+
+# target to build an object file
+demos/test_time_oper.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_time_oper.dir/build.make CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o
+.PHONY : demos/test_time_oper.cpp.o
+
+demos/test_time_oper.i: demos/test_time_oper.cpp.i
+.PHONY : demos/test_time_oper.i
+
+# target to preprocess a source file
+demos/test_time_oper.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_time_oper.dir/build.make CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.i
+.PHONY : demos/test_time_oper.cpp.i
+
+demos/test_time_oper.s: demos/test_time_oper.cpp.s
+.PHONY : demos/test_time_oper.s
+
+# target to generate assembly for a file
+demos/test_time_oper.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_time_oper.dir/build.make CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.s
+.PHONY : demos/test_time_oper.cpp.s
+
 src/giafem.o: src/giafem.cpp.o
 .PHONY : src/giafem.o
 
@@ -272,10 +568,21 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... MatrixLinearForm"
 	@echo "... SG_PW"
 	@echo "... SG_PW_p"
 	@echo "... SG_PW_theta"
+	@echo "... beam"
+	@echo "... beam_t"
+	@echo "... elastostatic"
 	@echo "... giafem_lib"
+	@echo "... test"
+	@echo "... test_field"
+	@echo "... test_field_2"
+	@echo "... test_time_oper"
+	@echo "... demos/MatrixLinearForm.o"
+	@echo "... demos/MatrixLinearForm.i"
+	@echo "... demos/MatrixLinearForm.s"
 	@echo "... demos/SG_PW.o"
 	@echo "... demos/SG_PW.i"
 	@echo "... demos/SG_PW.s"
@@ -285,6 +592,27 @@ help:
 	@echo "... demos/SG_PW_theta.o"
 	@echo "... demos/SG_PW_theta.i"
 	@echo "... demos/SG_PW_theta.s"
+	@echo "... demos/beam.o"
+	@echo "... demos/beam.i"
+	@echo "... demos/beam.s"
+	@echo "... demos/beam_t.o"
+	@echo "... demos/beam_t.i"
+	@echo "... demos/beam_t.s"
+	@echo "... demos/elastostatic.o"
+	@echo "... demos/elastostatic.i"
+	@echo "... demos/elastostatic.s"
+	@echo "... demos/test.o"
+	@echo "... demos/test.i"
+	@echo "... demos/test.s"
+	@echo "... demos/test_field.o"
+	@echo "... demos/test_field.i"
+	@echo "... demos/test_field.s"
+	@echo "... demos/test_field_2.o"
+	@echo "... demos/test_field_2.i"
+	@echo "... demos/test_field_2.s"
+	@echo "... demos/test_time_oper.o"
+	@echo "... demos/test_time_oper.i"
+	@echo "... demos/test_time_oper.s"
 	@echo "... src/giafem.o"
 	@echo "... src/giafem.i"
 	@echo "... src/giafem.s"
