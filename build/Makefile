@@ -130,6 +130,19 @@ giafem_lib/fast:
 .PHONY : giafem_lib/fast
 
 #=============================================================================
+# Target rules for targets named ex16
+
+# Build rule for target.
+ex16: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ex16
+.PHONY : ex16
+
+# fast build rule for target.
+ex16/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ex16.dir/build.make CMakeFiles/ex16.dir/build
+.PHONY : ex16/fast
+
+#=============================================================================
 # Target rules for targets named test
 
 # Build rule for target.
@@ -180,6 +193,19 @@ test_field_2: cmake_check_build_system
 test_field_2/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_field_2.dir/build.make CMakeFiles/test_field_2.dir/build
 .PHONY : test_field_2/fast
+
+#=============================================================================
+# Target rules for targets named test_ve
+
+# Build rule for target.
+test_ve: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_ve
+.PHONY : test_ve
+
+# fast build rule for target.
+test_ve/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_ve.dir/build.make CMakeFiles/test_ve.dir/build
+.PHONY : test_ve/fast
 
 #=============================================================================
 # Target rules for targets named SG_PW
@@ -440,6 +466,30 @@ demos/elastostatic.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/elastostatic.dir/build.make CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.s
 .PHONY : demos/elastostatic.cpp.s
 
+demos/ex16.o: demos/ex16.cpp.o
+.PHONY : demos/ex16.o
+
+# target to build an object file
+demos/ex16.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ex16.dir/build.make CMakeFiles/ex16.dir/demos/ex16.cpp.o
+.PHONY : demos/ex16.cpp.o
+
+demos/ex16.i: demos/ex16.cpp.i
+.PHONY : demos/ex16.i
+
+# target to preprocess a source file
+demos/ex16.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ex16.dir/build.make CMakeFiles/ex16.dir/demos/ex16.cpp.i
+.PHONY : demos/ex16.cpp.i
+
+demos/ex16.s: demos/ex16.cpp.s
+.PHONY : demos/ex16.s
+
+# target to generate assembly for a file
+demos/ex16.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ex16.dir/build.make CMakeFiles/ex16.dir/demos/ex16.cpp.s
+.PHONY : demos/ex16.cpp.s
+
 demos/test.o: demos/test.cpp.o
 .PHONY : demos/test.o
 
@@ -536,6 +586,30 @@ demos/test_time_oper.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_time_oper.dir/build.make CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.s
 .PHONY : demos/test_time_oper.cpp.s
 
+demos/test_ve.o: demos/test_ve.cpp.o
+.PHONY : demos/test_ve.o
+
+# target to build an object file
+demos/test_ve.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_ve.dir/build.make CMakeFiles/test_ve.dir/demos/test_ve.cpp.o
+.PHONY : demos/test_ve.cpp.o
+
+demos/test_ve.i: demos/test_ve.cpp.i
+.PHONY : demos/test_ve.i
+
+# target to preprocess a source file
+demos/test_ve.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_ve.dir/build.make CMakeFiles/test_ve.dir/demos/test_ve.cpp.i
+.PHONY : demos/test_ve.cpp.i
+
+demos/test_ve.s: demos/test_ve.cpp.s
+.PHONY : demos/test_ve.s
+
+# target to generate assembly for a file
+demos/test_ve.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_ve.dir/build.make CMakeFiles/test_ve.dir/demos/test_ve.cpp.s
+.PHONY : demos/test_ve.cpp.s
+
 src/giafem.o: src/giafem.cpp.o
 .PHONY : src/giafem.o
 
@@ -575,11 +649,13 @@ help:
 	@echo "... beam"
 	@echo "... beam_t"
 	@echo "... elastostatic"
+	@echo "... ex16"
 	@echo "... giafem_lib"
 	@echo "... test"
 	@echo "... test_field"
 	@echo "... test_field_2"
 	@echo "... test_time_oper"
+	@echo "... test_ve"
 	@echo "... demos/MatrixLinearForm.o"
 	@echo "... demos/MatrixLinearForm.i"
 	@echo "... demos/MatrixLinearForm.s"
@@ -601,6 +677,9 @@ help:
 	@echo "... demos/elastostatic.o"
 	@echo "... demos/elastostatic.i"
 	@echo "... demos/elastostatic.s"
+	@echo "... demos/ex16.o"
+	@echo "... demos/ex16.i"
+	@echo "... demos/ex16.s"
 	@echo "... demos/test.o"
 	@echo "... demos/test.i"
 	@echo "... demos/test.s"
@@ -613,6 +692,9 @@ help:
 	@echo "... demos/test_time_oper.o"
 	@echo "... demos/test_time_oper.i"
 	@echo "... demos/test_time_oper.s"
+	@echo "... demos/test_ve.o"
+	@echo "... demos/test_ve.i"
+	@echo "... demos/test_ve.s"
 	@echo "... src/giafem.o"
 	@echo "... src/giafem.i"
 	@echo "... src/giafem.s"

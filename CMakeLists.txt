@@ -22,6 +22,9 @@ add_library(giafem_lib src/giafem.cpp)
 target_include_directories(giafem_lib PUBLIC include ${MFEM_INCLUDE})
 target_link_libraries(giafem_lib PUBLIC ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
+add_executable(ex16 demos/ex16.cpp)
+target_link_libraries(ex16 PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
 add_executable(test demos/test.cpp)
 target_link_libraries(test PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
@@ -33,6 +36,9 @@ target_link_libraries(test_time_oper PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::M
 
 add_executable(test_field_2 demos/test_field_2.cpp)
 target_link_libraries(test_field_2 PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(test_ve demos/test_ve.cpp)
+target_link_libraries(test_ve PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
 add_executable(SG_PW demos/SG_PW.cpp)
 target_link_libraries(SG_PW PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
