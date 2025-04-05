@@ -37,115 +37,102 @@ void TensorFieldCoefficient::Eval(mfem::DenseMatrix &M, mfem::ElementTransformat
     M = m_storage[e][closest_idx];
 }
 
-//ViscoelasticRHSIntegrator::ViscoelasticRHSIntegrator(mfem::PWConstCoefficient &mu, mfem::MatrixRestrictedCoefficient &m_)
-//        : mu_func(mu), m(m_) {}
 
-    void ViscoelasticRHSIntegrator::AssembleRHSElementVect(const mfem::FiniteElement &el,
-                                                           mfem::ElementTransformation &Tr,
-                                                           mfem::Vector &elvec)
-    {
-        int dof = el.GetDof();
-        int dim = el.GetDim();
-        elvec.SetSize(dof * dim);
-        elvec = 0.0;
-
-        const mfem::IntegrationRule *ir = &mfem::IntRules.Get(Tr.GetGeometryType(), 2 * el.GetOrder());
-        mfem::DenseMatrix m_tensor(dim, dim);
-        mfem::DenseMatrix dshape(dof, dim);
-        mfem::Vector force(dof * dim);
-        force = 0.0;
-
-        for (int k = 0; k < ir->GetNPoints(); k++)
-        {
-            const mfem::IntegrationPoint &ip = ir->IntPoint(k);
-            Tr.SetIntPoint(&ip);
-
-            m.Eval(m_tensor, Tr, ip);
-            real_t m_tr = m_tensor.Trace();
-            real_t mu_val = mu.Eval(Tr, ip);
-            real_t fac = Tr.Weight() * ip.weight * 2.0 * mu_val;
-
-            el.CalcPhysDShape(Tr, dshape);
-
-            for (int s = 0; s < dof; s++)
-            {
-                for (int i = 0; i < dim; i++)
-                {
-                    real_t val = 0.0;
-                    for (int j = 0; j < dim; j++)
-                    {
-                        val += (m_tensor(i, j) + m_tensor(j, i)) / 2.0 * dshape(s, j) - m_tr / 3.0 * dshape(s, i);
-                    }
-                    force(s + i * dof) += val * fac;
-                }
-            }
-
-        }
-
-        elvec = force;
-    }
-
-    void MatrixGradLFIntegrator::AssembleRHSElementVect(const mfem::FiniteElement &el,
-                                                           mfem::ElementTransformation &Tr,
-                                                           mfem::Vector &elvec)
-    {
-        int dof = el.GetDof();
-        int dim = el.GetDim();
-        elvec.SetSize(dof * dim);
-        elvec = 0.0;
-
-        const mfem::IntegrationRule *ir = &mfem::IntRules.Get(Tr.GetGeometryType(), 2 * el.GetOrder());
-        mfem::DenseMatrix m_tensor(dim, dim);
-        mfem::DenseMatrix dshape(dof, dim);
-        mfem::Vector force(dof * dim);
-        force = 0.0;
-
-        for (int k = 0; k < ir->GetNPoints(); k++)
-        {
-            const mfem::IntegrationPoint &ip = ir->IntPoint(k);
-            Tr.SetIntPoint(&ip);
-
-            m.Eval(m_tensor, Tr, ip);
-            real_t fac = Tr.Weight() * ip.weight;
-
-            el.CalcPhysDShape(Tr, dshape);
-
-            for (int s = 0; s < dof; s++)
-            {
-                for (int i = 0; i < dim; i++)
-                {
-                    real_t val = 0.0;
-                    for (int j = 0; j < dim; j++)
-                    {
-                        val += m_tensor(i, j) * dshape(s, j);
-                    }
-                    force(s + i * dof) += val * fac;
-                }
-            }
-
-        }
-
-        elvec = force;
-    }
-
-
-//Turn a grid function into a dense matrix
-GF2Mat::GF2Mat(const mfem::GridFunction &grid_func, const mfem::Array<int> &dof_indices)
-    : mfem::DenseMatrix(dof_indices.Size(), grid_func.FESpace()->GetVDim())
+void ViscoelasticRHSIntegrator::AssembleRHSElementVect(const mfem::FiniteElement &el,
+                                                       mfem::ElementTransformation &Tr,
+                                                       mfem::Vector &elvec)
 {
-    int dim = grid_func.FESpace()->GetVDim();
-    int ndofs = dof_indices.Size();
-    mfem::Vector el_vals(ndofs * dim);
-    
-    grid_func.GetSubVector(dof_indices, el_vals);
+    int dof = el.GetDof();
+    int dim = el.GetDim();
+    elvec.SetSize(dof * dim);
+    elvec = 0.0;
 
-    for (int d = 0; d < dim; d++)
+    const mfem::IntegrationRule *ir = &mfem::IntRules.Get(Tr.GetGeometryType(), 2 * el.GetOrder());
+    mfem::Vector m_vec;
+    mfem::DenseMatrix m_tensor(dim, dim);
+    mfem::DenseMatrix dshape(dof, dim);
+    mfem::Vector force(dof * dim);
+    force = 0.0;
+
+    for (int k = 0; k < ir->GetNPoints(); k++)
     {
-        for (int i = 0; i < ndofs; i++)
+        const mfem::IntegrationPoint &ip = ir->IntPoint(k);
+        Tr.SetIntPoint(&ip);
+        m.Eval(m_vec, Tr, ip);
+        if (dim == 2){
+            m_tensor(0, 0) = m_vec(0); m_tensor(1, 0) = m_vec(1); m_tensor(0, 1) = m_vec(1);
+            m_tensor(1, 1) = -m_vec(0);
+        }
+        else if (dim == 3){
+            m_tensor(0, 0) = m_vec(0); m_tensor(1, 0) = m_vec(1); m_tensor(2, 0) = m_vec(2);
+            m_tensor(0, 1) = m_vec(2); m_tensor(1, 1) = m_vec(4); m_tensor(2, 1) = m_vec(5);
+            m_tensor(0, 2) = m_vec(3); m_tensor(1, 2) = m_vec(5); m_tensor(2, 2) = -m_vec(0)-m_vec(4);
+          
+        }
+        //real_t m_tr = m_tensor.Trace();
+        real_t mu_val = mu.Eval(Tr, ip);
+        real_t fac = Tr.Weight() * ip.weight * 2.0 * mu_val;
+
+        el.CalcPhysDShape(Tr, dshape);
+
+        for (int s = 0; s < dof; s++)
         {
-            (*this)(i, d) = el_vals(i + d * ndofs);
+            for (int i = 0; i < dim; i++)
+            {
+                real_t val = 0.0;
+                for (int j = 0; j < dim; j++)
+                {
+                    val += (m_tensor(i, j) + m_tensor(j, i)) / 2.0 * dshape(s, j); //- m_tr / 3.0 * dshape(s, i);
+                    force(s + i * dof) += val * fac;
+                }
+            }
+        }
+
+    }
+
+        elvec = force;
+}
+
+void MatrixGradLFIntegrator::AssembleRHSElementVect(const mfem::FiniteElement &el,
+                                                       mfem::ElementTransformation &Tr,
+                                                       mfem::Vector &elvec)
+{
+    int dof = el.GetDof();
+    int dim = el.GetDim();
+    elvec.SetSize(dof * dim);
+    elvec = 0.0;
+
+    const mfem::IntegrationRule *ir = &mfem::IntRules.Get(Tr.GetGeometryType(), 2 * el.GetOrder());
+    mfem::DenseMatrix m_tensor(dim, dim);
+    mfem::DenseMatrix dshape(dof, dim);
+    mfem::Vector force(dof * dim);
+    force = 0.0;
+
+    for (int k = 0; k < ir->GetNPoints(); k++)
+    {
+        const mfem::IntegrationPoint &ip = ir->IntPoint(k);
+        Tr.SetIntPoint(&ip);
+
+        m.Eval(m_tensor, Tr, ip);
+        real_t fac = Tr.Weight() * ip.weight;
+
+        el.CalcPhysDShape(Tr, dshape);
+
+        for (int s = 0; s < dof; s++)
+        {
+            for (int i = 0; i < dim; i++)
+            {
+                real_t val = 0.0;
+                for (int j = 0; j < dim; j++)
+                {
+                    val += m_tensor(i, j) * dshape(s, j);
+                }
+                force(s + i * dof) += val * fac;
+            }
         }
     }
+
+    elvec = force;
 }
 
 void FieldUtils::Strain_ip(const mfem::GridFunction &u,

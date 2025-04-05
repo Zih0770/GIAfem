@@ -24,14 +24,14 @@ namespace giafem
         virtual void Eval(mfem::DenseMatrix &M, mfem::ElementTransformation &T, const mfem::IntegrationPoint &ip);
     };
 
-    class ViscoelasticRHSIntegrator : public mfem::LinearFormIntegrator
+    class ViscoelasticRHSIntegrator : public LinearFormIntegrator
     {
     private:
-        mfem::PWConstCoefficient &mu;
-        mfem::MatrixRestrictedCoefficient &m;
+        Coefficient &mu;
+        VectorCoefficient &m;
 
     public:
-        ViscoelasticRHSIntegrator(mfem::PWConstCoefficient &mu_, mfem::MatrixRestrictedCoefficient &m_)
+        ViscoelasticRHSIntegrator(Coefficient &mu_, VectorCoefficient &m_)
             : mu(mu_), m(m_) {}
         virtual void AssembleRHSElementVect(const mfem::FiniteElement &el,
                                            mfem::ElementTransformation &Tr,
@@ -55,10 +55,6 @@ namespace giafem
         using LinearFormIntegrator::AssembleRHSElementVect;
     };
 
-    class GF2Mat : public mfem::DenseMatrix {
-    public:
-        GF2Mat(const mfem::GridFunction &grid_func, const mfem::Array<int> &dof_indices);
-    };
 
     class FieldUtils
     {
