@@ -22,14 +22,14 @@ protected:
     BilinearForm *K;
     mutable SparseMatrix Kmat;
     SparseMatrix *T;
-    CGSolver K_solver;
-    DSmoother K_prec;
+    mutable CGSolver K_solver;
+    GSSmoother K_prec;
     real_t current_dt;
 
     mutable Vector z;
 
 public:
-    VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, Array<int> &etl_, real_t lamb_, real_t mu_, real_t tau_, const Vector &u_vec, const Vector &m_vec, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_);
+    VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, real_t lamb_, real_t mu_, real_t tau_, const Vector &u_vec, const Vector &m_vec, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_);
 
     void Mult(const Vector &m_vec, Vector &dm_dt_vec) const override;
 
@@ -116,16 +116,16 @@ void visualize(ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
 int main(int argc, char *argv[])
 {
     const char *mesh_file = "mesh/examples/beam-tet.mesh";
-    real_t tau = 1.0;
-    real_t lamb = 3.0;
-    real_t mu = 1.0;
+    real_t tau = 5.0;
+    real_t lamb = 15.0;
+    real_t mu = 10.0;
     int ode_solver_type = 23;
     real_t t_final = 5.0;
-    real_t dt = 0.1;
+    real_t dt = 0.02;
     //int ref_levels = 3;
     int order = 2;
     bool visualization = true;
-    int vis_steps = 5;
+    int vis_steps = 1;
 
     OptionsParser args(argc, argv);
     args.AddOption(&t_final, "-tf", "--t-final",
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
     //   mesh->UniformRefinement();
     //}
     {
-        int ref_levels = (int) floor(log(50000./mesh->GetNE())/log(2.)/dim);
+        int ref_levels = (int) floor(log(5000./mesh->GetNE())/log(2.)/dim);
         for (int l = 0; l < ref_levels; l++)
         {
             mesh->UniformRefinement();
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 
 
     H1_FECollection fec(order, dim);
-    L2_FECollection fec_L2(order + 1, dim); //
+    L2_FECollection fec_L2(order, dim); //
     FiniteElementSpace fes_u(mesh, &fec, 3);
     FiniteElementSpace fes_m(mesh, &fec_L2, 5);
     FiniteElementSpace fes_w(mesh, &fec_L2);
@@ -177,20 +177,20 @@ int main(int argc, char *argv[])
     Vector m_vec;
     m.GetTrueDofs(m_vec);
 
-    Array<int> ess_bdr(fes_u.GetMesh()->bdr_attributes.Max());
-    ess_bdr = 0;
-    ess_bdr[0] = 1;
-    Array<int> ess_tdof_list;
-    fes_u.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
-
-
-    VeOperator oper(fes_u, fes_m, ess_tdof_list, lamb, mu, tau, u_vec, m_vec, u, m, d);
+    GridFunction *nodes = new GridFunction(&fes_u);
+    VectorFunctionCoefficient identity(mesh->SpaceDimension(), [](const Vector &x, Vector &y) { y = x; });
+    nodes->ProjectCoefficient(identity);
+    mesh->NewNodes(*nodes, false);
+    MFEM_VERIFY(mesh->GetNodes(), "Mesh has no nodal coordinates!");
+                             
+    VeOperator oper(fes_u, fes_m, lamb, mu, tau, u_vec, m_vec, u, m, d);
     //unique_ptr<ODESolver> ode_solver = ODESolver::Select(ode_solver_type);
     ODESolver *ode_solver = new ForwardEulerSolver();
     ode_solver->Init(oper);
     real_t t = 0.0;
     socketstream vis_w;
     u.SetFromTrueDofs(u_vec); //
+    cout << "||u||_L2 = " << u.Norml2() << endl;
     StrainEnergyCoefficient strainEnergyDensity(u, lamb, mu);
     if (visualization)
     {
@@ -204,6 +204,7 @@ int main(int argc, char *argv[])
        cout << "GLVis visualization paused."
             << " Press space (in the GLVis window) to resume it.\n";
     }
+    
     bool last_step = false;
     for (int ti = 1; !last_step; ti++)
     {
@@ -218,7 +219,8 @@ int main(int argc, char *argv[])
             {
                 StrainEnergyCoefficient strainEnergyDensity(u, lamb, mu);
                 w.ProjectCoefficient(strainEnergyDensity);
-                cout<<"w_L2: "<<w.ComputeL2Error(zero)<<endl;
+                std::cout << "||u||_L2 = " << u.Norml2() << std::endl;
+                cout<<"w_L2: "<<w.Norml2()<<endl;
                 visualize(vis_w, mesh, &u, &w, "Elastic energy density");
             }
         }
@@ -249,15 +251,24 @@ void visualize(ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
     {
        return;
     }
+    ConstantCoefficient zero(0.0);
+   
 
-    GridFunction *nodes = deformed_nodes;
+    //GridFunction *displaced_nodes = new GridFunction(*mesh->GetNodes()); 
+    //displaced_nodes->Add(1.0, *deformed_nodes);
+    mfem::GridFunction *displaced_nodes = new mfem::GridFunction(deformed_nodes->FESpace());
+    *displaced_nodes = *mesh->GetNodes();          // base geometry
+    *displaced_nodes += *deformed_nodes;  
+
     int owns_nodes = 0;
 
-    mesh->SwapNodes(nodes, owns_nodes);
 
+    std::cout << "Displacement max = " << deformed_nodes->Max() << std::endl;
+    std::cout << "Mesh node max before = " << mesh->GetNodes()->Max() << std::endl;
+    
+    mesh->SwapNodes(displaced_nodes, owns_nodes);
+    
     os << "solution\n" << *mesh << *field;
-
-    mesh->SwapNodes(nodes, owns_nodes);
 
     if (init_vis)
     {
@@ -272,6 +283,10 @@ void visualize(ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
         os << "autoscale value\n";
         os << "pause\n";
     }
+    mesh->SwapNodes(displaced_nodes, owns_nodes);
+
+    delete displaced_nodes;
+
     os << flush;
 }
 
@@ -305,12 +320,17 @@ real_t StrainEnergyCoefficient::Eval(ElementTransformation &T,
 }
 
 
-VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, Array<int> &etl_, 
+VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, 
                        real_t lamb_, real_t mu_, real_t tau_, const Vector &u_vec, const Vector &m_vec, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_)   
-    : TimeDependentOperator(fes_m_.GetTrueVSize(), (real_t) 0.0), fes_u(fes_u_), fes_m(fes_m_), u_gf(u_gf_), m_gf(m_gf_), d_gf(d_gf_), etl(etl_), lamb(lamb_), mu(mu_), tau(tau_), K(NULL), current_dt(0.0), force(3) 
+    : TimeDependentOperator(fes_m_.GetTrueVSize(), (real_t) 0.0), fes_u(fes_u_), fes_m(fes_m_), u_gf(u_gf_), m_gf(m_gf_), d_gf(d_gf_), lamb(lamb_), mu(mu_), tau(tau_), K(NULL), current_dt(0.0), force(3) 
 {
     ConstantCoefficient lamb_func(lamb);
     ConstantCoefficient mu_func(mu);
+
+    Array<int> ess_bdr(fes_u.GetMesh()->bdr_attributes.Max());
+    ess_bdr = 0;
+    ess_bdr[0] = 1;
+    fes_u.GetEssentialTrueDofs(ess_bdr, etl);
     
     int dim = fes_u.GetMesh()->Dimension();
     for (int i = 0; i < dim-1; i++)
@@ -334,15 +354,15 @@ VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, A
     K_solver.SetRelTol(rel_tol);
     K_solver.SetAbsTol(0.0);
     K_solver.SetMaxIter(1000);
-    K_solver.SetPrintLevel(1);
+    K_solver.SetPrintLevel(0);
     K_solver.SetPreconditioner(K_prec);
-    K_solver.SetOperator(Kmat);
 
 }
 
 void VeOperator::Mult(const Vector &m_vec, Vector &dm_dt_vec) const
 {
     auto b = new LinearForm(&fes_u);
+    m_gf.SetFromTrueDofs(m_vec);
     VectorGridFunctionCoefficient m_func(&m_gf);
     ConstantCoefficient mu_func(mu);
     b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu_func, m_func));
@@ -351,6 +371,7 @@ void VeOperator::Mult(const Vector &m_vec, Vector &dm_dt_vec) const
     
     Vector X, B;
     K->FormLinearSystem(etl, u_gf, *b, Kmat, X, B);
+    K_solver.SetOperator(Kmat);
     K_solver.Mult(B, X);
     K->RecoverFEMSolution(X, *b, u_gf);
     
