@@ -8,35 +8,6 @@ using namespace std;
 using namespace mfem;
 using namespace giafem;
 
-class VeOperator : public TimeDependentOperator
-{
-protected:
-    real_t tau, lamb, mu;
-    Array<int> etl;
-    FiniteElementSpace &fes_u;
-    FiniteElementSpace &fes_m;
-    GridFunction &u_gf;
-    GridFunction &m_gf;
-    GridFunction &d_gf;
-    mutable VectorArrayCoefficient force;
-    BilinearForm *K;
-    mutable SparseMatrix Kmat;
-    SparseMatrix *T;
-    mutable CGSolver K_solver;
-    GSSmoother K_prec;
-    real_t current_dt;
-
-    mutable Vector z;
-
-public:
-    VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, real_t lamb_, real_t mu_, real_t tau_, const Vector &u_vec, const Vector &m_vec, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_);
-
-    void Mult(const Vector &m_vec, Vector &dm_dt_vec) const override;
-
-    void ImplicitSolve(const real_t dt, const Vector &m_vec, Vector &k_vec) override;
-
-    ~VeOperator() override;
-};
 
 class StrainCoefficient : public VectorCoefficient
 {
@@ -176,6 +147,7 @@ int main(int argc, char *argv[])
     u.GetTrueDofs(u_vec);
     Vector m_vec;
     m.GetTrueDofs(m_vec);
+    ConstantCoefficient lamb_func(lamb), mu_func(mu), tau_func(tau);
 
     GridFunction *nodes = new GridFunction(&fes_u);
     VectorFunctionCoefficient identity(mesh->SpaceDimension(), [](const Vector &x, Vector &y) { y = x; });
@@ -183,9 +155,10 @@ int main(int argc, char *argv[])
     mesh->NewNodes(*nodes, false);
     MFEM_VERIFY(mesh->GetNodes(), "Mesh has no nodal coordinates!");
                              
-    VeOperator oper(fes_u, fes_m, lamb, mu, tau, u_vec, m_vec, u, m, d);
+    VeOperator oper(fes_u, fes_m, fes_w, lamb_func, mu_func, tau_func, u_vec, m_vec, u, m, d);
     //unique_ptr<ODESolver> ode_solver = ODESolver::Select(ode_solver_type);
-    ODESolver *ode_solver = new ForwardEulerSolver();
+    //ODESolver *ode_solver = new ForwardEulerSolver();
+    ODESolver *ode_solver = new BaileySolver();
     ode_solver->Init(oper);
     real_t t = 0.0;
     socketstream vis_w;
@@ -320,13 +293,10 @@ real_t StrainEnergyCoefficient::Eval(ElementTransformation &T,
 }
 
 
-VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, 
-                       real_t lamb_, real_t mu_, real_t tau_, const Vector &u_vec, const Vector &m_vec, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_)   
-    : TimeDependentOperator(fes_m_.GetTrueVSize(), (real_t) 0.0), fes_u(fes_u_), fes_m(fes_m_), u_gf(u_gf_), m_gf(m_gf_), d_gf(d_gf_), lamb(lamb_), mu(mu_), tau(tau_), K(NULL), current_dt(0.0), force(3) 
+VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_w_, 
+                       Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, const Vector &u_vec, const Vector &m_vec, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_)   
+    : TimeDependentOperator(fes_m_.GetTrueVSize(), (real_t) 0.0), fes_u(fes_u_), fes_m(fes_m_), fes_w(fes_w_), u_gf(u_gf_), m_gf(m_gf_), d_gf(d_gf_), lamb(lamb_), mu(mu_), tau(tau_), K(NULL), current_dt(0.0), force(3), lamb_gf(&fes_w), mu_gf(&fes_w), tau_gf(&fes_w) 
 {
-    ConstantCoefficient lamb_func(lamb);
-    ConstantCoefficient mu_func(mu);
-
     Array<int> ess_bdr(fes_u.GetMesh()->bdr_attributes.Max());
     ess_bdr = 0;
     ess_bdr[0] = 1;
@@ -345,27 +315,37 @@ VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_,
     }
 
     const real_t rel_tol = 1e-6;
+
+    auto b = new LinearForm(&fes_u);
+    VectorGridFunctionCoefficient m_func(&m_gf);
+    b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu, m_func));
+    b->AddBoundaryIntegrator(new VectorBoundaryLFIntegrator(force));
+    b->Assemble();
+    
     K = new BilinearForm(&fes_u);
-    K->AddDomainIntegrator(new ElasticityIntegrator(lamb_func, mu_func));
+    K->AddDomainIntegrator(new ElasticityIntegrator(lamb, mu));
     K->Assemble();
     K->FormSystemMatrix(etl, Kmat);
-
+    
     K_solver.iterative_mode = false;
     K_solver.SetRelTol(rel_tol);
     K_solver.SetAbsTol(0.0);
     K_solver.SetMaxIter(1000);
     K_solver.SetPrintLevel(0);
     K_solver.SetPreconditioner(K_prec);
-
 }
 
 void VeOperator::Mult(const Vector &m_vec, Vector &dm_dt_vec) const
 {
+    tau_gf.ProjectCoefficient(tau);
+    //const Vector &tau_vals = tau_gf;
+    Vector tau_vec;
+    tau_gf.GetTrueDofs(tau_vec);
+
     auto b = new LinearForm(&fes_u);
     m_gf.SetFromTrueDofs(m_vec);
     VectorGridFunctionCoefficient m_func(&m_gf);
-    ConstantCoefficient mu_func(mu);
-    b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu_func, m_func));
+    b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu, m_func));
     b->AddBoundaryIntegrator(new VectorBoundaryLFIntegrator(force));
     b->Assemble();
     
@@ -374,16 +354,16 @@ void VeOperator::Mult(const Vector &m_vec, Vector &dm_dt_vec) const
     K_solver.SetOperator(Kmat);
     K_solver.Mult(B, X);
     K->RecoverFEMSolution(X, *b, u_gf);
-    
-    //u_gf.SetFromTrueDofs(z);
+
     StrainCoefficient d_func(&u_gf, StrainCoefficient::DEVIATORIC);
     d_gf.ProjectCoefficient(d_func);
+
     Vector d_vec;
     d_gf.GetTrueDofs(d_vec);
 
     for (int i = 0; i < d_vec.Size(); i++)
     {
-        dm_dt_vec[i] = (d_vec[i] - m_vec[i]) / tau;
+        dm_dt_vec[i] = (d_vec[i] - m_vec[i]) / tau_vec[i % tau_vec.Size()];
     }
 
     delete b;
