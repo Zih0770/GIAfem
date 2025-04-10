@@ -8,8 +8,52 @@
 #include <iostream>
 #include <stdexcept>
 
+using namespace std;
+
 namespace giafem
 {
+
+void BaileySolver::Init(TimeDependentOperator &f_)
+{
+    ODESolver::Init(f_);
+    dxdt.SetSize(f->Width(), mem_type);
+    d_vec_old.SetSize(f->Width());
+    d_vec_new.SetSize(f->Width());
+    //d_vec_old = 0.0;
+}
+
+void BaileySolver::Step(Vector &x, real_t &t, real_t &dt)
+{
+    auto &op = *static_cast<VeOperator *>(f);
+    f->SetTime(t);
+    op.Mult(x, dxdt);
+    op.GetDev().GetTrueDofs(d_vec_new);
+    Vector tau_vec, mu_vec;
+    op.GetTau().GetTrueDofs(tau_vec);
+    op.GetMu().GetTrueDofs(mu_vec);
+
+    if (t == 0.0)  // First time step: use Forward Euler
+    {
+        for (int i = 0; i < x.Size(); i++)
+        {
+            x[i] += dt * dxdt[i];
+        }
+    }
+    else 
+    {
+        for (int i = 0; i < x.Size(); i++)
+        {
+            real_t decay = exp(-dt / tau_vec[i % tau_vec.Size()]);
+            real_t dev_rate = (d_vec_new[i] - d_vec_old[i]) / dt;
+
+            x[i] = x[i] * decay + 2.0 * mu_vec[i % mu_vec.Size()] * (1.0 - decay) * dev_rate;
+        }
+    }
+
+    d_vec_old = d_vec_new;
+
+    t += dt;
+}
 
 void TensorFieldCoefficient::Eval(mfem::DenseMatrix &M, mfem::ElementTransformation &T, const mfem::IntegrationPoint &ip)
 {

@@ -10,6 +10,57 @@ namespace giafem
 {
     using namespace mfem;
 
+class VeOperator : public TimeDependentOperator
+{
+protected:
+    Coefficient &tau, &lamb, &mu;
+    Array<int> etl;
+    FiniteElementSpace &fes_u;
+    FiniteElementSpace &fes_m;
+    FiniteElementSpace &fes_w;
+    GridFunction &u_gf;
+    GridFunction &m_gf;
+    GridFunction &d_gf;
+    GridFunction d0_gf;
+    mutable GridFunction lamb_gf, mu_gf, tau_gf;
+    mutable VectorArrayCoefficient force;
+    BilinearForm *K;
+    mutable SparseMatrix Kmat;
+    SparseMatrix *T;
+    mutable CGSolver K_solver;
+    GSSmoother K_prec;
+    real_t current_dt;
+
+    mutable Vector z;
+
+public:
+    VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_w_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, const Vector &u_vec, const Vector &m_vec, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_);
+
+    void Mult(const Vector &m_vec, Vector &dm_dt_vec) const override;
+
+    void ImplicitSolve(const real_t dt, const Vector &m_vec, Vector &k_vec) override;
+
+    const GridFunction &GetTau() const { return tau_gf; }
+    const GridFunction &GetLamb() const { return lamb_gf; }
+    const GridFunction &GetMu()  const { return mu_gf; }
+    const GridFunction &GetDev() const { return d_gf; }
+    const GridFunction &GetDev0() const { return d0_gf; }
+
+    ~VeOperator() override;
+};
+
+
+    class BaileySolver : public ODESolver
+    {
+    private:
+        Vector dxdt;
+        Vector d_vec_old, d_vec_new;
+
+    public:
+        void Init(TimeDependentOperator &f_) override;
+        void Step(Vector &x, real_t &t, real_t &dt) override;
+    };
+
     class TensorFieldCoefficient : public mfem::MatrixCoefficient
     {
     private:
