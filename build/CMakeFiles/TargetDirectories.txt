@@ -1,6 +1,8 @@
 /home/sssou/giafem/build/CMakeFiles/giafem_lib.dir
 /home/sssou/giafem/build/CMakeFiles/ex16.dir
 /home/sssou/giafem/build/CMakeFiles/test.dir
+/home/sssou/giafem/build/CMakeFiles/test_N_L2.dir
+/home/sssou/giafem/build/CMakeFiles/test_interpolation.dir
 /home/sssou/giafem/build/CMakeFiles/test_field.dir
 /home/sssou/giafem/build/CMakeFiles/test_time_oper.dir
 /home/sssou/giafem/build/CMakeFiles/test_field_2.dir

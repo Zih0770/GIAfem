@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/test_N_L2.dir/demos/test_N_L2.cpp.o -o test_N_L2  -Wl,-rpath,/home/sssou/local/mfem/lib libgiafem_lib.a /home/sssou/local/mfem/lib/libmfem.so /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so 

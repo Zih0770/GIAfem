@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/sssou/giafem/src/giafem.cpp" "CMakeFiles/giafem_lib.dir/src/giafem.cpp.o" "gcc" "CMakeFiles/giafem_lib.dir/src/giafem.cpp.o.d"
+  "/home/sssou/giafem/lib/giafem.cpp" "CMakeFiles/giafem_lib.dir/lib/giafem.cpp.o" "gcc" "CMakeFiles/giafem_lib.dir/lib/giafem.cpp.o.d"
   )
 
 # Targets to which this target links.

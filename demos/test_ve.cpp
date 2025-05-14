@@ -2,7 +2,9 @@
 #include "giafem.hpp"
 #include <iostream>
 #include <fstream>
+#include <cmath>
 #include <memory>
+#include <chrono>
 
 using namespace std;
 using namespace mfem;
@@ -87,6 +89,7 @@ void visualize(ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
 int main(int argc, char *argv[])
 {
     const char *mesh_file = "mesh/examples/beam-tet.mesh";
+    const char *output_file = "output.dat";
     real_t tau = 5.0;
     real_t lamb = 15.0;
     real_t mu = 10.0;
@@ -95,10 +98,12 @@ int main(int argc, char *argv[])
     real_t dt = 0.02;
     //int ref_levels = 3;
     int order = 2;
-    bool visualization = true;
+    bool visualization = false;
     int vis_steps = 1;
 
     OptionsParser args(argc, argv);
+    args.AddOption(&output_file, "-f", "--file",
+                   "Output file.");
     args.AddOption(&t_final, "-tf", "--t-final",
                   "Final time; start time is 0.");
     args.AddOption(&dt, "-dt", "--time-step",
@@ -155,14 +160,34 @@ int main(int argc, char *argv[])
     mesh->NewNodes(*nodes, false);
     MFEM_VERIFY(mesh->GetNodes(), "Mesh has no nodal coordinates!");
                              
-    VeOperator oper(fes_u, fes_m, fes_w, lamb_func, mu_func, tau_func, u_vec, m_vec, u, m, d);
+    VeOperator oper(fes_u, fes_m, fes_w, lamb_func, mu_func, tau_func, u, m, d);
     //unique_ptr<ODESolver> ode_solver = ODESolver::Select(ode_solver_type);
     //ODESolver *ode_solver = new ForwardEulerSolver();
-    ODESolver *ode_solver = new BaileySolver();
+    //ODESolver *ode_solver = new RK2Solver;
+    //ODESolver *ode_solver = new RK3SSPSolver;
+    //ODESolver *ode_solver = new RK4Solver;
+    //ODESolver *ode_solver = new RK6Solver;
+    //ODESolver *ode_solver = new AB1Solver;
+    //ODESolver *ode_solver = new AB2Solver;
+    //ODESolver *ode_solver = new AB3Solver;
+    //ODESolver *ode_solver = new AB4Solver;
+    //ODESolver *ode_solver = new AB5Solver;
+    ODESolver *ode_solver = new BaileySolver;
+
+    //ODESolver *ode_solver = new BackwardEulerSolver;
+    //ODESolver *ode_solver = new SDIRK23Solver(2);
+    //ODESolver *ode_solver = new SDIRK33Solver;
+    //ODESolver *ode_solver = new ImplicitMidpointSolver;
+    //ODESolver *ode_solver = new SDIRK23Solver;
+    //ODESolver *ode_solver = new SDIRK34Solver;
+    //ODESolver *ode_solver = new AM2Solver;
+
     ode_solver->Init(oper);
+    ofstream fout(output_file);
+    fout << "# t   L2_u\n";
     real_t t = 0.0;
     socketstream vis_w;
-    u.SetFromTrueDofs(u_vec); //
+    u.SetFromTrueDofs(u_vec); 
     cout << "||u||_L2 = " << u.Norml2() << endl;
     StrainEnergyCoefficient strainEnergyDensity(u, lamb, mu);
     if (visualization)
@@ -179,9 +204,14 @@ int main(int argc, char *argv[])
     }
     
     bool last_step = false;
+    auto start = std::chrono::high_resolution_clock::now();
     for (int ti = 1; !last_step; ti++)
     {
         cout<<"t = "<<t<<":"<<endl;
+        auto current = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = current - start;
+        fout << t << " " << elapsed.count() << " " << u.Norml2() << "\n";
+        
         real_t dt_real = min(dt, t_final - t);
         ode_solver->Step(m_vec, t, dt_real);
         last_step = (t >= t_final - 1e-8*dt);
@@ -192,8 +222,9 @@ int main(int argc, char *argv[])
             {
                 StrainEnergyCoefficient strainEnergyDensity(u, lamb, mu);
                 w.ProjectCoefficient(strainEnergyDensity);
-                std::cout << "||u||_L2 = " << u.Norml2() << std::endl;
+                cout << "||u||_L2 = " << u.Norml2() << std::endl;
                 cout<<"w_L2: "<<w.Norml2()<<endl;
+                cout<<"m_msv: "<<m.Norml2()/sqrt(m.Size())<<endl;
                 visualize(vis_w, mesh, &u, &w, "Elastic energy density");
             }
         }
@@ -293,89 +324,3 @@ real_t StrainEnergyCoefficient::Eval(ElementTransformation &T,
 }
 
 
-VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_w_, 
-                       Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, const Vector &u_vec, const Vector &m_vec, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_)   
-    : TimeDependentOperator(fes_m_.GetTrueVSize(), (real_t) 0.0), fes_u(fes_u_), fes_m(fes_m_), fes_w(fes_w_), u_gf(u_gf_), m_gf(m_gf_), d_gf(d_gf_), lamb(lamb_), mu(mu_), tau(tau_), K(NULL), current_dt(0.0), force(3), lamb_gf(&fes_w), mu_gf(&fes_w), tau_gf(&fes_w) 
-{
-    Array<int> ess_bdr(fes_u.GetMesh()->bdr_attributes.Max());
-    ess_bdr = 0;
-    ess_bdr[0] = 1;
-    fes_u.GetEssentialTrueDofs(ess_bdr, etl);
-    
-    int dim = fes_u.GetMesh()->Dimension();
-    for (int i = 0; i < dim-1; i++)
-    {
-       force.Set(i, new ConstantCoefficient(0.0));
-    }
-    {
-       Vector pull_force(fes_u.GetMesh()->bdr_attributes.Max());
-       pull_force = 0.0;
-       pull_force(1) = -1.0e-2;
-       force.Set(dim-1, new PWConstCoefficient(pull_force));
-    }
-
-    const real_t rel_tol = 1e-6;
-
-    auto b = new LinearForm(&fes_u);
-    VectorGridFunctionCoefficient m_func(&m_gf);
-    b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu, m_func));
-    b->AddBoundaryIntegrator(new VectorBoundaryLFIntegrator(force));
-    b->Assemble();
-    
-    K = new BilinearForm(&fes_u);
-    K->AddDomainIntegrator(new ElasticityIntegrator(lamb, mu));
-    K->Assemble();
-    K->FormSystemMatrix(etl, Kmat);
-    
-    K_solver.iterative_mode = false;
-    K_solver.SetRelTol(rel_tol);
-    K_solver.SetAbsTol(0.0);
-    K_solver.SetMaxIter(1000);
-    K_solver.SetPrintLevel(0);
-    K_solver.SetPreconditioner(K_prec);
-}
-
-void VeOperator::Mult(const Vector &m_vec, Vector &dm_dt_vec) const
-{
-    tau_gf.ProjectCoefficient(tau);
-    //const Vector &tau_vals = tau_gf;
-    Vector tau_vec;
-    tau_gf.GetTrueDofs(tau_vec);
-
-    auto b = new LinearForm(&fes_u);
-    m_gf.SetFromTrueDofs(m_vec);
-    VectorGridFunctionCoefficient m_func(&m_gf);
-    b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu, m_func));
-    b->AddBoundaryIntegrator(new VectorBoundaryLFIntegrator(force));
-    b->Assemble();
-    
-    Vector X, B;
-    K->FormLinearSystem(etl, u_gf, *b, Kmat, X, B);
-    K_solver.SetOperator(Kmat);
-    K_solver.Mult(B, X);
-    K->RecoverFEMSolution(X, *b, u_gf);
-
-    StrainCoefficient d_func(&u_gf, StrainCoefficient::DEVIATORIC);
-    d_gf.ProjectCoefficient(d_func);
-
-    Vector d_vec;
-    d_gf.GetTrueDofs(d_vec);
-
-    for (int i = 0; i < d_vec.Size(); i++)
-    {
-        dm_dt_vec[i] = (d_vec[i] - m_vec[i]) / tau_vec[i % tau_vec.Size()];
-    }
-
-    delete b;
-}
-
-void VeOperator::ImplicitSolve(const real_t dt,
-                               const Vector &m, Vector &dm_dt)
-{
-}
-
-VeOperator::~VeOperator()
-{
-    //delete T;
-    delete K;
-}

@@ -10,6 +10,104 @@ namespace giafem
 {
     using namespace mfem;
 
+class VGradInterpolator : public DiscreteInterpolator
+{
+public:
+    VGradInterpolator() {}
+
+    virtual ~VGradInterpolator() {}
+
+    void AssembleElementMatrix2(const FiniteElement &u_fe,
+                                const FiniteElement &e_fe,
+                                ElementTransformation &Trans,
+                                DenseMatrix &elmat) override;
+};
+
+class GradInterpolator : public DiscreteInterpolator
+{
+protected:
+    int dim;
+public:
+    GradInterpolator(int dim_ = 3) : dim(dim_) {}
+
+    void AssembleElementMatrix2(const FiniteElement &u_fe,
+                                const FiniteElement &e_fe,
+                                ElementTransformation &Trans,
+                                DenseMatrix &elmat) override;
+
+    /*using BilinearFormIntegrator::AssemblePA;
+   
+    void AssemblePA(const FiniteElementSpace &u_fes,
+                    const FiniteElementSpace &e_fes) override;
+ 
+    void AddMultPA(const Vector &x, Vector &y) const override;
+   
+    void AddMultTransposePA(const Vector &x, Vector &y) const override;*/
+};
+
+class StrainInterpolator : public DiscreteInterpolator
+{
+protected:
+    int dim, vdim;
+    std::vector<std::pair<int, int>> IndexMap;
+
+public:
+    StrainInterpolator(int dim_ = 3) : dim(dim_) {
+        vdim = dim * (dim + 1) / 2;
+        if (dim == 2){
+            IndexMap = {{0, 0}, {1, 0}, {1, 1}};
+        } else{
+            IndexMap = {{0, 0}, {1, 0}, {2, 0}, {1, 1}, {2, 1}, {2,2}};
+        }
+    }
+
+    void AssembleElementMatrix2(const FiniteElement &u_fe,
+                                const FiniteElement &e_fe,
+                                ElementTransformation &Trans,
+                                DenseMatrix &elmat) override;
+
+    /*using BilinearFormIntegrator::AssemblePA;
+   
+    void AssemblePA(const FiniteElementSpace &u_fes,
+                    const FiniteElementSpace &e_fes) override;
+ 
+    void AddMultPA(const Vector &x, Vector &y) const override;
+   
+    void AddMultTransposePA(const Vector &x, Vector &y) const override;*/
+};
+
+class DevStrainInterpolator : public DiscreteInterpolator
+{
+protected:
+    int dim, vdim;
+    std::vector<std::pair<int, int>> IndexMap;
+public:
+    DevStrainInterpolator(int dim_ = 3) : dim(dim_) {
+        vdim = dim * (dim + 1) / 2 - 1;
+        if (dim == 2){
+            IndexMap = {{0, 0}, {1, 0}};
+        } else{
+            IndexMap = {{0, 0}, {1, 0}, {2, 0}, {1, 1}, {2, 1}};
+        }
+    }
+
+    void AssembleElementMatrix2(const FiniteElement &u_fe,
+                                const FiniteElement &e_fe,
+                                ElementTransformation &Trans,
+                                DenseMatrix &elmat) override;
+
+    /*using BilinearFormIntegrator::AssemblePA;
+   
+    void AssemblePA(const FiniteElementSpace &u_fes,
+                    const FiniteElementSpace &e_fes) override;
+ 
+    void AddMultPA(const Vector &x, Vector &y) const override;
+   
+    void AddMultTransposePA(const Vector &x, Vector &y) const override;*/
+};
+
+
+
 class VeOperator : public TimeDependentOperator
 {
 protected:
@@ -26,15 +124,18 @@ protected:
     mutable VectorArrayCoefficient force;
     BilinearForm *K;
     mutable SparseMatrix Kmat;
-    SparseMatrix *T;
     mutable CGSolver K_solver;
     GSSmoother K_prec;
     real_t current_dt;
+    DiscreteLinearOperator Dev;
 
+    mutable Vector u_vec;
+    mutable Vector d_vec;
+    mutable Vector tau_vec;
     mutable Vector z;
 
 public:
-    VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_w_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, const Vector &u_vec, const Vector &m_vec, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_);
+    VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_w_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_);
 
     void Mult(const Vector &m_vec, Vector &dm_dt_vec) const override;
 
@@ -43,14 +144,23 @@ public:
     const GridFunction &GetTau() const { return tau_gf; }
     const GridFunction &GetLamb() const { return lamb_gf; }
     const GridFunction &GetMu()  const { return mu_gf; }
-    const GridFunction &GetDev() const { return d_gf; }
-    const GridFunction &GetDev0() const { return d0_gf; }
 
-    ~VeOperator() override;
+    ~VeOperator() override {delete K;}
 };
 
 
     class BaileySolver : public ODESolver
+    {
+    private:
+        Vector dxdt;
+        Vector d_vec_old, d_vec_new;
+
+    public:
+        void Init(TimeDependentOperator &f_) override;
+        void Step(Vector &x, real_t &t, real_t &dt) override;
+    };
+
+    class BaileySolver_test : public ODESolver
     {
     private:
         Vector dxdt;

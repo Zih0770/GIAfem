@@ -13,6 +13,131 @@ using namespace std;
 namespace giafem
 {
 
+void VGradInterpolator::AssembleElementMatrix2(const FiniteElement &u_fe,
+                                               const FiniteElement &e_fe,
+                                               ElementTransformation &Trans,
+                                               DenseMatrix &elmat)
+{
+   MFEM_ASSERT(u_fe.GetMapType() == VALUE, "");
+   int sdim = u_fe.GetDim(), vdim = u_fe.GetRangeDim(); 
+   int N = u_fe.GetDof(), M = e_fe.GetDof();
+ 
+   DenseMatrix dshape0(M, sdim), dshape(M, sdim), Jinv(sdim);
+ 
+   elmat.SetSize(M*vdim*sdim, N*vdim);
+   elmat = 0.0;
+   for (int m = 0; m < M; m++)
+   {
+      const IntegrationPoint &ip = e_fe.GetNodes().IntPoint(m);
+      u_fe.CalcDShape(ip, dshape0);
+      Trans.SetIntPoint(&ip);
+      CalcInverse(Trans.Jacobian(), Jinv);
+      Mult(dshape0, Jinv, dshape);
+      //if (map_type == INTEGRAL)
+      for (int n = 0; n < N; n++)
+          for (int i = 0; i < vdim; i++)
+              for (int j = 0; j < sdim; j++)
+                  for (int k = 0; k < vdim; k++)
+                  {
+                      elmat(m+i*M+j*vdim*M,n+k*N) = (i == k) ? dshape(n,j) : 0;
+                  }
+    }
+}
+
+
+void GradInterpolator::AssembleElementMatrix2(const FiniteElement &u_fe,
+                                                const FiniteElement &e_fe,
+                                                ElementTransformation &Trans,
+                                                DenseMatrix &elmat)
+{
+    //MFEM_ASSERT(u_fe.GetMapType() == VALUE, "");
+    int N = u_fe.GetDof(), M = e_fe.GetDof();
+ 
+    DenseMatrix dshape(N, dim);
+ 
+    elmat.SetSize(M*dim*dim, N*dim);
+    elmat = 0.0;
+    for (int m = 0; m < M; m++)
+    {
+        const auto &ip  = e_fe.GetNodes().IntPoint(m);    
+        Trans.SetIntPoint(&ip);
+        u_fe.CalcPhysDShape(Trans, dshape);
+        //if (map_type == INTEGRAL)
+        for (int n = 0; n < N; n++){
+            for (int i = 0; i < dim; i++){
+                for (int j = 0; j < dim; j++){
+                    elmat(m+i*M+j*dim*M,n+i*N) = dshape(n,j);
+                }
+            }
+        }
+    }
+}
+
+void StrainInterpolator::AssembleElementMatrix2(const FiniteElement &u_fe,
+                                                const FiniteElement &e_fe,
+                                                ElementTransformation &Trans,
+                                                DenseMatrix &elmat)
+{
+    int N = u_fe.GetDof(), M = e_fe.GetDof();
+ 
+    DenseMatrix dshape(N, dim);
+ 
+    elmat.SetSize(vdim*M, dim*N);
+    elmat = 0.0;
+    constexpr auto half = static_cast<real_t>(1) / static_cast<real_t>(2);
+    for (int m = 0; m < M; m++)
+    {
+        const auto &ip  = e_fe.GetNodes().IntPoint(m);    
+        Trans.SetIntPoint(&ip);
+        u_fe.CalcPhysDShape(Trans, dshape);
+        //if (map_type == INTEGRAL)
+        for (int n = 0; n < N; n++){
+            for (int l = 0; l < vdim; l++){
+                    auto [i, j] = this->IndexMap[l];
+                    elmat(m+l*M,n+i*N) += dshape(n,j);
+                    elmat(m+l*M,n+j*N) += dshape(n,i);
+            }
+        }
+    }
+    elmat *= half;
+}
+
+
+void DevStrainInterpolator::AssembleElementMatrix2(const FiniteElement &u_fe,
+                                                   const FiniteElement &e_fe,
+                                                   ElementTransformation &Trans,
+                                                   DenseMatrix &elmat)
+{
+    int N = u_fe.GetDof(), M = e_fe.GetDof();
+ 
+    DenseMatrix dshape(N, dim);
+ 
+    elmat.SetSize(vdim*M, dim*N);
+    elmat = 0.0;
+    constexpr auto half = static_cast<real_t>(1) / static_cast<real_t>(2);
+    auto third = 1.0 / dim;
+    for (int m = 0; m < M; m++)
+    {
+        const auto &ip  = e_fe.GetNodes().IntPoint(m);    
+        Trans.SetIntPoint(&ip);
+        u_fe.CalcPhysDShape(Trans, dshape);
+        //if (map_type == INTEGRAL)
+        for (int n = 0; n < N; n++){
+            for (int l = 0; l < vdim; l++){
+                    auto [i, j] = this->IndexMap[l];
+                    elmat(m+l*M,n+i*N) += dshape(n,j) * half;
+                    elmat(m+l*M,n+j*N) += dshape(n,i) * half;
+                    if (i == j){
+                    for (int k = 0; k < dim; k++){
+                        elmat(m+l*M,n+k*N) -= third * dshape(n,k);
+                    }
+                    }
+            }
+        }
+    }
+}
+
+
 void BaileySolver::Init(TimeDependentOperator &f_)
 {
     ODESolver::Init(f_);
@@ -27,11 +152,10 @@ void BaileySolver::Step(Vector &x, real_t &t, real_t &dt)
     auto &op = *static_cast<VeOperator *>(f);
     f->SetTime(t);
     op.Mult(x, dxdt);
-    op.GetDev().GetTrueDofs(d_vec_new);
-    Vector tau_vec, mu_vec;
+    //op.GetDev().GetTrueDofs(d_vec_new);
+    Vector tau_vec;
     op.GetTau().GetTrueDofs(tau_vec);
-    op.GetMu().GetTrueDofs(mu_vec);
-
+/*
     if (t == 0.0)  // First time step: use Forward Euler
     {
         for (int i = 0; i < x.Size(); i++)
@@ -39,14 +163,14 @@ void BaileySolver::Step(Vector &x, real_t &t, real_t &dt)
             x[i] += dt * dxdt[i];
         }
     }
-    else 
+    else */ 
     {
         for (int i = 0; i < x.Size(); i++)
         {
-            real_t decay = exp(-dt / tau_vec[i % tau_vec.Size()]);
-            real_t dev_rate = (d_vec_new[i] - d_vec_old[i]) / dt;
+            real_t tau = tau_vec[i % tau_vec.Size()];
+            real_t decay = exp(-dt / tau);
 
-            x[i] = x[i] * decay + 2.0 * mu_vec[i % mu_vec.Size()] * (1.0 - decay) * dev_rate;
+            x[i] = x[i] * decay + (1.0 - decay) * (x[i] + tau * dxdt[i]);
         }
     }
 
@@ -54,6 +178,154 @@ void BaileySolver::Step(Vector &x, real_t &t, real_t &dt)
 
     t += dt;
 }
+
+void BaileySolver_test::Init(TimeDependentOperator &f_)
+{
+    ODESolver::Init(f_);
+    dxdt.SetSize(f->Width(), mem_type);
+    d_vec_old.SetSize(f->Width());
+    d_vec_new.SetSize(f->Width());
+    //d_vec_old = 0.0;
+}
+
+void BaileySolver_test::Step(Vector &x, real_t &t, real_t &dt)
+{
+    f->SetTime(t);
+    f->Mult(x, dxdt);
+    {
+        for (int i = 0; i < x.Size(); i++)
+        {
+            real_t tau = 5.0;
+            real_t decay = exp(-dt / tau);
+
+            x[i] = x[i] * decay + (1.0 - decay) * (x[i] + tau * dxdt[i]);
+        }
+    }
+
+    t += dt;
+}
+
+VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_w_, 
+                       Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_)   
+    : TimeDependentOperator(fes_m_.GetTrueVSize(), (real_t) 0.0), fes_u(fes_u_), fes_m(fes_m_), fes_w(fes_w_), u_gf(u_gf_), m_gf(m_gf_), d_gf(d_gf_), lamb(lamb_), mu(mu_), tau(tau_), K(NULL), current_dt(0.0), force(3), lamb_gf(&fes_w), mu_gf(&fes_w), tau_gf(&fes_w), Dev(&fes_u_, &fes_m_) 
+{
+    Array<int> ess_bdr(fes_u.GetMesh()->bdr_attributes.Max());
+    ess_bdr = 0;
+    ess_bdr[0] = 1;
+    fes_u.GetEssentialTrueDofs(ess_bdr, etl);
+    
+    int dim = fes_u.GetMesh()->Dimension();
+    for (int i = 0; i < dim-1; i++)
+    {
+       force.Set(i, new ConstantCoefficient(0.0));
+    }
+    {
+       Vector pull_force(fes_u.GetMesh()->bdr_attributes.Max());
+       pull_force = 0.0;
+       pull_force(1) = -1.0e-2;
+       force.Set(dim-1, new PWConstCoefficient(pull_force));
+    }
+
+    const real_t rel_tol = 1e-6;
+
+    auto b = new LinearForm(&fes_u);
+    VectorGridFunctionCoefficient m_func(&m_gf);
+    b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu, m_func));
+    b->AddBoundaryIntegrator(new VectorBoundaryLFIntegrator(force));
+    b->Assemble();
+    
+    K = new BilinearForm(&fes_u);
+    K->AddDomainIntegrator(new ElasticityIntegrator(lamb, mu));
+    K->Assemble();
+    K->FormSystemMatrix(etl, Kmat);
+    
+    K_solver.iterative_mode = false;
+    K_solver.SetRelTol(rel_tol);
+    K_solver.SetAbsTol(0.0);
+    K_solver.SetMaxIter(1000);
+    K_solver.SetPrintLevel(0);
+    K_solver.SetPreconditioner(K_prec);
+
+    Dev.AddDomainInterpolator(new DevStrainInterpolator);
+    Dev.Assemble();
+    //Dev.Finalize();
+}
+
+void VeOperator::Mult(const Vector &m_vec, Vector &dm_dt_vec) const
+{
+    tau_gf.ProjectCoefficient(tau);
+    //const Vector &tau_vals = tau_gf;
+    tau_gf.GetTrueDofs(tau_vec);
+
+    auto b = new LinearForm(&fes_u);
+    m_gf.SetFromTrueDofs(m_vec);
+    VectorGridFunctionCoefficient m_func(&m_gf);
+    b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu, m_func));
+    b->AddBoundaryIntegrator(new VectorBoundaryLFIntegrator(force));
+    b->Assemble();
+    
+    Vector X, B;
+    K->FormLinearSystem(etl, u_gf, *b, Kmat, X, B);
+    K_solver.SetOperator(Kmat);
+    K_solver.Mult(B, X);
+    K->RecoverFEMSolution(X, *b, u_gf);
+
+    //StrainCoefficient d_func(&u_gf, StrainCoefficient::DEVIATORIC);
+    //d_gf.ProjectCoefficient(d_func);
+    //d_gf.GetTrueDofs(d_vec);
+    
+    Dev.Mult(u_gf, d_gf);
+    d_gf.GetTrueDofs(d_vec);
+
+    //Vector d_vec2;
+    //u_gf.GetTrueDofs(u_vec);
+    //Dev.Mult(u_vec,d_vec2);
+    //Cout<<"Error of dev. stress: "<<d_vec.ComputeL2Error(d_vec2)<<endl;
+
+    for (int i = 0; i < d_vec.Size(); i++)
+    {
+        //d_vec[i] = 1;
+        dm_dt_vec[i] = (d_vec[i] - m_vec[i]) / tau_vec[i % tau_vec.Size()];
+    }
+
+    delete b;
+}
+
+void VeOperator::ImplicitSolve(const real_t dt,
+                               const Vector &m, Vector &dm_dt)
+{
+    current_dt = dt;
+    this->Mult(m, dm_dt);
+    Vector dm_dt_old;
+    Vector res;
+    int iter=0;
+    do {
+    cout<<"Iter: "<<++iter<<endl;
+    dm_dt_old = dm_dt;
+    //add(m, current_dt, dm_dt, z);
+    Vector m_est;
+    m_est = dm_dt; m_est *= current_dt; m_est += m;
+    //add(m, current_dt, dm_dt, m_est);
+    //m_est = Add(1.0, m, current_dt, dm_dt);
+    //z = Add(1.0, m, current_dt, dm_dt);
+    this->Mult(m_est, dm_dt);
+
+    for (int i = 0; i < dm_dt.Size(); i++)
+    {
+        dm_dt[i] *= tau_vec[i % tau_vec.Size()];
+        dm_dt[i] /= tau_vec[i % tau_vec.Size()] + current_dt;
+    }
+    cout<<"dmdt: "<<dm_dt.Norml2()<<endl;
+    cout<<"dmdt_old: "<<dm_dt_old.Norml2()<<endl;
+
+
+    res = dm_dt;
+    res -= dm_dt_old;
+    cout<<"res: "<<res.Norml2()<<endl;
+    } while (res.Norml2()>1e-8);
+
+}
+
 
 void TensorFieldCoefficient::Eval(mfem::DenseMatrix &M, mfem::ElementTransformation &T, const mfem::IntegrationPoint &ip)
 {
