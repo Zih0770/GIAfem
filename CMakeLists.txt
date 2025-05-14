@@ -18,7 +18,9 @@ include_directories(${MFEM_INCLUDE})
 find_package(MPI REQUIRED)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
-add_library(giafem_lib src/giafem.cpp)
+include_directories(/usr/include/suitesparse)
+
+add_library(giafem_lib lib/giafem.cpp)
 target_include_directories(giafem_lib PUBLIC include ${MFEM_INCLUDE})
 target_link_libraries(giafem_lib PUBLIC ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
@@ -27,6 +29,12 @@ target_link_libraries(ex16 PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
 add_executable(test demos/test.cpp)
 target_link_libraries(test PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(test_N_L2 demos/test_N_L2.cpp)
+target_link_libraries(test_N_L2 PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+
+add_executable(test_interpolation demos/test_interpolation.cpp)
+target_link_libraries(test_interpolation PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
 
 add_executable(test_field demos/test_field.cpp)
 target_link_libraries(test_field PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
@@ -69,7 +77,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
-#add_subdirectory(src)
+#add_subdirectory(lib)
 
 
 

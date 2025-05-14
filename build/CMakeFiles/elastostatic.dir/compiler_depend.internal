@@ -290,6 +290,7 @@ CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o
  /home/sssou/local/mfem/include/mfem/general/table.hpp
  /home/sssou/local/mfem/include/mfem/general/mem_alloc.hpp
  /home/sssou/local/mfem/include/mfem/general/hash.hpp
+ /usr/include/c++/13/array
  /usr/include/c++/13/cstdint
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
  /usr/include/stdint.h
@@ -431,6 +432,41 @@ CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o
  /usr/include/hypre/krylov.h
  /usr/include/hypre/par_csr_block_matrix.h
  /usr/include/hypre/csr_block_matrix.h
+ /usr/include/suitesparse/umfpack.h
+ /usr/include/suitesparse/SuiteSparse_config.h
+ /usr/include/suitesparse/umfpack_symbolic.h
+ /usr/include/suitesparse/umfpack_numeric.h
+ /usr/include/suitesparse/umfpack_solve.h
+ /usr/include/suitesparse/umfpack_free_symbolic.h
+ /usr/include/suitesparse/umfpack_free_numeric.h
+ /usr/include/suitesparse/umfpack_defaults.h
+ /usr/include/suitesparse/umfpack_qsymbolic.h
+ /usr/include/suitesparse/umfpack_wsolve.h
+ /usr/include/suitesparse/umfpack_triplet_to_col.h
+ /usr/include/suitesparse/umfpack_col_to_triplet.h
+ /usr/include/suitesparse/umfpack_transpose.h
+ /usr/include/suitesparse/umfpack_scale.h
+ /usr/include/suitesparse/umfpack_get_lunz.h
+ /usr/include/suitesparse/umfpack_get_numeric.h
+ /usr/include/suitesparse/umfpack_get_symbolic.h
+ /usr/include/suitesparse/umfpack_save_numeric.h
+ /usr/include/suitesparse/umfpack_load_numeric.h
+ /usr/include/suitesparse/umfpack_save_symbolic.h
+ /usr/include/suitesparse/umfpack_load_symbolic.h
+ /usr/include/suitesparse/umfpack_get_determinant.h
+ /usr/include/suitesparse/umfpack_report_status.h
+ /usr/include/suitesparse/umfpack_report_info.h
+ /usr/include/suitesparse/umfpack_report_control.h
+ /usr/include/suitesparse/umfpack_report_matrix.h
+ /usr/include/suitesparse/umfpack_report_triplet.h
+ /usr/include/suitesparse/umfpack_report_vector.h
+ /usr/include/suitesparse/umfpack_report_symbolic.h
+ /usr/include/suitesparse/umfpack_report_numeric.h
+ /usr/include/suitesparse/umfpack_report_perm.h
+ /usr/include/suitesparse/umfpack_timer.h
+ /usr/include/suitesparse/umfpack_tictoc.h
+ /usr/include/suitesparse/amd.h
+ /usr/include/suitesparse/umfpack_global.h
  /home/sssou/local/mfem/include/mfem/linalg/complex_densemat.hpp
  /usr/include/c++/13/complex
  /home/sssou/local/mfem/include/mfem/linalg/blockvector.hpp
@@ -442,10 +478,22 @@ CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o
  /home/sssou/local/mfem/include/mfem/general/communication.hpp
  /home/sssou/local/mfem/include/mfem/linalg/solvers.hpp
  /home/sssou/local/mfem/include/mfem/linalg/handle.hpp
+ /usr/include/suitesparse/klu.h
+ /usr/include/suitesparse/colamd.h
+ /usr/include/suitesparse/btf.h
  /home/sssou/local/mfem/include/mfem/linalg/invariants.hpp
  /home/sssou/local/mfem/include/mfem/general/error.hpp
  /home/sssou/local/mfem/include/mfem/linalg/constraints.hpp
  /home/sssou/local/mfem/include/mfem/linalg/auxiliary.hpp
+ /home/sssou/local/mfem/include/mfem/linalg/mma.hpp
+ /home/sssou/local/mfem/include/mfem/linalg/batched/batched.hpp
+ /home/sssou/local/mfem/include/mfem/config/config.hpp
+ /home/sssou/local/mfem/include/mfem/linalg/densemat.hpp
+ /home/sssou/local/mfem/include/mfem/linalg/batched/gpu_blas.hpp
+ /home/sssou/local/mfem/include/mfem/linalg/batched/batched.hpp
+ /home/sssou/local/mfem/include/mfem/general/backends.hpp
+ /home/sssou/local/mfem/include/mfem/linalg/batched/solver.hpp
+ /home/sssou/local/mfem/include/mfem/linalg/operator.hpp
  /home/sssou/local/mfem/include/mfem/mesh/mesh_headers.hpp
  /home/sssou/local/mfem/include/mfem/mesh/vertex.hpp
  /home/sssou/local/mfem/include/mfem/config/config.hpp
@@ -460,6 +508,12 @@ CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o
  /home/sssou/local/mfem/include/mfem/fem/intrules.hpp
  /home/sssou/local/mfem/include/mfem/general/array.hpp
  /home/sssou/local/mfem/include/mfem/general/hash.hpp
+ /usr/include/c++/13/unordered_map
+ /usr/include/c++/13/bits/unordered_map.h
+ /usr/include/c++/13/bits/hashtable.h
+ /usr/include/c++/13/bits/hashtable_policy.h
+ /usr/include/c++/13/bits/enable_special_members.h
+ /home/sssou/local/mfem/include/mfem/general/hash.hpp
  /home/sssou/local/mfem/include/mfem/mesh/point.hpp
  /home/sssou/local/mfem/include/mfem/mesh/segment.hpp
  /home/sssou/local/mfem/include/mfem/mesh/triangle.hpp
@@ -469,9 +523,11 @@ CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o
  /home/sssou/local/mfem/include/mfem/fem/intrules.hpp
  /home/sssou/local/mfem/include/mfem/fem/geom.hpp
  /home/sssou/local/mfem/include/mfem/fem/doftrans.hpp
+ /home/sssou/local/mfem/include/mfem/general/hash.hpp
  /home/sssou/local/mfem/include/mfem/fem/fe/fe_fixed_order.hpp
  /home/sssou/local/mfem/include/mfem/fem/fe/fe_base.hpp
  /home/sssou/local/mfem/include/mfem/fem/fe/fe_h1.hpp
+ /home/sssou/local/mfem/include/mfem/fem/fe/fe_pyramid.hpp
  /home/sssou/local/mfem/include/mfem/fem/fe/fe_l2.hpp
  /home/sssou/local/mfem/include/mfem/fem/fe/fe_h1.hpp
  /home/sssou/local/mfem/include/mfem/fem/fe/fe_nd.hpp
@@ -485,11 +541,6 @@ CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o
  /home/sssou/local/mfem/include/mfem/mesh/tetrahedron.hpp
  /home/sssou/local/mfem/include/mfem/mesh/ncmesh.hpp
  /home/sssou/local/mfem/include/mfem/general/sort_pairs.hpp
- /usr/include/c++/13/unordered_map
- /usr/include/c++/13/bits/unordered_map.h
- /usr/include/c++/13/bits/hashtable.h
- /usr/include/c++/13/bits/hashtable_policy.h
- /usr/include/c++/13/bits/enable_special_members.h
  /home/sssou/local/mfem/include/mfem/mesh/mesh.hpp
  /home/sssou/local/mfem/include/mfem/general/stable3d.hpp
  /home/sssou/local/mfem/include/mfem/mesh/attribute_sets.hpp
@@ -498,10 +549,12 @@ CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o
  /home/sssou/local/mfem/include/mfem/general/binaryio.hpp
  /home/sssou/local/mfem/include/mfem/fem/eltrans.hpp
  /home/sssou/local/mfem/include/mfem/fem/fe.hpp
+ /home/sssou/local/mfem/include/mfem/fem/kernel_dispatch.hpp
+ /home/sssou/local/mfem/include/mfem/fem/kernel_reporter.hpp
+ /home/sssou/local/mfem/include/mfem/general/globals.hpp
  /home/sssou/local/mfem/include/mfem/fem/coefficient.hpp
  /usr/include/c++/13/functional
  /usr/include/c++/13/bits/std_function.h
- /usr/include/c++/13/array
  /home/sssou/local/mfem/include/mfem/fem/eltrans.hpp
  /home/sssou/local/mfem/include/mfem/general/zstr.hpp
  /home/sssou/local/mfem/include/mfem/mesh/mesh_operators.hpp
@@ -525,6 +578,7 @@ CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o
  /home/sssou/local/mfem/include/mfem/linalg/operator.hpp
  /home/sssou/local/mfem/include/mfem/fem/ceed/interface/ceed.hpp
  /home/sssou/local/mfem/include/mfem/config/config.hpp
+ /home/sssou/local/mfem/include/mfem/fem/integrator.hpp
  /home/sssou/local/mfem/include/mfem/fem/ceed/interface/util.hpp
  /home/sssou/local/mfem/include/mfem/general/error.hpp
  /home/sssou/local/mfem/include/mfem/fem/qfunction.hpp
@@ -547,31 +601,37 @@ CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o
  /home/sssou/local/mfem/include/mfem/mesh/pmesh.hpp
  /home/sssou/local/mfem/include/mfem/general/communication.hpp
  /home/sssou/local/mfem/include/mfem/mesh/pncmesh.hpp
+ /home/sssou/local/mfem/include/mfem/fem/fespace.hpp
  /home/sssou/local/mfem/include/mfem/mesh/nurbs.hpp
  /home/sssou/local/mfem/include/mfem/linalg/vector.hpp
  /home/sssou/local/mfem/include/mfem/mesh/spacing.hpp
  /home/sssou/local/mfem/include/mfem/fem/hybridization.hpp
  /home/sssou/local/mfem/include/mfem/fem/pgridfunc.hpp
- /home/sssou/local/mfem/include/mfem/general/globals.hpp
+ /home/sssou/local/mfem/include/mfem/mesh/submesh/ncsubmesh.hpp
+ /home/sssou/local/mfem/include/mfem/mesh/ncmesh.hpp
  /home/sssou/local/mfem/include/mfem/mesh/submesh/submesh.hpp
  /home/sssou/local/mfem/include/mfem/mesh/mesh.hpp
  /home/sssou/local/mfem/include/mfem/mesh/submesh/transfermap.hpp
  /home/sssou/local/mfem/include/mfem/fem/gridfunc.hpp
  /home/sssou/local/mfem/include/mfem/mesh/submesh/transfer_category.hpp
  /home/sssou/local/mfem/include/mfem/mesh/submesh/submesh_utils.hpp
- /home/sssou/local/mfem/include/mfem/mesh/submesh/submesh.hpp
  /home/sssou/local/mfem/include/mfem/fem/fespace.hpp
+ /home/sssou/local/mfem/include/mfem/mesh/submesh/submesh.hpp
+ /home/sssou/local/mfem/include/mfem/mesh/submesh/submesh_utils.hpp
  /home/sssou/local/mfem/include/mfem/mesh/submesh/transfermap.hpp
  /home/sssou/local/mfem/include/mfem/mesh/submesh/transfer_category.hpp
  /home/sssou/local/mfem/include/mfem/mesh/nurbs.hpp
  /home/sssou/local/mfem/include/mfem/mesh/wedge.hpp
  /home/sssou/local/mfem/include/mfem/mesh/pyramid.hpp
  /home/sssou/local/mfem/include/mfem/mesh/pmesh.hpp
- /home/sssou/local/mfem/include/mfem/mesh/submesh/psubmesh.hpp
+ /home/sssou/local/mfem/include/mfem/mesh/submesh/pncsubmesh.hpp
  /home/sssou/local/mfem/include/mfem/config/config.hpp
+ /home/sssou/local/mfem/include/mfem/mesh/pncmesh.hpp
+ /home/sssou/local/mfem/include/mfem/mesh/submesh/psubmesh.hpp
  /home/sssou/local/mfem/include/mfem/mesh/submesh/ptransfermap.hpp
  /home/sssou/local/mfem/include/mfem/fem/pgridfunc.hpp
  /home/sssou/local/mfem/include/mfem/mesh/pmesh.hpp
+ /home/sssou/local/mfem/include/mfem/mesh/submesh/psubmesh.hpp
  /home/sssou/local/mfem/include/mfem/mesh/submesh/ptransfermap.hpp
  /home/sssou/local/mfem/include/mfem/fem/fem.hpp
  /home/sssou/local/mfem/include/mfem/fem/intrules_cut.hpp

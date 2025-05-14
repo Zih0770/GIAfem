@@ -156,6 +156,32 @@ test/fast:
 .PHONY : test/fast
 
 #=============================================================================
+# Target rules for targets named test_N_L2
+
+# Build rule for target.
+test_N_L2: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_N_L2
+.PHONY : test_N_L2
+
+# fast build rule for target.
+test_N_L2/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_N_L2.dir/build.make CMakeFiles/test_N_L2.dir/build
+.PHONY : test_N_L2/fast
+
+#=============================================================================
+# Target rules for targets named test_interpolation
+
+# Build rule for target.
+test_interpolation: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_interpolation
+.PHONY : test_interpolation
+
+# fast build rule for target.
+test_interpolation/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_interpolation.dir/build.make CMakeFiles/test_interpolation.dir/build
+.PHONY : test_interpolation/fast
+
+#=============================================================================
 # Target rules for targets named test_field
 
 # Build rule for target.
@@ -514,6 +540,30 @@ demos/test.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/demos/test.cpp.s
 .PHONY : demos/test.cpp.s
 
+demos/test_N_L2.o: demos/test_N_L2.cpp.o
+.PHONY : demos/test_N_L2.o
+
+# target to build an object file
+demos/test_N_L2.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_N_L2.dir/build.make CMakeFiles/test_N_L2.dir/demos/test_N_L2.cpp.o
+.PHONY : demos/test_N_L2.cpp.o
+
+demos/test_N_L2.i: demos/test_N_L2.cpp.i
+.PHONY : demos/test_N_L2.i
+
+# target to preprocess a source file
+demos/test_N_L2.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_N_L2.dir/build.make CMakeFiles/test_N_L2.dir/demos/test_N_L2.cpp.i
+.PHONY : demos/test_N_L2.cpp.i
+
+demos/test_N_L2.s: demos/test_N_L2.cpp.s
+.PHONY : demos/test_N_L2.s
+
+# target to generate assembly for a file
+demos/test_N_L2.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_N_L2.dir/build.make CMakeFiles/test_N_L2.dir/demos/test_N_L2.cpp.s
+.PHONY : demos/test_N_L2.cpp.s
+
 demos/test_field.o: demos/test_field.cpp.o
 .PHONY : demos/test_field.o
 
@@ -561,6 +611,30 @@ demos/test_field_2.s: demos/test_field_2.cpp.s
 demos/test_field_2.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_field_2.dir/build.make CMakeFiles/test_field_2.dir/demos/test_field_2.cpp.s
 .PHONY : demos/test_field_2.cpp.s
+
+demos/test_interpolation.o: demos/test_interpolation.cpp.o
+.PHONY : demos/test_interpolation.o
+
+# target to build an object file
+demos/test_interpolation.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_interpolation.dir/build.make CMakeFiles/test_interpolation.dir/demos/test_interpolation.cpp.o
+.PHONY : demos/test_interpolation.cpp.o
+
+demos/test_interpolation.i: demos/test_interpolation.cpp.i
+.PHONY : demos/test_interpolation.i
+
+# target to preprocess a source file
+demos/test_interpolation.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_interpolation.dir/build.make CMakeFiles/test_interpolation.dir/demos/test_interpolation.cpp.i
+.PHONY : demos/test_interpolation.cpp.i
+
+demos/test_interpolation.s: demos/test_interpolation.cpp.s
+.PHONY : demos/test_interpolation.s
+
+# target to generate assembly for a file
+demos/test_interpolation.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_interpolation.dir/build.make CMakeFiles/test_interpolation.dir/demos/test_interpolation.cpp.s
+.PHONY : demos/test_interpolation.cpp.s
 
 demos/test_time_oper.o: demos/test_time_oper.cpp.o
 .PHONY : demos/test_time_oper.o
@@ -610,29 +684,29 @@ demos/test_ve.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_ve.dir/build.make CMakeFiles/test_ve.dir/demos/test_ve.cpp.s
 .PHONY : demos/test_ve.cpp.s
 
-src/giafem.o: src/giafem.cpp.o
-.PHONY : src/giafem.o
+lib/giafem.o: lib/giafem.cpp.o
+.PHONY : lib/giafem.o
 
 # target to build an object file
-src/giafem.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/giafem_lib.dir/build.make CMakeFiles/giafem_lib.dir/src/giafem.cpp.o
-.PHONY : src/giafem.cpp.o
+lib/giafem.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/giafem_lib.dir/build.make CMakeFiles/giafem_lib.dir/lib/giafem.cpp.o
+.PHONY : lib/giafem.cpp.o
 
-src/giafem.i: src/giafem.cpp.i
-.PHONY : src/giafem.i
+lib/giafem.i: lib/giafem.cpp.i
+.PHONY : lib/giafem.i
 
 # target to preprocess a source file
-src/giafem.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/giafem_lib.dir/build.make CMakeFiles/giafem_lib.dir/src/giafem.cpp.i
-.PHONY : src/giafem.cpp.i
+lib/giafem.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/giafem_lib.dir/build.make CMakeFiles/giafem_lib.dir/lib/giafem.cpp.i
+.PHONY : lib/giafem.cpp.i
 
-src/giafem.s: src/giafem.cpp.s
-.PHONY : src/giafem.s
+lib/giafem.s: lib/giafem.cpp.s
+.PHONY : lib/giafem.s
 
 # target to generate assembly for a file
-src/giafem.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/giafem_lib.dir/build.make CMakeFiles/giafem_lib.dir/src/giafem.cpp.s
-.PHONY : src/giafem.cpp.s
+lib/giafem.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/giafem_lib.dir/build.make CMakeFiles/giafem_lib.dir/lib/giafem.cpp.s
+.PHONY : lib/giafem.cpp.s
 
 # Help Target
 help:
@@ -652,8 +726,10 @@ help:
 	@echo "... ex16"
 	@echo "... giafem_lib"
 	@echo "... test"
+	@echo "... test_N_L2"
 	@echo "... test_field"
 	@echo "... test_field_2"
+	@echo "... test_interpolation"
 	@echo "... test_time_oper"
 	@echo "... test_ve"
 	@echo "... demos/MatrixLinearForm.o"
@@ -683,21 +759,27 @@ help:
 	@echo "... demos/test.o"
 	@echo "... demos/test.i"
 	@echo "... demos/test.s"
+	@echo "... demos/test_N_L2.o"
+	@echo "... demos/test_N_L2.i"
+	@echo "... demos/test_N_L2.s"
 	@echo "... demos/test_field.o"
 	@echo "... demos/test_field.i"
 	@echo "... demos/test_field.s"
 	@echo "... demos/test_field_2.o"
 	@echo "... demos/test_field_2.i"
 	@echo "... demos/test_field_2.s"
+	@echo "... demos/test_interpolation.o"
+	@echo "... demos/test_interpolation.i"
+	@echo "... demos/test_interpolation.s"
 	@echo "... demos/test_time_oper.o"
 	@echo "... demos/test_time_oper.i"
 	@echo "... demos/test_time_oper.s"
 	@echo "... demos/test_ve.o"
 	@echo "... demos/test_ve.i"
 	@echo "... demos/test_ve.s"
-	@echo "... src/giafem.o"
-	@echo "... src/giafem.i"
-	@echo "... src/giafem.s"
+	@echo "... lib/giafem.o"
+	@echo "... lib/giafem.i"
+	@echo "... lib/giafem.s"
 .PHONY : help
 
 

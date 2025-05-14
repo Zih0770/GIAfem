@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/giafem_lib.dir/src/giafem.cpp.o"
-  "CMakeFiles/giafem_lib.dir/src/giafem.cpp.o.d"
+  "CMakeFiles/giafem_lib.dir/lib/giafem.cpp.o"
+  "CMakeFiles/giafem_lib.dir/lib/giafem.cpp.o.d"
   "libgiafem_lib.a"
   "libgiafem_lib.pdb"
 )

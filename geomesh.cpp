@@ -4,14 +4,15 @@
 #include <sstream>
 #include <string>
 
-void createConcentricSphericalLayers(const std::vector<double> &radii, double meshSizeMin, double meshSizeMax, const std::string &outputFileName) {
+
+void createConcentricSphericalLayers(const std::vector<double> &radii, double meshSizeMin, double meshSizeMax, int elementOrder, const std::string &outputFileName) {
     int numLayers = radii.size();
     
     if (numLayers < 1) {
         std::cerr << "Error: There should be at least one layer." << std::endl;
         return;
     }
-    // Initialize Gmsh
+
     gmsh::initialize();
     gmsh::model::add("ConcentricSphericalLayers");
 
@@ -19,93 +20,96 @@ void createConcentricSphericalLayers(const std::vector<double> &radii, double me
     gmsh::option::setNumber("Mesh.MeshSizeMin", meshSizeMin);
     gmsh::option::setNumber("Mesh.MeshSizeMax", meshSizeMax);
 
-    // Tagging scheme starting from 301
-    int layerTag = 1;
-    int surfaceTag = 1;
     for (int i = 0; i < numLayers; ++i) {
         gmsh::model::occ::addSphere(0, 0, 0, radii[i]);
-    } 
+    }
     gmsh::model::occ::synchronize();
+    //Innest layer
+    int layerTag = 1;
+    int surfaceTag = 1;
     gmsh::model::addPhysicalGroup(3, {1}, layerTag);
-    gmsh::model::setPhysicalName(3, layerTag, "sphericalLayer_1");
+    gmsh::model::setPhysicalName(3, layerTag, "layer_1");
     std::vector<std::pair<int, int>> surfaceEntities;
-    gmsh::model::getBoundary({{3, 1}}, surfaceEntities, false, false, false);
+    gmsh::model::getBoundary({{3, 1}}, surfaceEntities, false, false, false); //combined - oriented - recursive
     std::pair<int, int> surface = surfaceEntities[0];
     if (surface.first == 2) {
         gmsh::model::addPhysicalGroup(2, {surface.second}, surfaceTag);
-        gmsh::model::setPhysicalName(2, surfaceTag,
-                                     "sphericalSurface_" + std::to_string(1));
+        gmsh::model::setPhysicalName(2, surfaceTag, "surface_" + std::to_string(1));
     }
+    //Other layers
     for (int i = 1; i < numLayers; ++i) {
-        std::vector<std::pair<int, int> > ov;
-        std::vector<std::vector<std::pair<int, int> > > ovv;
+        std::vector<std::pair<int, int>> ov;
+        std::vector<std::vector<std::pair<int, int>>> ovv;
 
-        gmsh::model::occ::cut({{3, i+1}}, {{3, i}},  ov, ovv, -1, false, false); 
-	gmsh::model::occ::synchronize();
+        gmsh::model::occ::cut({{3, i+1}}, {{3, i}},  ov, ovv, -1, false, false); //auto-assigns tags - removeObject - removeTool 
+	    gmsh::model::occ::synchronize();
 
-	std::vector<int> volumeTags;
+	    std::vector<int> volumeTags;
         for (const auto &entity : ov) {
-            volumeTags.push_back(entity.second);  // Extract only the tag part
-	}
+            volumeTags.push_back(entity.second);
+	    }
         ++layerTag;
         gmsh::model::addPhysicalGroup(3, volumeTags, layerTag);
-        gmsh::model::setPhysicalName(3, layerTag, "sphericalLayer_" + std::to_string(i + 1));
+        gmsh::model::setPhysicalName(3, layerTag, "layer_" + std::to_string(i+1));
         for (const auto &volumeTag : volumeTags) {
             std::vector<std::pair<int, int>> surfaceEntities;
             gmsh::model::getBoundary({{3, volumeTag}}, surfaceEntities, false, false, false);	
-	    std::pair<int, int> surface = surfaceEntities[0];
+	        std::pair<int, int> surface = surfaceEntities[0]; //Only take the inner surface
             if (surface.first == 2) {
                 ++surfaceTag;
                 gmsh::model::addPhysicalGroup(2, {surface.second}, surfaceTag);
-                gmsh::model::setPhysicalName(2, surfaceTag, 
-                                             "sphericalSurface_" + std::to_string(i + 1));
+                gmsh::model::setPhysicalName(2, surfaceTag, "surface_" + std::to_string(i+1));
             }
-	}
+	    }
     }
     for (int i = 1; i < numLayers; ++i) {
         gmsh::model::occ::remove({{3, i+1}});
     }
     gmsh::model::occ::synchronize();
 
-    // Generate 3D mesh
     gmsh::model::mesh::generate(3);
 
-    // Save the mesh
+    gmsh::option::setNumber("Mesh.Algorithm3D", 10); //1-Delaunay, 4-Frontal, 7-MMG3D, 9-R-tree Delaunay, 10-HXT (Frontal-Delaunay), 11-Automatic
+    gmsh::option::setNumber("Mesh.Optimize", 3);
+    gmsh::option::setNumber("Mesh.OptimizeNetgen", 1);
+    gmsh::option::setNumber("Mesh.ElementOrder", elementOrder);
+    //gmsh::option::setNumber("Mesh.SecondOrderIncomplete", 0);
     gmsh::option::setNumber("Mesh.MshFileVersion", 2.2);
     gmsh::write(outputFileName);
 
-    // Finalize Gmsh
     gmsh::finalize();
 }
 
-std::vector<double> parseRadii(const std::string &radiiStr) {
-    std::vector<double> radii;
-    std::istringstream iss(radiiStr);
+std::vector<double> parseString(const std::string &string_arg) {
+    std::vector<double> entries;
+    std::istringstream iss(string_arg);
     std::string token;
 
     while (std::getline(iss, token, '-')) {
         token.erase(std::remove_if(token.begin(), token.end(), ::isspace), token.end());
-        radii.push_back(std::stod(token));
+        entries.push_back(std::stod(token));
     }
 
-    return radii;
+    return entries;
 }
+
 
 int main(int argc, char **argv) {
 
-    std::vector<double> radii = {6.38, 8.0};
-    double meshSizeMin = 1.0;
-    double meshSizeMax = 1.0;
+    std::vector<double> radii = {6380.0, 8000.0};
+    double meshSizeMin = 20.0;
+    double meshSizeMax = 200.0;
+    int elementOrder = 1;
     std::string outputFileName = "concentric_spherical_layers.msh";
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
 
         if (arg == "-r" && i + 1 < argc) {
-            radii = parseRadii(argv[++i]);
+            radii = parseString(argv[++i]);
         } else if (arg == "-s" && i + 1 < argc) {
             std::string meshSizeStr = argv[++i];
-            auto meshSizes = parseRadii(meshSizeStr); 
+            auto meshSizes = parseString(meshSizeStr); 
             if (meshSizes.size() == 2) {
                 meshSizeMin = meshSizes[0];
                 meshSizeMax = meshSizes[1];
@@ -114,12 +118,13 @@ int main(int argc, char **argv) {
                 return 1;
             }
         } else if (arg == "-o" && i + 1 < argc) {
-            outputFileName = argv[++i];  // Set the output file name
+            elementOrder = std::stoi(argv[++i]);
+        } else if (arg == "-o" && i + 1 < argc) {
+            outputFileName = argv[++i];
         }
     }
 
-    // Run the spherical layers creation function
-    createConcentricSphericalLayers(radii, meshSizeMin, meshSizeMax, outputFileName);
+    createConcentricSphericalLayers(radii, meshSizeMin, meshSizeMax, elementOrder, outputFileName);
 
     return 0;
 }

@@ -1,261 +1,207 @@
-//                                MFEM Example 2
-//
-// Compile with: make ex2
-//
-// Sample runs:  ex2 -m ../data/beam-tri.mesh
-//               ex2 -m ../data/beam-quad.mesh
-//               ex2 -m ../data/beam-tet.mesh
-//               ex2 -m ../data/beam-hex.mesh
-//               ex2 -m ../data/beam-wedge.mesh
-//               ex2 -m ../data/beam-quad.mesh -o 3 -sc
-//               ex2 -m ../data/beam-quad-nurbs.mesh
-//               ex2 -m ../data/beam-hex-nurbs.mesh
-//
-// Description:  This example code solves a simple linear elasticity problem
-//               describing a multi-material cantilever beam.
-//
-//               Specifically, we approximate the weak form of -div(sigma(u))=0
-//               where sigma(u)=lambda*div(u)*I+mu*(grad*u+u*grad) is the stress
-//               tensor corresponding to displacement field u, and lambda and mu
-//               are the material Lame constants. The boundary conditions are
-//               u=0 on the fixed part of the boundary with attribute 1, and
-//               sigma(u).n=f on the remainder with f being a constant pull down
-//               vector on boundary elements with attribute 2, and zero
-//               otherwise. The geometry of the domain is assumed to be as
-//               follows:
-//
-//                                 +----------+----------+
-//                    boundary --->| material | material |<--- boundary
-//                    attribute 1  |    1     |    2     |     attribute 2
-//                    (fixed)      +----------+----------+     (pull down)
-//
-//               The example demonstrates the use of high-order and NURBS vector
-//               finite element spaces with the linear elasticity bilinear form,
-//               meshes with curved elements, and the definition of piece-wise
-//               constant and vector coefficient objects. Static condensation is
-//               also illustrated.
-//
-//               We recommend viewing Example 1 before viewing this example.
+/*
+  5-Component Vector Field Relaxation on 3D Mesh
+  -------------------------------------------------------------
+  Solves the system:
+    dm(x,t)/dt = (1/tau) [ d(x,t) - m(x,t) ],
+  where m(x,t) and d(x,t) are vector fields in R^5 defined on a 3D mesh.
 
+  Forcing:
+    d(x,t) = d0(x) e^{-alp*t},
+    d0_j(x) = (j+1) sin(π x) sin(π y) sin(π z),  j = 0,...,4.
+
+  Analytical solution at each degree of freedom:
+    m_ana(x,t) = m0(x) e^{-t/tau} + [ d0(x)/(1 - alp*tau) ] [ e^{-alp*t} - e^{-t/tau} ].
+
+  Initial condition:
+    m(x,0) = m0(x),
+    m0_j(x) given by a smooth 5-vector FunctionCoefficient.
+
+  Outputs error data in error.dat for L2( m_num - m_ana ).
+*/
 #include "mfem.hpp"
+#include "giafem.hpp"
 #include <fstream>
 #include <iostream>
+#include <cmath>
+#include <chrono>
 
 using namespace std;
 using namespace mfem;
+using namespace giafem;
+
+class RelaxOp : public TimeDependentOperator
+{
+private:
+    real_t tau, alpha;
+    Vector d0_true;
+public:
+    RelaxOp(real_t tau_, real_t alpha_, const Vector &d0)
+      : TimeDependentOperator(d0.Size()), tau(tau_), alpha(alpha_), d0_true(d0) { }
+
+    // computes dm_dt = (d(t)-m)/tau
+    void Mult(const Vector &m, Vector &dm_dt) const override
+    {
+        real_t t = this->GetTime();
+        int n = m.Size();
+        for (int i = 0; i < n; i++)
+        {
+            real_t dval = d0_true(i) * exp(-alpha * t);
+            dm_dt(i) = (dval - m(i)) / tau;
+        }
+    }
+
+    void ImplicitSolve(const real_t dt, const Vector &m_old, Vector &dm_dt) override
+    {
+        real_t t = this->GetTime() + dt;
+        int n = m_old.Size();
+
+        for (int i = 0; i < n; i++)
+        {
+            real_t d_next = d0_true(i) * exp(-alpha * t);
+            dm_dt(i) = (d_next - m_old(i)) / tau / (1.0 + dt / tau);
+        }
+    }
+};
+
+// analytic solution for m0=initial m, forcing D0 e^{-αt}
+void ComputeAnalytic(const Vector &m0,
+                     Vector &m_ana,
+                     double tau,
+                     double alpha,
+                     const Vector &D0,
+                     double t)
+{
+    int n = m0.Size();
+    double e1 = exp(-t/tau),
+           e2 = exp(-alpha * t),
+           denom = 1.0 - alpha*tau;
+    for (int i = 0; i < n; i++)
+    {
+        m_ana(i) = m0(i)*e1
+                  + D0(i)*(e2 - e1)/denom;
+    }
+}
 
 int main(int argc, char *argv[])
 {
-   // 1. Parse command-line options.
-   const char *mesh_file = "../data/beam-tri.mesh";
-   int order = 1;
-   bool static_cond = false;
-   bool visualization = 1;
+    const char *mesh_file = "mesh/examples/star.mesh";
+    const char *output_file = "error.dat";
+    real_t tau     = 5.0;
+    real_t dt      = 0.01;
+    real_t t_final = 5.0;
+    int solver_type = 3; // 0:FE,1:RK2,2:RK3,3:RK4,…
+    real_t alpha = 0.5;
 
-   OptionsParser args(argc, argv);
-   args.AddOption(&mesh_file, "-m", "--mesh",
-                  "Mesh file to use.");
-   args.AddOption(&order, "-o", "--order",
-                  "Finite element order (polynomial degree).");
-   args.AddOption(&static_cond, "-sc", "--static-condensation", "-no-sc",
-                  "--no-static-condensation", "Enable static condensation.");
-   args.AddOption(&visualization, "-vis", "--visualization", "-no-vis",
-                  "--no-visualization",
-                  "Enable or disable GLVis visualization.");
-   args.Parse();
-   if (!args.Good())
-   {
-      args.PrintUsage(cout);
-      return 1;
-   }
-   args.PrintOptions(cout);
+    OptionsParser args(argc, argv);
+    args.AddOption(&mesh_file, "-m", "--mesh",
+                   "Mesh file.");
+    args.AddOption(&output_file, "-f", "--file",
+                   "Output file.");
+    args.AddOption(&tau,       "-tau", "--tau",
+                   "Relaxation time constant τ.");
+    args.AddOption(&dt,        "-dt",  "--time-step",
+                   "Time step size Δt.");
+    args.AddOption(&t_final,   "-tf",  "--final-time",
+                   "Final time T.");
+    args.AddOption(&solver_type, "-s","--solver",
+                   "Integrator: 0=FE, 1=RK2, 2=RK3, 3=RK4, …");
+    args.Parse();
+    if (!args.Good())
+    {
+        args.PrintUsage(cout);
+        return 1;
+    }
+    args.PrintOptions(cout);
 
-   // 2. Read the mesh from the given mesh file. We can handle triangular,
-   //    quadrilateral, tetrahedral or hexahedral elements with the same code.
-   Mesh *mesh = new Mesh(mesh_file, 1, 1);
-   int dim = mesh->Dimension();
 
-   if (mesh->attributes.Max() < 2 || mesh->bdr_attributes.Max() < 2)
-   {
-      cerr << "\nInput mesh should have at least two materials and "
-           << "two boundary attributes! (See schematic in ex2.cpp)\n"
-           << endl;
-      return 3;
-   }
-
-   // 3. Select the order of the finite element discretization space. For NURBS
-   //    meshes, we increase the order by degree elevation.
-   if (mesh->NURBSext)
-   {
-      mesh->DegreeElevate(order, order);
-   }
-
-   // 4. Refine the mesh to increase the resolution. In this example we do
-   //    'ref_levels' of uniform refinement. We choose 'ref_levels' to be the
-   //    largest number that gives a final mesh with no more than 5,000
-   //    elements.
-   {
-      int ref_levels =
-         (int)floor(log(5000./mesh->GetNE())/log(2.)/dim);
-      for (int l = 0; l < ref_levels; l++)
+    Mesh mesh(mesh_file, 1, 1);
+    int order = 2;
+    H1_FECollection fec(order, mesh.Dimension());
+    FiniteElementSpace fes(&mesh, &fec, 5);
+    int size = fes.GetTrueVSize();
+    Vector m(size), m0(size), d0(size);
+    // Initial condition
+    GridFunction m0_gf(&fes);
+    VectorFunctionCoefficient m0_coeff(5,
+      [&](const Vector &x, Vector &v)
       {
-         mesh->UniformRefinement();
-      }
-   }
+        v(0) = sin(M_PI*x[0])*sin(M_PI*x[1])*sin(M_PI*x[2]);
+        v(1) = cos(M_PI*x[0])*sin(M_PI*x[1])*sin(M_PI*x[2]);
+        v(2) = sin(M_PI*x[0])*cos(M_PI*x[1])*sin(M_PI*x[2]);
+        v(3) = sin(M_PI*x[0])*sin(M_PI*x[1])*cos(M_PI*x[2]);
+        v(4) = cos(M_PI*x[0])*cos(M_PI*x[1])*cos(M_PI*x[2]);
+      });
+    m0_gf.ProjectCoefficient(m0_coeff);
+    m0_gf.GetTrueDofs(m0);
+    m = m0; 
+    
+    //Project the forcing d0(x) = (j+1)*sin(πx)sin(πy)sin(πz)
+    GridFunction d0_gf(&fes);
+    VectorFunctionCoefficient d0_coeff(5,
+      [&](const Vector &x, Vector &v)
+      {
+        double S = sin(M_PI*x[0])*sin(M_PI*x[1])*sin(M_PI*x[2]);
+        for (int j = 0; j < 5; ++j) { v(j) = (j+1)*S; }
+      });
+    d0_gf.ProjectCoefficient(d0_coeff);
+    d0_gf.GetTrueDofs(d0);
 
-   // 5. Define a finite element space on the mesh. Here we use vector finite
-   //    elements, i.e. dim copies of a scalar finite element space. The vector
-   //    dimension is specified by the last argument of the FiniteElementSpace
-   //    constructor. For NURBS meshes, we use the (degree elevated) NURBS space
-   //    associated with the mesh nodes.
-   FiniteElementCollection *fec;
-   FiniteElementSpace *fespace;
-   if (mesh->NURBSext)
-   {
-      fec = NULL;
-      fespace = mesh->GetNodes()->FESpace();
-   }
-   else
-   {
-      fec = new H1_FECollection(order, dim);
-      fespace = new FiniteElementSpace(mesh, fec, dim);
-   }
-   cout << "Number of finite element unknowns: " << fespace->GetTrueVSize()
-        << endl << "Assembling: " << flush;
 
-   // 6. Determine the list of true (i.e. conforming) essential boundary dofs.
-   //    In this example, the boundary conditions are defined by marking only
-   //    boundary attribute 1 from the mesh as essential and converting it to a
-   //    list of true dofs.
-   Array<int> ess_tdof_list, ess_bdr(mesh->bdr_attributes.Max());
-   ess_bdr = 0;
-   ess_bdr[0] = 1;
-   fespace->GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
+    RelaxOp oper(tau, alpha, d0);
+    //auto ode_solver = unique_ptr<ODESolver>(ODESolver::Select(solver_type));
+    //ODESolver *ode_solver = new ForwardEulerSolver();
+    //ODESolver *ode_solver = new RK2Solver;
+    //ODESolver *ode_solver = new RK3SSPSolver;
+    //ODESolver *ode_solver = new RK4Solver;
+    //ODESolver *ode_solver = new RK6Solver;
+    //ODESolver *ode_solver = new AB1Solver;
+    //ODESolver *ode_solver = new AB2Solver;
+    //ODESolver *ode_solver = new AB3Solver;
+    //ODESolver *ode_solver = new AB4Solver;
+    //ODESolver *ode_solver = new AB5Solver;
+    //ODESolver *ode_solver = new BaileySolver_test;
 
-   // 7. Set up the linear form b(.) which corresponds to the right-hand side of
-   //    the FEM linear system. In this case, b_i equals the boundary integral
-   //    of f*phi_i where f represents a "pull down" force on the Neumann part
-   //    of the boundary and phi_i are the basis functions in the finite element
-   //    fespace. The force is defined by the VectorArrayCoefficient object f,
-   //    which is a vector of Coefficient objects. The fact that f is non-zero
-   //    on boundary attribute 2 is indicated by the use of piece-wise constants
-   //    coefficient for its last component.
-   VectorArrayCoefficient f(dim);
-   for (int i = 0; i < dim-1; i++)
-   {
-      f.Set(i, new ConstantCoefficient(0.0));
-   }
-   {
-      Vector pull_force(mesh->bdr_attributes.Max());
-      pull_force = 0.0;
-      pull_force(1) = -1.0e-2;
-      f.Set(dim-1, new PWConstCoefficient(pull_force));
-   }
+    //ODESolver *ode_solver = new BackwardEulerSolver;
+    //ODESolver *ode_solver = new SDIRK23Solver(2);
+    //ODESolver *ode_solver = new SDIRK33Solver;
+    ODESolver *ode_solver = new ImplicitMidpointSolver;
+    //ODESolver *ode_solver = new SDIRK23Solver;
+    //ODESolver *ode_solver = new SDIRK34Solver;
+    //ODESolver *ode_solver = new AM2Solver;
+    ode_solver->Init(oper);
 
-   LinearForm *b = new LinearForm(fespace);
-   b->AddBoundaryIntegrator(new VectorBoundaryLFIntegrator(f));
-   cout << "r.h.s. ... " << flush;
-   b->Assemble();
+    ofstream fout(output_file);
+    fout << "# t   L2_error\n";
+    GridFunction m_gf(&fes), ana_gf(&fes), diff_gf(&fes);
+    m_gf.SetFromTrueDofs(m);
 
-   // 8. Define the solution vector x as a finite element grid function
-   //    corresponding to fespace. Initialize x with initial guess of zero,
-   //    which satisfies the boundary conditions.
-   GridFunction x(fespace);
-   x = 0.0;
+    real_t t = 0.0;
+    auto start = std::chrono::high_resolution_clock::now();
+    while (t < t_final - 1e-12)
+    {
+        Vector ana_true(size);
+        real_t e1 = exp(-t/tau), e2 = exp(-alpha*t), denom = 1.0 - alpha*tau;
+        for (int i = 0; i < size; ++i)
+        {
+            ana_true(i) = m0(i)*e1 + d0(i)*(e2 - e1)/denom;
+        }
+        ana_gf.SetFromTrueDofs(ana_true);
 
-   // 9. Set up the bilinear form a(.,.) on the finite element space
-   //    corresponding to the linear elasticity integrator with piece-wise
-   //    constants coefficient lambda and mu.
-   Vector lambda(mesh->attributes.Max());
-   lambda = 1.0;
-   lambda(0) = lambda(1)*50;
-   PWConstCoefficient lambda_func(lambda);
-   Vector mu(mesh->attributes.Max());
-   mu = 1.0;
-   mu(0) = mu(1)*50;
-   PWConstCoefficient mu_func(mu);
+        // compute L2 error
+        diff_gf = m_gf;
+        diff_gf -= ana_gf;
+        real_t err = diff_gf.Norml2();
+        auto current = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = current - start;
+        fout << t << " " << elapsed.count() << " " << err << "\n";
 
-   BilinearForm *a = new BilinearForm(fespace);
-   a->AddDomainIntegrator(new ElasticityIntegrator(lambda_func,mu_func));
+        real_t h = min(dt, t_final - t);
+        ode_solver->Step(m, t, h);
+        m_gf.SetFromTrueDofs(m);
+    }
+    fout.close();
 
-   // 10. Assemble the bilinear form and the corresponding linear system,
-   //     applying any necessary transformations such as: eliminating boundary
-   //     conditions, applying conforming constraints for non-conforming AMR,
-   //     static condensation, etc.
-   cout << "matrix ... " << flush;
-   if (static_cond) { a->EnableStaticCondensation(); }
-   a->Assemble();
-
-   SparseMatrix A;
-   Vector B, X;
-   a->FormLinearSystem(ess_tdof_list, x, *b, A, X, B);
-   cout << "done." << endl;
-
-   cout << "Size of linear system: " << A.Height() << endl;
-
-#ifndef MFEM_USE_SUITESPARSE
-   // 11. Define a simple symmetric Gauss-Seidel preconditioner and use it to
-   //     solve the system Ax=b with PCG.
-   GSSmoother M(A);
-   PCG(A, M, B, X, 1, 500, 1e-8, 0.0);
-#else
-   // 11. If MFEM was compiled with SuiteSparse, use UMFPACK to solve the system.
-   UMFPackSolver umf_solver;
-   umf_solver.Control[UMFPACK_ORDERING] = UMFPACK_ORDERING_METIS;
-   umf_solver.SetOperator(A);
-   umf_solver.Mult(B, X);
-#endif
-
-   // 12. Recover the solution as a finite element grid function.
-   a->RecoverFEMSolution(X, *b, x);
-
-   // 13. For non-NURBS meshes, make the mesh curved based on the finite element
-   //     space. This means that we define the mesh elements through a fespace
-   //     based transformation of the reference element. This allows us to save
-   //     the displaced mesh as a curved mesh when using high-order finite
-   //     element displacement field. We assume that the initial mesh (read from
-   //     the file) is not higher order curved mesh compared to the chosen FE
-   //     space.
-   if (!mesh->NURBSext)
-   {
-      mesh->SetNodalFESpace(fespace);
-   }
-
-   // 14. Save the displaced mesh and the inverted solution (which gives the
-   //     backward displacements to the original grid). This output can be
-   //     viewed later using GLVis: "glvis -m displaced.mesh -g sol.gf".
-   {
-      GridFunction *nodes = mesh->GetNodes();
-      *nodes += x;
-      x *= -1;
-      ofstream mesh_ofs("displaced.mesh");
-      mesh_ofs.precision(8);
-      mesh->Print(mesh_ofs);
-      ofstream sol_ofs("sol.gf");
-      sol_ofs.precision(8);
-      x.Save(sol_ofs);
-   }
-
-   // 15. Send the above data by socket to a GLVis server. Use the "n" and "b"
-   //     keys in GLVis to visualize the displacements.
-   if (visualization)
-   {
-      char vishost[] = "localhost";
-      int  visport   = 19916;
-      socketstream sol_sock(vishost, visport);
-      sol_sock.precision(8);
-      sol_sock << "solution\n" << *mesh << x << flush;
-   }
-
-   // 16. Free the used memory.
-   delete a;
-   delete b;
-   if (fec)
-   {
-      delete fespace;
-      delete fec;
-   }
-   delete mesh;
-
-   return 0;
+    delete ode_solver;
+    return 0;
 }
+
