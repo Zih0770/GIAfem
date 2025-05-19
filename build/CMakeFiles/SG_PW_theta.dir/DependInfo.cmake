@@ -11,9 +11,12 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/sssou/giafem/demos/SG_PW_theta.cpp" "CMakeFiles/SG_PW_theta.dir/demos/SG_PW_theta.cpp.o" "gcc" "CMakeFiles/SG_PW_theta.dir/demos/SG_PW_theta.cpp.o.d"
   )
 
-# Targets to which this target links.
-set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/home/sssou/giafem/build/CMakeFiles/giafem_lib.dir/DependInfo.cmake"
+# Targets to which this target links which contain Fortran sources.
+set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
+  )
+
+# Targets to which this target links which contain Fortran sources.
+set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
   )
 
 # Fortran module output directory.

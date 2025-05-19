@@ -104,9 +104,54 @@ int main(int argc, char *argv[])
 
     ode_solver->Init(oper);
 
-    ofstream fout("solver_"+to_string(solver_type)+".dat");
+    ofstream fout("solver_"+to_string(solver_type)+"_N"+".dat");
     fout << "#dt N_calls L2_error\n";
 
+    vector<double> target_errors = {1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7};
+
+    for (double target_error : target_errors)
+    {
+        cout<<target_error<<endl;
+        double dt_low = 1e-8, dt_high = 5.0, dt = 3.0;
+
+        real_t actual_error;
+        for (int iter = 0; iter < 30; ++iter)
+        {
+            oper.ResetCounter();
+            m = m0; double t = 0.0;
+
+            while (t < t_final - 1e-8)
+            {
+                real_t h = min(dt, t_final - t);
+                ode_solver->Step(m, t, h);
+            }
+
+            Vector ana(size);
+            double e1 = exp(-t / tau), e2 = exp(-alpha * t), denom = 1 - alpha * tau;
+            for (int i = 0; i < size; ++i)
+                ana(i) = m0(i)*e1 + d0(i)*(e2 - e1)/denom;
+
+            ana -= m;
+            actual_error = ana.Norml2();
+
+            if (fabs(actual_error - target_error) / target_error < 0.05)
+                break;
+
+            if (actual_error > target_error)
+                dt_high = dt;
+            else
+                dt_low = dt;
+
+            dt = sqrt(dt_low * dt_high);
+        }
+        if (fabs(actual_error - target_error) / target_error > 0.05){
+            cout<<"Maximum iteration number achieved."<<endl;
+        } else {
+        fout << target_error << " " << dt << " " << oper.GetCounter()
+             << " " << actual_error << "\n";
+        }
+    }
+/*
     for (real_t dt = 1e-3; dt <= 1.0; dt*=2)
     {
         oper.ResetCounter();
@@ -125,7 +170,7 @@ int main(int argc, char *argv[])
 
         ana-=m;
         fout<<dt<<" "<<oper.GetCounter()<<" "<<ana.Norml2()<<"\n";
-    }
+    }*/
     fout.close();
     
 }

@@ -67,7 +67,7 @@ public:
     }
 };
 
-class StrainEnergyCoefficient : public Coefficient
+class StrainEnergyCoefficient_beam : public Coefficient
 {
 private:
     GridFunction &u;
@@ -75,13 +75,13 @@ private:
     DenseMatrix grad_u;
 
 public:
-    StrainEnergyCoefficient(GridFunction &displacement, double lambda_, double mu_);
+    StrainEnergyCoefficient_beam(GridFunction &displacement, double lambda_, double mu_);
     real_t Eval(ElementTransformation &T, const IntegrationPoint &ip) override;
-    ~StrainEnergyCoefficient() override { }
+    ~StrainEnergyCoefficient_beam() override { }
 };
 
 
-void visualize(ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
+void visualize_beam(ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
                GridFunction *field, const char *field_name = NULL,
                bool init_vis = false);
 
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
     real_t dt = 0.02;
     //int ref_levels = 3;
     int order = 2;
-    bool visualization = false;
+    bool visualization = true;
     int vis_steps = 1;
 
     OptionsParser args(argc, argv);
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
     mesh->NewNodes(*nodes, false);
     MFEM_VERIFY(mesh->GetNodes(), "Mesh has no nodal coordinates!");
                              
-    VeOperator oper(fes_u, fes_m, fes_w, lamb_func, mu_func, tau_func, u, m, d);
+    VeOperator_beam oper(fes_u, fes_m, fes_w, lamb_func, mu_func, tau_func, u, m, d);
     //unique_ptr<ODESolver> ode_solver = ODESolver::Select(ode_solver_type);
     //ODESolver *ode_solver = new ForwardEulerSolver();
     //ODESolver *ode_solver = new RK2Solver;
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
     socketstream vis_w;
     u.SetFromTrueDofs(u_vec); 
     cout << "||u||_L2 = " << u.Norml2() << endl;
-    StrainEnergyCoefficient strainEnergyDensity(u, lamb, mu);
+    StrainEnergyCoefficient_beam strainEnergyDensity(u, lamb, mu);
     if (visualization)
     {
        char vishost[] = "localhost";
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
        w.ProjectCoefficient(strainEnergyDensity);
        cout<<"w_L2: "<<w.ComputeL2Error(zero)<<endl;
        vis_w.precision(8);
-       visualize(vis_w, mesh, &u, &w, "Elastic energy density", true);
+       visualize_beam(vis_w, mesh, &u, &w, "Elastic energy density", true);
        cout << "GLVis visualization paused."
             << " Press space (in the GLVis window) to resume it.\n";
     }
@@ -220,12 +220,12 @@ int main(int argc, char *argv[])
         {
             if (visualization)
             {
-                StrainEnergyCoefficient strainEnergyDensity(u, lamb, mu);
+                StrainEnergyCoefficient_beam strainEnergyDensity(u, lamb, mu);
                 w.ProjectCoefficient(strainEnergyDensity);
                 cout << "||u||_L2 = " << u.Norml2() << std::endl;
                 cout<<"w_L2: "<<w.Norml2()<<endl;
                 cout<<"m_msv: "<<m.Norml2()/sqrt(m.Size())<<endl;
-                visualize(vis_w, mesh, &u, &w, "Elastic energy density");
+                visualize_beam(vis_w, mesh, &u, &w, "Elastic energy density");
             }
         }
 
@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
 }
 
 
-void visualize(ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
+void visualize_beam(ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
                GridFunction *field, const char *field_name, bool init_vis)
 {
     if (!os)
@@ -260,7 +260,7 @@ void visualize(ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
 
     //GridFunction *displaced_nodes = new GridFunction(*mesh->GetNodes()); 
     //displaced_nodes->Add(1.0, *deformed_nodes);
-    mfem::GridFunction *displaced_nodes = new mfem::GridFunction(deformed_nodes->FESpace());
+    GridFunction *displaced_nodes = new GridFunction(deformed_nodes->FESpace());
     *displaced_nodes = *mesh->GetNodes();          // base geometry
     *displaced_nodes += *deformed_nodes;  
 
@@ -295,11 +295,11 @@ void visualize(ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
 }
 
 
-StrainEnergyCoefficient::StrainEnergyCoefficient(
+StrainEnergyCoefficient_beam::StrainEnergyCoefficient_beam(
     GridFunction &displacement, real_t lambda_, real_t mu_)
     : u(displacement), lambda(lambda_), mu(mu_) {}
 
-real_t StrainEnergyCoefficient::Eval(ElementTransformation &T,
+real_t StrainEnergyCoefficient_beam::Eval(ElementTransformation &T,
                                      const IntegrationPoint &ip)
 {
     u.GetVectorGradient(T, grad_u);

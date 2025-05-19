@@ -10,67 +10,99 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
+#find_package(OpenMP REQUIRED)
 
-set(MFEM_LIBRARIES "/home/sssou/local/mfem/lib/libmfem.so" "/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so")
+set(MFEM_LIBRARIES "/home/sssou/local/mfem/lib/libmfem.so" "/home/sssou/source/petsc/arch-opt/lib/libmpi.so")
 set(MFEM_INCLUDE "/home/sssou/local/mfem/include")
 include_directories(${MFEM_INCLUDE})
 
-find_package(MPI REQUIRED)
-include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+# CUDA
+find_package(CUDAToolkit REQUIRED)
+include_directories(${CUDAToolkit_INCLUDE_DIRS})
 
-include_directories(/usr/include/suitesparse)
+find_path(RAJA_INCLUDE_DIR RAJA/RAJA.hpp HINTS /home/sssou/source/raja/installed/include)
+find_library(RAJA_LIBRARY RAJA HINTS /home/sssou/source/raja/installed/lib)
+include_directories(${RAJA_INCLUDE_DIR})
+
+find_path(AMGX_INCLUDE_DIR amgx_c.h HINTS /home/sssou/source/amgx//installed/include)
+find_library(AMGX_LIBRARY amgxsh HINTS /home/sssou/source/amgx/installed/lib)
+include_directories(${AMGX_INCLUDE_DIR})
+
+set(SUNDIALS_DIR "/home/sssou/source/sundials/installed")
+find_path(SUNDIALS_INCLUDE_DIR sundials/sundials_config.h HINTS ${SUNDIALS_DIR}/include)
+find_library(SUNDIALS_LIBRARY sundials_cvode HINTS ${SUNDIALS_DIR}/lib)
+include_directories(${SUNDIALS_INCLUDE_DIR})
+
+set(GINKGO_DIR "/home/sssou/source/ginkgo/installed")
+find_path(GINKGO_INCLUDE_DIR ginkgo/ginkgo.hpp HINTS ${GINKGO_DIR}/include)
+find_library(GINKGO_LIBRARY ginkgo HINTS ${GINKGO_DIR}/lib)
+include_directories(${GINKGO_INCLUDE_DIR})
+
+set(PETSC_DIR "/home/sssou/source/petsc")
+set(PETSC_ARCH "arch-opt")
+include_directories("${PETSC_DIR}/${PETSC_ARCH}/include")
+include_directories("${PETSC_DIR}/include")
+link_directories("${PETSC_DIR}/${PETSC_ARCH}/lib")
+
+set(MPI_CXX_LIBRARIES "${PETSC_DIR}/${PETSC_ARCH}/lib/libmpi.so")
+set(MPI_CXX_INCLUDE_PATH "${PETSC_DIR}/${PETSC_ARCH}/include")
+#find_package(MPI REQUIRED)
+#include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+include_directories(SYSTEM ${MPI_CXX_INCLUDE_PATH})
+
+#include_directories(/usr/include/suitesparse)
 
 add_library(giafem_lib lib/giafem.cpp)
 target_include_directories(giafem_lib PUBLIC include ${MFEM_INCLUDE})
-target_link_libraries(giafem_lib PUBLIC ${MFEM_LIBRARIES} MPI::MPI_CXX)
-
-add_executable(ex16 demos/ex16.cpp)
-target_link_libraries(ex16 PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(giafem_lib PUBLIC ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test demos/test.cpp)
-target_link_libraries(test PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(test PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test_N_L2 demos/test_N_L2.cpp)
-target_link_libraries(test_N_L2 PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(test_N_L2 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test_interpolation demos/test_interpolation.cpp)
-target_link_libraries(test_interpolation PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(test_interpolation PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test_field demos/test_field.cpp)
-target_link_libraries(test_field PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(test_field PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test_time_oper demos/test_time_oper.cpp)
-target_link_libraries(test_time_oper PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(test_time_oper PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test_field_2 demos/test_field_2.cpp)
-target_link_libraries(test_field_2 PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(test_field_2 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test_ve demos/test_ve.cpp)
-target_link_libraries(test_ve PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(test_ve PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(viscoelastic_sphere demos/viscoelastic_sphere.cpp)
+target_link_libraries(viscoelastic_sphere PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(SG_PW demos/SG_PW.cpp)
-target_link_libraries(SG_PW PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(SG_PW PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(SG_PW_theta demos/SG_PW_theta.cpp)
-target_link_libraries(SG_PW_theta PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(SG_PW_theta PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(SG_PW_p demos/SG_PW_p.cpp)
-target_link_libraries(SG_PW_p PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(SG_PW_p PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(elastostatic demos/elastostatic.cpp)
-target_link_libraries(elastostatic PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(elastostatic PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 #add_executable(viscoelastic_beam demos/viscoelastic_beam.cpp)
-#target_link_libraries(viscoelastic_beam PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+#target_link_libraries(viscoelastic_beam PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(beam demos/beam.cpp)
-target_link_libraries(beam PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(beam PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(beam_t demos/beam_t.cpp)
-target_link_libraries(beam_t PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(beam_t PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(MatrixLinearForm demos/MatrixLinearForm.cpp)
-target_link_libraries(MatrixLinearForm PRIVATE giafem_lib ${MFEM_LIBRARIES} MPI::MPI_CXX)
+target_link_libraries(MatrixLinearForm PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

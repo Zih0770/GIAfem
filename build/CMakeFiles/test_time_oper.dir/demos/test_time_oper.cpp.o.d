@@ -173,51 +173,14 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /home/sssou/local/mfem/include/mfem/general/enzyme.hpp \
  /home/sssou/local/mfem/include/mfem/general/globals.hpp \
  /usr/include/c++/13/iostream \
- /usr/lib/x86_64-linux-gnu/openmpi/include/mpi.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/mpi_portable_platform.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h \
- /usr/include/c++/13/map /usr/include/c++/13/bits/stl_tree.h \
- /usr/include/c++/13/ext/aligned_buffer.h \
- /usr/include/c++/13/bits/node_handle.h \
- /usr/include/c++/13/bits/stl_map.h \
- /usr/include/c++/13/bits/stl_multimap.h \
- /usr/include/c++/13/bits/erase_if.h /usr/include/c++/13/utility \
- /usr/include/c++/13/bits/stl_relops.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/constants.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/functions.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/datatype.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/exception.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/op.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/status.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/request.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/group.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/comm.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/win.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/file.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/errhandler.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/intracomm.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/topology.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/intercomm.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/info.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/datatype_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/functions_inln.h \
- /usr/include/string.h /usr/include/strings.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/request_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/comm_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/intracomm_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/topology_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/intercomm_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/group_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/op_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/errhandler_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/status_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/info_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/win_inln.h \
- /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/ompi/mpi/cxx/file_inln.h \
+ /home/sssou/source/petsc/arch-opt/include/mpi.h \
+ /home/sssou/source/petsc/arch-opt/include/mpi_portable_platform.h \
  /home/sssou/local/mfem/include/mfem/general/mem_manager.hpp \
  /home/sssou/local/mfem/include/mfem/general/error.hpp \
- /usr/include/c++/13/cstring /usr/include/hypre/HYPRE_utilities.h \
- /usr/include/hypre/HYPRE_config.h \
+ /usr/include/c++/13/cstring /usr/include/string.h /usr/include/strings.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_utilities.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_config.h \
+ /home/sssou/source/petsc/arch-opt/include/mpi.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/float.h \
  /usr/include/c++/13/stdlib.h \
  /home/sssou/local/mfem/include/mfem/general/array.hpp \
@@ -233,7 +196,13 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /usr/include/c++/13/pstl/execution_defs.h \
  /home/sssou/local/mfem/include/mfem/general/arrays_by_name.hpp \
  /home/sssou/local/mfem/include/mfem/general/array.hpp \
- /usr/include/c++/13/set /usr/include/c++/13/bits/stl_set.h \
+ /usr/include/c++/13/map /usr/include/c++/13/bits/stl_tree.h \
+ /usr/include/c++/13/ext/aligned_buffer.h \
+ /usr/include/c++/13/bits/node_handle.h \
+ /usr/include/c++/13/bits/stl_map.h \
+ /usr/include/c++/13/bits/stl_multimap.h \
+ /usr/include/c++/13/bits/erase_if.h /usr/include/c++/13/set \
+ /usr/include/c++/13/bits/stl_set.h \
  /usr/include/c++/13/bits/stl_multiset.h \
  /home/sssou/local/mfem/include/mfem/general/sets.hpp \
  /home/sssou/local/mfem/include/mfem/general/table.hpp \
@@ -242,6 +211,8 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /usr/include/c++/13/array /usr/include/c++/13/cstdint \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
+ /usr/include/c++/13/utility /usr/include/c++/13/bits/stl_relops.h \
  /home/sssou/local/mfem/include/mfem/general/mem_alloc.hpp \
  /home/sssou/local/mfem/include/mfem/general/sort_pairs.hpp \
  /home/sssou/local/mfem/include/mfem/general/stable3d.hpp \
@@ -335,8 +306,237 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /home/sssou/local/mfem/include/mfem/linalg/matrix.hpp \
  /home/sssou/local/mfem/include/mfem/linalg/sparsemat.hpp \
  /home/sssou/local/mfem/include/mfem/general/backends.hpp \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cusparse.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuComplex.h \
+ /usr/include/c++/13/math.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/vector_types.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/crt/host_defines.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuda_runtime_api.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/builtin_types.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/device_types.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/driver_types.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/surface_types.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/texture_types.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuda_device_runtime_api.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/library_types.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuda_fp16.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/vector_functions.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuda_runtime_api.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/vector_functions.hpp \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/nv/target \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/nv/detail/__target_macros \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/nv/detail/__preprocessor \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuda_fp16.hpp \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuda_runtime.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/crt/host_config.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/library_types.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/channel_descriptor.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/driver_functions.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuda.h \
  /home/sssou/local/mfem/include/mfem/general/cuda.hpp \
  /home/sssou/local/mfem/include/mfem/general/hip.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/RAJA.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/config.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/Operators.hpp \
+ /usr/include/c++/13/cfloat \
+ /home/sssou/source/raja/installed/include/RAJA/util/concepts.hpp \
+ /usr/include/c++/13/iterator /usr/include/c++/13/bits/stream_iterator.h \
+ /home/sssou/source/raja/installed/include/camp/concepts.hpp \
+ /home/sssou/source/raja/installed/include/camp/helpers.hpp \
+ /home/sssou/source/raja/installed/include/camp/defines.hpp \
+ /home/sssou/source/raja/installed/include/camp/config.hpp \
+ /home/sssou/source/raja/installed/include/camp/list.hpp \
+ /home/sssou/source/raja/installed/include/camp/list/at.hpp \
+ /home/sssou/source/raja/installed/include/camp/list/list.hpp \
+ /home/sssou/source/raja/installed/include/camp/number.hpp \
+ /home/sssou/source/raja/installed/include/camp/number/if.hpp \
+ /home/sssou/source/raja/installed/include/camp/value.hpp \
+ /home/sssou/source/raja/installed/include/camp/number/number.hpp \
+ /home/sssou/source/raja/installed/include/camp/size.hpp \
+ /home/sssou/source/raja/installed/include/camp/list/find_if.hpp \
+ /home/sssou/source/raja/installed/include/camp/lambda.hpp \
+ /home/sssou/source/raja/installed/include/camp/list/at.hpp \
+ /home/sssou/source/raja/installed/include/camp/list/list.hpp \
+ /home/sssou/source/raja/installed/include/camp/type_traits/is_same.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/macros.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/basic_mempool.hpp \
+ /usr/include/c++/13/list /usr/include/c++/13/bits/stl_list.h \
+ /usr/include/c++/13/bits/list.tcc \
+ /home/sssou/source/raja/installed/include/RAJA/util/align.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/mutex.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/camp_aliases.hpp \
+ /home/sssou/source/raja/installed/include/camp/tuple.hpp \
+ /home/sssou/source/raja/installed/include/camp/map.hpp \
+ /home/sssou/source/raja/installed/include/camp/resource.hpp \
+ /usr/include/c++/13/mutex /usr/include/c++/13/bits/chrono.h \
+ /usr/include/c++/13/ratio /usr/include/c++/13/bits/parse_numbers.h \
+ /usr/include/c++/13/bits/unique_lock.h \
+ /home/sssou/source/raja/installed/include/camp/resource/event.hpp \
+ /home/sssou/source/raja/installed/include/camp/resource/host.hpp \
+ /home/sssou/source/raja/installed/include/camp/resource/platform.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/types.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/math.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/plugins.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/PluginContext.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/PolicyBase.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/internal/get_platform.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/internal/foldl.hpp \
+ /usr/include/c++/13/functional /usr/include/c++/13/bits/std_function.h \
+ /usr/include/c++/13/unordered_map \
+ /usr/include/c++/13/bits/unordered_map.h \
+ /usr/include/c++/13/bits/hashtable.h \
+ /usr/include/c++/13/bits/hashtable_policy.h \
+ /usr/include/c++/13/bits/enable_special_members.h \
+ /home/sssou/source/raja/installed/include/camp/camp.hpp \
+ /home/sssou/source/raja/installed/include/camp/make_unique.hpp \
+ /home/sssou/source/raja/installed/include/camp/detail/test.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/internal.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/internal/LoopData.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/index/IndexSet.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/index/ListSegment.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/Span.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/index/RangeSegment.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/internal/Iterators.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/index/IndexValue.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/internal/RAJAVec.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/internal/MemUtils_CPU.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/detail/privatizer.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/internal/StatementList.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/internal/Template.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/internal/LoopTypes.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/internal/Statement.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/PluginOptions.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/PluginStrategy.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/Registry.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/for_each.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/detail/algorithm.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/forall.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/MultiPolicy.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/resource.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/policy.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/openmp_target/policy.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/internal/fault_tolerance.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/forall.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/detail/forall.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/params/forall.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/CombiningAdapter.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/Layout.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/Permutations.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/OffsetLayout.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/PermutedLayout.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/params/params_base.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/params/kernel_name.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/Collapse.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/Conditional.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/For.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/ForICount.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/Param.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/Hyperplane.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/InitLocalMem.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/Lambda.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/Reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/Region.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/region.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/region.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/Tile.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/TileTCount.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/launch.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/launch/launch_core.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/StaticLayout.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/launch.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/simd/launch.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/simd/policy.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/stats.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/RegisterBase.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/TensorLayout.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/TensorRef.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/BitMask.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/tensor/arch.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/tensor/arch/scalar/traits.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/TensorIndex.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/TensorIndexTraits.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/TensorRegister.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/TensorRegisterBase.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/ScalarRegister.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/VectorRegister.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/MatrixRegister.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ExpressionTemplate.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/ExpressionTemplateBase.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/normalizeOperand.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/BinaryOperatorTraits.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/BinaryOperator.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/BlockLiteral.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/TensorDivide.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/TensorLiteral.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/TensorLoadStore.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/TensorTileExec.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/TensorMultiply.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/MultiplyOperator.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/TensorMultiplyAdd.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/TensorNegate.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/TensorScalarLiteral.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/ET/TensorTranspose.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/MatrixRegisterImpl.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/MatrixMatrixMultiply.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/VectorRegisterImpl.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/TensorBlock.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/atomic.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/kernel.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/kernel/Collapse.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/kernel/Reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/detail/reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/multi_reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/detail/multi_reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/RepeatView.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/multi_reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/scan.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/sort.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/zip.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/zip_tuple.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/sort.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/WorkGroup.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/WorkGroup/Dispatcher.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/WorkGroup/Dispatcher.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/WorkGroup.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/WorkGroup/WorkRunner.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/WorkGroup/WorkRunner.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/params/reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/params/reducer.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/SoAPtr.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/sequential/params/kernel_name.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/simd.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/simd/forall.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/simd/kernel/For.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/simd/kernel/ForICount.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/simd/params/reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/simd/params/kernel_name.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/tensor.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/tensor/arch_impl.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/tensor/arch/scalar.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/tensor/arch/scalar/scalar.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/tensor/policy.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/IndexLayout.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/View.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/atomic.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/atomic_auto.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/policy/atomic_builtin.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/TypeConvert.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/TypedViewBase.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/LocalArray.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/util/reduce.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/WorkGroup.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/WorkGroup/WorkStorage.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/WorkGroup/WorkStruct.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/synchronize.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/index/IndexSetUtils.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/index/IndexSetBuilders.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/scan.hpp \
+ /home/sssou/source/raja/installed/include/RAJA/pattern/sort.hpp \
  /home/sssou/local/mfem/include/mfem/general/mem_alloc.hpp \
  /home/sssou/local/mfem/include/mfem/general/table.hpp \
  /home/sssou/local/mfem/include/mfem/linalg/densemat.hpp \
@@ -344,54 +544,35 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /home/sssou/local/mfem/include/mfem/linalg/complex_operator.hpp \
  /home/sssou/local/mfem/include/mfem/linalg/hypre.hpp \
  /home/sssou/local/mfem/include/mfem/linalg/hypre_parcsr.hpp \
- /usr/include/hypre/_hypre_parcsr_mv.h \
- /usr/include/hypre/HYPRE_parcsr_mv.h \
- /usr/include/hypre/HYPRE_utilities.h /usr/include/hypre/HYPRE_seq_mv.h \
- /usr/include/hypre/_hypre_utilities.h /usr/include/hypre/HYPRE_config.h \
- /usr/include/c++/13/math.h /usr/include/hypre/seq_mv.h \
- /usr/include/hypre/seq_mv.h /usr/include/hypre/temp_multivector.h \
- /usr/include/hypre/interpreter.h /usr/include/hypre/_hypre_parcsr_ls.h \
- /usr/include/hypre/HYPRE_parcsr_ls.h /usr/include/hypre/HYPRE_IJ_mv.h \
- /usr/include/hypre/HYPRE_lobpcg.h /usr/include/hypre/HYPRE_krylov.h \
- /usr/include/hypre/fortran_matrix.h /usr/include/hypre/multivector.h \
- /usr/include/hypre/temp_multivector.h \
- /usr/include/hypre/HYPRE_MatvecFunctions.h \
- /usr/include/hypre/_hypre_parcsr_mv.h /usr/include/hypre/krylov.h \
- /usr/include/hypre/par_csr_block_matrix.h \
- /usr/include/hypre/csr_block_matrix.h /usr/include/suitesparse/umfpack.h \
- /usr/include/suitesparse/SuiteSparse_config.h \
- /usr/include/suitesparse/umfpack_symbolic.h \
- /usr/include/suitesparse/umfpack_numeric.h \
- /usr/include/suitesparse/umfpack_solve.h \
- /usr/include/suitesparse/umfpack_free_symbolic.h \
- /usr/include/suitesparse/umfpack_free_numeric.h \
- /usr/include/suitesparse/umfpack_defaults.h \
- /usr/include/suitesparse/umfpack_qsymbolic.h \
- /usr/include/suitesparse/umfpack_wsolve.h \
- /usr/include/suitesparse/umfpack_triplet_to_col.h \
- /usr/include/suitesparse/umfpack_col_to_triplet.h \
- /usr/include/suitesparse/umfpack_transpose.h \
- /usr/include/suitesparse/umfpack_scale.h \
- /usr/include/suitesparse/umfpack_get_lunz.h \
- /usr/include/suitesparse/umfpack_get_numeric.h \
- /usr/include/suitesparse/umfpack_get_symbolic.h \
- /usr/include/suitesparse/umfpack_save_numeric.h \
- /usr/include/suitesparse/umfpack_load_numeric.h \
- /usr/include/suitesparse/umfpack_save_symbolic.h \
- /usr/include/suitesparse/umfpack_load_symbolic.h \
- /usr/include/suitesparse/umfpack_get_determinant.h \
- /usr/include/suitesparse/umfpack_report_status.h \
- /usr/include/suitesparse/umfpack_report_info.h \
- /usr/include/suitesparse/umfpack_report_control.h \
- /usr/include/suitesparse/umfpack_report_matrix.h \
- /usr/include/suitesparse/umfpack_report_triplet.h \
- /usr/include/suitesparse/umfpack_report_vector.h \
- /usr/include/suitesparse/umfpack_report_symbolic.h \
- /usr/include/suitesparse/umfpack_report_numeric.h \
- /usr/include/suitesparse/umfpack_report_perm.h \
- /usr/include/suitesparse/umfpack_timer.h \
- /usr/include/suitesparse/umfpack_tictoc.h /usr/include/suitesparse/amd.h \
- /usr/include/suitesparse/umfpack_global.h \
+ /home/sssou/source/petsc/arch-opt/include/_hypre_parcsr_mv.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_parcsr_mv.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_utilities.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_seq_mv.h \
+ /home/sssou/source/petsc/arch-opt/include/_hypre_utilities.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_config.h \
+ /home/sssou/source/petsc/arch-opt/include/_hypre_seq_block_mv.h \
+ /home/sssou/source/petsc/arch-opt/include/seq_mv.h \
+ /home/sssou/source/petsc/arch-opt/include/seq_mv.h \
+ /home/sssou/source/petsc/arch-opt/include/temp_multivector.h \
+ /home/sssou/source/petsc/arch-opt/include/interpreter.h \
+ /home/sssou/source/petsc/arch-opt/include/_hypre_parcsr_ls.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_parcsr_ls.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_IJ_mv.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_lobpcg.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_krylov.h \
+ /home/sssou/source/petsc/arch-opt/include/fortran_matrix.h \
+ /home/sssou/source/petsc/arch-opt/include/multivector.h \
+ /home/sssou/source/petsc/arch-opt/include/temp_multivector.h \
+ /home/sssou/source/petsc/arch-opt/include/HYPRE_MatvecFunctions.h \
+ /home/sssou/source/petsc/arch-opt/include/_hypre_parcsr_mv.h \
+ /home/sssou/source/petsc/arch-opt/include/krylov.h \
+ /home/sssou/source/petsc/arch-opt/include/par_csr_block_matrix.h \
+ /home/sssou/source/petsc/arch-opt/include/csr_block_matrix.h \
+ /home/sssou/source/SuiteSparse/installed/include/suitesparse/umfpack.h \
+ /home/sssou/source/SuiteSparse/installed/include/suitesparse/SuiteSparse_config.h \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
+ /usr/include/inttypes.h \
+ /home/sssou/source/SuiteSparse/installed/include/suitesparse/amd.h \
  /home/sssou/local/mfem/include/mfem/linalg/complex_densemat.hpp \
  /usr/include/c++/13/complex \
  /home/sssou/local/mfem/include/mfem/linalg/blockvector.hpp \
@@ -403,8 +584,9 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /home/sssou/local/mfem/include/mfem/general/communication.hpp \
  /home/sssou/local/mfem/include/mfem/linalg/solvers.hpp \
  /home/sssou/local/mfem/include/mfem/linalg/handle.hpp \
- /usr/include/suitesparse/klu.h /usr/include/suitesparse/colamd.h \
- /usr/include/suitesparse/btf.h \
+ /home/sssou/source/SuiteSparse/installed/include/suitesparse/klu.h \
+ /home/sssou/source/SuiteSparse/installed/include/suitesparse/colamd.h \
+ /home/sssou/source/SuiteSparse/installed/include/suitesparse/btf.h \
  /home/sssou/local/mfem/include/mfem/linalg/invariants.hpp \
  /home/sssou/local/mfem/include/mfem/general/error.hpp \
  /home/sssou/local/mfem/include/mfem/linalg/constraints.hpp \
@@ -416,8 +598,235 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /home/sssou/local/mfem/include/mfem/linalg/batched/gpu_blas.hpp \
  /home/sssou/local/mfem/include/mfem/linalg/batched/batched.hpp \
  /home/sssou/local/mfem/include/mfem/general/backends.hpp \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cublas_v2.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cublas_api.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuComplex.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuda_bf16.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuda_fp16.h \
+ /usr/local/cuda-12.9/targets/x86_64-linux/include/cuda_bf16.hpp \
  /home/sssou/local/mfem/include/mfem/linalg/batched/solver.hpp \
  /home/sssou/local/mfem/include/mfem/linalg/operator.hpp \
+ /home/sssou/local/mfem/include/mfem/linalg/amgxsolver.hpp \
+ /home/sssou/source/amgx/installed/include/amgx_c.h \
+ /home/sssou/source/amgx/installed/include/amgx_config.h \
+ /home/sssou/local/mfem/include/mfem/linalg/sundials.hpp \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_config.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_export.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_matrix.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_context.h \
+ /home/sssou/source/sundials/installed/include/sundials/priv/sundials_context_impl.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_types.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_errors.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_nvector.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_linearsolver.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_iterative.h \
+ /home/sssou/source/sundials/installed/include/arkode/arkode_arkstep.h \
+ /home/sssou/source/sundials/installed/include/arkode/arkode.h \
+ /home/sssou/source/sundials/installed/include/arkode/arkode_butcher.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_adjointstepper.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_adjointcheckpointscheme.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_stepper.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_core.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_adaptcontroller.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_logger.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_math.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_memory.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_nonlinearsolver.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_profiler.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_version.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_mpi_errors.h \
+ /home/sssou/source/sundials/installed/include/arkode/arkode_butcher_dirk.h \
+ /home/sssou/source/sundials/installed/include/arkode/arkode_butcher_erk.h \
+ /home/sssou/source/sundials/installed/include/arkode/arkode_ls.h \
+ /home/sssou/source/sundials/installed/include/sundials/sundials_direct.h \
+ /home/sssou/source/sundials/installed/include/sunadaptcontroller/sunadaptcontroller_imexgus.h \
+ /home/sssou/source/sundials/installed/include/sunadaptcontroller/sunadaptcontroller_soderlind.h \
+ /home/sssou/source/sundials/installed/include/cvodes/cvodes.h \
+ /home/sssou/source/sundials/installed/include/cvodes/cvodes_ls.h \
+ /home/sssou/source/sundials/installed/include/cvodes/cvodes_proj.h \
+ /home/sssou/source/sundials/installed/include/kinsol/kinsol.h \
+ /home/sssou/source/sundials/installed/include/kinsol/kinsol_ls.h \
+ /home/sssou/source/sundials/installed/include/sunmemory/sunmemory_cuda.h \
+ /home/sssou/local/mfem/include/mfem/linalg/ginkgo.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/ginkgo.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/config.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/abstract_factory.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/polymorphic_object.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/executor.hpp \
+ /usr/include/c++/13/atomic \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/device.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/fwd_decls.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/machine_topology.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/exception.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/types.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/bfloat16.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/half.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/exception_helpers.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/batch_dim.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/dim.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/name_demangling.hpp \
+ /usr/include/c++/13/cxxabi.h \
+ /usr/include/x86_64-linux-gnu/c++/13/bits/cxxabi_tweaks.h \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/utils_helper.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/memory.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/scoped_device_id_guard.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/log/logger.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/synthesizer/containers.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/utils.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/temporary_clone.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/array.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/batch_lin_op.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/batch_multi_vector.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/mtx_io.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/matrix_data.hpp \
+ /usr/include/c++/13/numeric /usr/include/c++/13/bits/stl_numeric.h \
+ /usr/include/c++/13/pstl/glue_numeric_defs.h \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/math.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/range.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/range_accessors.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/dense.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/lin_op.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/device_matrix_data.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/matrix_assembly_data.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/permutation.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/scaled_permutation.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/block_operator.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/dense_cache.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/combination.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/composition.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/index_set.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/intrinsics.hpp \
+ /usr/include/c++/13/bitset \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/mpi.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/perturbation.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/precision_dispatch.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/temporary_conversion.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/vector.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/base.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/segmented_array.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/std_extensions.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/stream.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/timer.hpp \
+ /usr/include/c++/13/chrono /usr/include/c++/13/bits/chrono_io.h \
+ /usr/include/c++/13/format /usr/include/c++/13/charconv \
+ /usr/include/c++/13/optional /usr/include/c++/13/span \
+ /usr/include/c++/13/variant \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/type_traits.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/version.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/config/config.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/config/type_descriptor.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/solver_base.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/identity.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/workspace.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/stop/combined.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/stop/criterion.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/stop/stopping_status.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/config/property_tree.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/config/registry.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/assembly.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/collective_communicator.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/index_map.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/partition.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/dense_communicator.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/matrix.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/row_gatherer.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/vector_cache.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/neighborhood_communicator.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/partition_helpers.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/distributed/preconditioner/schwarz.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/factorization/cholesky.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/factorization/factorization.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/csr.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/diagonal.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/sparsity_csr.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/factorization/ic.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/factorization/incomplete_factorization.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/factorization/ilu.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/factorization/lu.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/factorization/par_ic.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/factorization/par_ict.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/factorization/par_ilu.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/factorization/par_ilut.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/log/batch_logger.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/log/convergence.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/log/papi.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/log/performance_hint.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/log/profiler_hook.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/log/record.hpp \
+ /usr/include/c++/13/deque /usr/include/c++/13/bits/stl_deque.h \
+ /usr/include/c++/13/bits/deque.tcc \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/log/solver_progress.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/log/stream.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/batch_csr.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/batch_dense.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/batch_ell.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/ell.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/batch_identity.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/coo.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/fbcsr.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/fft.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/hybrid.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/row_gatherer.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/sellp.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/multigrid/fixed_coarsening.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/multigrid/multigrid_level.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/multigrid/pgm.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/preconditioner/batch_jacobi.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/preconditioner/gauss_seidel.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/preconditioner/ic.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/solver_traits.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/triangular.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/stop/iteration.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/stop/residual_norm.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/preconditioner/ilu.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/preconditioner/isai.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/preconditioner/jacobi.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/preconditioner/sor.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/reorder/amd.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/reorder/mc64.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/reorder/reordering_base.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/reorder/nested_dissection.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/reorder/rcm.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/reorder/scaled_reordered.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/batch_bicgstab.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/batch_solver_base.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/stop/batch_stop_enum.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/batch_cg.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/bicg.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/bicgstab.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/cb_gmres.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/cg.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/cgs.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/chebyshev.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/direct.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/fcg.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/gcr.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/gmres.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/idr.hpp \
+ /usr/include/c++/13/random /usr/include/c++/13/bits/random.h \
+ /usr/include/x86_64-linux-gnu/c++/13/bits/opt_random.h \
+ /usr/include/c++/13/bits/random.tcc \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/ir.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/minres.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/multigrid.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/pipe_cg.hpp \
+ /home/sssou/source/ginkgo/installed/include/ginkgo/core/stop/time.hpp \
+ /home/sssou/local/mfem/include/mfem/linalg/mumps.hpp \
+ /home/sssou/source/petsc/arch-opt/include/dmumps_c.h \
+ /home/sssou/source/petsc/arch-opt/include/mumps_compat.h \
+ /home/sssou/source/petsc/arch-opt/include/mumps_c_types.h \
+ /home/sssou/source/petsc/arch-opt/include/mumps_int_def.h \
+ /home/sssou/local/mfem/include/mfem/linalg/petsc.hpp \
+ /home/sssou/source/petsc/arch-opt/include/petscconf.h \
+ /home/sssou/source/petsc/include/petscversion.h \
+ /home/sssou/source/petsc/include/petscsystypes.h \
+ /home/sssou/source/petsc/arch-opt/include/petscconf_poison.h \
+ /home/sssou/source/petsc/arch-opt/include/petscfix.h \
+ /home/sssou/source/petsc/include/petscmacros.h \
+ /home/sssou/source/petsc/include/petsc/private/petscadvancedmacros.h \
+ /home/sssou/source/petsc/include/petsccxxcomplexfix.h \
+ /home/sssou/local/mfem/include/mfem/linalg/slepc.hpp \
+ /home/sssou/local/mfem/include/mfem/linalg/superlu.hpp \
  /home/sssou/local/mfem/include/mfem/mesh/mesh_headers.hpp \
  /home/sssou/local/mfem/include/mfem/mesh/vertex.hpp \
  /home/sssou/local/mfem/include/mfem/config/config.hpp \
@@ -431,12 +840,8 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /home/sssou/local/mfem/include/mfem/linalg/densemat.hpp \
  /home/sssou/local/mfem/include/mfem/fem/intrules.hpp \
  /home/sssou/local/mfem/include/mfem/general/array.hpp \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/omp.h \
  /home/sssou/local/mfem/include/mfem/general/hash.hpp \
- /usr/include/c++/13/unordered_map \
- /usr/include/c++/13/bits/unordered_map.h \
- /usr/include/c++/13/bits/hashtable.h \
- /usr/include/c++/13/bits/hashtable_policy.h \
- /usr/include/c++/13/bits/enable_special_members.h \
  /home/sssou/local/mfem/include/mfem/general/hash.hpp \
  /home/sssou/local/mfem/include/mfem/mesh/point.hpp \
  /home/sssou/local/mfem/include/mfem/mesh/segment.hpp \
@@ -477,7 +882,6 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /home/sssou/local/mfem/include/mfem/fem/kernel_reporter.hpp \
  /home/sssou/local/mfem/include/mfem/general/globals.hpp \
  /home/sssou/local/mfem/include/mfem/fem/coefficient.hpp \
- /usr/include/c++/13/functional /usr/include/c++/13/bits/std_function.h \
  /home/sssou/local/mfem/include/mfem/fem/eltrans.hpp \
  /home/sssou/local/mfem/include/mfem/general/zstr.hpp \
  /home/sssou/local/mfem/include/mfem/mesh/mesh_operators.hpp \
@@ -501,18 +905,18 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /home/sssou/local/mfem/include/mfem/linalg/operator.hpp \
  /home/sssou/local/mfem/include/mfem/fem/ceed/interface/ceed.hpp \
  /home/sssou/local/mfem/include/mfem/config/config.hpp \
+ /home/sssou/source/petsc/arch-opt/include/ceed.h \
+ /home/sssou/source/petsc/arch-opt/include/ceed/ceed.h \
+ /home/sssou/source/petsc/arch-opt/include/ceed/types.h \
+ /home/sssou/source/petsc/arch-opt/include/ceed/ceed-f64.h \
  /home/sssou/local/mfem/include/mfem/fem/integrator.hpp \
  /home/sssou/local/mfem/include/mfem/fem/ceed/interface/util.hpp \
  /home/sssou/local/mfem/include/mfem/general/error.hpp \
+ /home/sssou/source/petsc/arch-opt/include/ceed/backend.h \
  /home/sssou/local/mfem/include/mfem/fem/qfunction.hpp \
  /home/sssou/local/mfem/include/mfem/fem/qspace.hpp \
  /home/sssou/local/mfem/include/mfem/fem/linearform.hpp \
  /home/sssou/local/mfem/include/mfem/fem/lininteg.hpp \
- /usr/include/c++/13/random /usr/include/c++/13/bits/random.h \
- /usr/include/x86_64-linux-gnu/c++/13/bits/opt_random.h \
- /usr/include/c++/13/bits/random.tcc /usr/include/c++/13/numeric \
- /usr/include/c++/13/bits/stl_numeric.h \
- /usr/include/c++/13/pstl/glue_numeric_defs.h \
  /home/sssou/local/mfem/include/mfem/fem/linearform_ext.hpp \
  /home/sssou/local/mfem/include/mfem/fem/bilinearform_ext.hpp \
  /home/sssou/local/mfem/include/mfem/general/device.hpp \
@@ -590,7 +994,5 @@ CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o: \
  /home/sssou/local/mfem/include/mfem/fem/dgmassinv.hpp \
  /home/sssou/local/mfem/include/mfem/fem/hyperbolic.hpp \
  /usr/include/c++/13/filesystem /usr/include/c++/13/bits/fs_fwd.h \
- /usr/include/c++/13/bits/chrono.h /usr/include/c++/13/ratio \
- /usr/include/c++/13/bits/parse_numbers.h \
  /usr/include/c++/13/bits/fs_path.h /usr/include/c++/13/codecvt \
  /usr/include/c++/13/bits/fs_dir.h /usr/include/c++/13/bits/fs_ops.h

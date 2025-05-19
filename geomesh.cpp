@@ -5,7 +5,7 @@
 #include <string>
 
 
-void createConcentricSphericalLayers(const std::vector<double> &radii, double meshSizeMin, double meshSizeMax, int elementOrder, const std::string &outputFileName) {
+void createConcentricSphericalLayers(const std::vector<double> &radii, double meshSizeMin, double meshSizeMax, int elementOrder, int algorithm, const std::string &outputFileName) {
     int numLayers = radii.size();
     
     if (numLayers < 1) {
@@ -60,21 +60,37 @@ void createConcentricSphericalLayers(const std::vector<double> &radii, double me
                 gmsh::model::addPhysicalGroup(2, {surface.second}, surfaceTag);
                 gmsh::model::setPhysicalName(2, surfaceTag, "surface_" + std::to_string(i+1));
             }
-	    }
+        }
     }
     for (int i = 1; i < numLayers; ++i) {
         gmsh::model::occ::remove({{3, i+1}});
     }
     gmsh::model::occ::synchronize();
 
-    gmsh::model::mesh::generate(3);
+    std::vector<double> facesList(numLayers);
+    for (int i = 0; i < numLayers; ++i)
+        facesList[i] = i + 1;
 
-    gmsh::option::setNumber("Mesh.Algorithm3D", 10); //1-Delaunay, 4-Frontal, 7-MMG3D, 9-R-tree Delaunay, 10-HXT (Frontal-Delaunay), 11-Automatic
-    gmsh::option::setNumber("Mesh.Optimize", 3);
-    gmsh::option::setNumber("Mesh.OptimizeNetgen", 1);
+    gmsh::model::mesh::field::add("Distance", 1);
+    gmsh::model::mesh::field::setNumbers(1, "FacesList", facesList);
+
+    gmsh::model::mesh::field::add("Threshold", 2);
+    gmsh::model::mesh::field::setNumber(2, "InField", 1);
+    gmsh::model::mesh::field::setNumber(2, "SizeMin", meshSizeMin); 
+    gmsh::model::mesh::field::setNumber(2, "SizeMax", meshSizeMax);  
+    gmsh::model::mesh::field::setNumber(2, "DistMin", 0.0);
+    gmsh::model::mesh::field::setNumber(2, "DistMax", radii.back() * 0.1);
+
+    gmsh::model::mesh::field::setAsBackgroundMesh(2);
+
+    gmsh::option::setNumber("Mesh.Algorithm3D", algorithm); //1-Delaunay, 4-Frontal, 7-MMG3D, 9-R-tree Delaunay, 10-HXT (Frontal-Delaunay), 11-Automatic
     gmsh::option::setNumber("Mesh.ElementOrder", elementOrder);
+    gmsh::option::setNumber("Mesh.HighOrderOptimize", 1);
+    //gmsh::option::setNumber("Mesh.Optimize", 3);
+    //gmsh::option::setNumber("Mesh.OptimizeNetgen", 1);
     //gmsh::option::setNumber("Mesh.SecondOrderIncomplete", 0);
     gmsh::option::setNumber("Mesh.MshFileVersion", 2.2);
+    gmsh::model::mesh::generate(3);
     gmsh::write(outputFileName);
 
     gmsh::finalize();
@@ -96,10 +112,11 @@ std::vector<double> parseString(const std::string &string_arg) {
 
 int main(int argc, char **argv) {
 
-    std::vector<double> radii = {6380.0, 8000.0};
-    double meshSizeMin = 20.0;
-    double meshSizeMax = 200.0;
-    int elementOrder = 1;
+    std::vector<double> radii = {6380e3, 8000e3};
+    double meshSizeMin = 20e3;
+    double meshSizeMax = 200e3;
+    int algorithm = 1;
+    int elementOrder = 2;
     std::string outputFileName = "concentric_spherical_layers.msh";
 
     for (int i = 1; i < argc; ++i) {
@@ -119,12 +136,14 @@ int main(int argc, char **argv) {
             }
         } else if (arg == "-o" && i + 1 < argc) {
             elementOrder = std::stoi(argv[++i]);
-        } else if (arg == "-o" && i + 1 < argc) {
+        } else if (arg == "-ma" && i + 1 < argc) {
+            algorithm = std::stod(argv[++i]);
+        } else if (arg == "-output" && i + 1 < argc) {
             outputFileName = argv[++i];
         }
     }
 
-    createConcentricSphericalLayers(radii, meshSizeMin, meshSizeMax, elementOrder, outputFileName);
+    createConcentricSphericalLayers(radii, meshSizeMin, meshSizeMax, elementOrder, algorithm, outputFileName);
 
     return 0;
 }
