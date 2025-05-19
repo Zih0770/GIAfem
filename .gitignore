@@ -19,5 +19,6 @@
 Thumbs.db
 
 *.msh
+*.mesh
 git rm --cached *.msh
 
