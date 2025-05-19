@@ -1,12 +1,7 @@
 // giafem.cpp
 #include "giafem.hpp"
 #include <cmath>
-#include <limits>
-#include <functional>
-#include <fstream>
-#include <sstream>
 #include <iostream>
-#include <stdexcept>
 
 using namespace std;
 
@@ -31,10 +26,6 @@ void visualize(std::ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
 
     int owns_nodes = 0;
 
-
-    std::cout << "Displacement max = " << deformed_nodes->Max() << std::endl;
-    std::cout << "Mesh node max before = " << mesh->GetNodes()->Max() << std::endl;
-    
     mesh->SwapNodes(displaced_nodes, owns_nodes);
     
     os << "solution\n" << *mesh << *field;
@@ -379,7 +370,7 @@ void VeOperator_beam::CalcStrainEnergyDensity()
 }
 
 
-VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_properties_, FiniteElementSpace &fes_w_, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, Coefficient *loading_)   
+VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_properties_, FiniteElementSpace &fes_w_, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, Coefficient &loading_)   
     : TimeDependentOperator(fes_m_.GetTrueVSize(), (real_t) 0.0), fes_u(fes_u_), fes_m(fes_m_), fes_properties(fes_properties_), fes_w(fes_w_), u_gf(u_gf_), m_gf(m_gf_), d_gf(d_gf_), lamb(lamb_), mu(mu_), tau(tau_), loading(loading_), K(NULL), current_dt(0.0), lamb_gf(&fes_properties), mu_gf(&fes_properties), tau_gf(&fes_properties), Dev(&fes_u_, &fes_m_), force(3) 
 {
     tau_gf.ProjectCoefficient(tau);
@@ -393,13 +384,13 @@ VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, F
     //create_boundary_integ = [this]() {
     //    return new VectorBoundaryFluxLFIntegrator(*loading);
     //};
-
+/*
     auto b = new LinearForm(&fes_u);
     VectorGridFunctionCoefficient m_func(&m_gf);
     b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu, m_func));
-    b->AddBoundaryIntegrator(new VectorBoundaryFluxLFIntegrator(*loading));
+    b->AddBoundaryIntegrator(new VectorBoundaryFluxLFIntegrator(loading));
     b->Assemble();
-    
+*/    
     K = new BilinearForm(&fes_u);
     K->AddDomainIntegrator(new ElasticityIntegrator(lamb, mu));
     K->Assemble();
@@ -409,7 +400,7 @@ VeOperator::VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, F
     K_solver.SetRelTol(rel_tol);
     K_solver.SetAbsTol(0.0);
     K_solver.SetMaxIter(1000);
-    K_solver.SetPrintLevel(0);
+    K_solver.SetPrintLevel(1);
     K_solver.SetPreconditioner(K_prec);
 
     Dev.AddDomainInterpolator(new DevStrainInterpolator);
@@ -422,7 +413,7 @@ void VeOperator::Mult(const Vector &m_vec, Vector &dm_dt_vec) const
     m_gf.SetFromTrueDofs(m_vec);
     VectorGridFunctionCoefficient m_func(&m_gf);
     b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu, m_func));
-    b->AddBoundaryIntegrator(new VectorBoundaryFluxLFIntegrator(*loading));
+    b->AddBoundaryIntegrator(new VectorBoundaryFluxLFIntegrator(loading));
     b->Assemble();
     
     Vector X, B;
@@ -479,8 +470,8 @@ void VeOperator::ImplicitSolve(const real_t dt,
         dm_dt[i] *= tau_vec[i % tau_vec.Size()];
         dm_dt[i] /= tau_vec[i % tau_vec.Size()] + current_dt;
     }
-    cout<<"dmdt: "<<dm_dt.Norml2()<<endl;
-    cout<<"dmdt_old: "<<dm_dt_old.Norml2()<<endl;
+    //cout<<"dmdt: "<<dm_dt.Norml2()<<endl;
+    //cout<<"dmdt_old: "<<dm_dt_old.Norml2()<<endl;
 
 
     res = dm_dt;

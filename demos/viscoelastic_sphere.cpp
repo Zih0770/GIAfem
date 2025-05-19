@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
     MFEM_VERIFY(mesh->GetNodes(), "Mesh has no nodal coordinates!");
            
     //Time depednet operator
-    VeOperator oper(fes_u, fes_m, fes_properties, fes_w, u_gf, m_gf, d_gf, lamb_coeff, mu_coeff, tau_coeff, &loading_coeff);
+    VeOperator oper(fes_u, fes_m, fes_properties, fes_w, u_gf, m_gf, d_gf, lamb_coeff, mu_coeff, tau_coeff, loading_coeff);
     unique_ptr<ODESolver> ode_solver = ODESolver::Select(ode_solver_type);
     //ODESolver *ode_solver = new BaileySolver;
     ode_solver->Init(oper);

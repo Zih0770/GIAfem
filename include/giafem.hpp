@@ -7,7 +7,6 @@
 #include <string>
 #include <utility>
 #include <iostream>
-#include <memory>
 
 namespace giafem
 {
@@ -170,7 +169,7 @@ protected:
     mutable GridFunction lamb_gf, mu_gf, tau_gf;
     Array<int> etl;
     mutable VectorArrayCoefficient force;
-    Coefficient *loading;
+    Coefficient &loading;
     LinearFormIntegrator *boundary_integ; 
     BilinearForm *K;
     mutable SparseMatrix Kmat;
@@ -188,7 +187,7 @@ protected:
 public:
     VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_w_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_);
 
-    VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_properties_, FiniteElementSpace &fes_w_, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, Coefficient *loading_);
+    VeOperator(FiniteElementSpace &fes_u_, FiniteElementSpace &fes_m_, FiniteElementSpace &fes_properties_, FiniteElementSpace &fes_w_, GridFunction &u_gf_, GridFunction &m_gf_, GridFunction &d_gf_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, Coefficient &loading_);
 
     void Mult(const Vector &m_vec, Vector &dm_dt_vec) const override;
 
