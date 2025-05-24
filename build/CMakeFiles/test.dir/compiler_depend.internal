@@ -316,6 +316,10 @@ CMakeFiles/test.dir/demos/test.cpp.o
  /home/sssou/source/ginkgo/installed/include/ginkgo/core/stop/time.hpp
  /home/sssou/source/ginkgo/installed/include/ginkgo/core/synthesizer/containers.hpp
  /home/sssou/source/ginkgo/installed/include/ginkgo/ginkgo.hpp
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity.hpp
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/bilininteg.hpp
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/lininteg.hpp
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/solvers.hpp
  /home/sssou/source/petsc/arch-opt/include/HYPRE_IJ_mv.h
  /home/sssou/source/petsc/arch-opt/include/HYPRE_MatvecFunctions.h
  /home/sssou/source/petsc/arch-opt/include/HYPRE_config.h

@@ -12,8 +12,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 #find_package(OpenMP REQUIRED)
 
-set(MFEM_LIBRARIES "/home/sssou/local/mfem/lib/libmfem.so" "/home/sssou/source/petsc/arch-opt/lib/libmpi.so")
-set(MFEM_INCLUDE "/home/sssou/local/mfem/include")
+message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
+
+set(MFEM_LIBRARIES "/home/sssou/local/mfem/lib/libmfem.so" "/home/sssou/source/petsc/arch-opt/lib/libmpi.so" /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a)
+set(MFEM_INCLUDE "/home/sssou/local/mfem/include" /home/sssou/source/mfemElasticity/installed/include)
 include_directories(${MFEM_INCLUDE})
 
 # CUDA
@@ -62,17 +64,18 @@ target_link_libraries(test PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRAR
 add_executable(test_N_L2 demos/test_N_L2.cpp)
 target_link_libraries(test_N_L2 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
+add_executable(test_N_alp demos/test_N_alp.cpp)
+target_link_libraries(test_N_alp PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(test_N_tau demos/test_N_tau.cpp)
+target_link_libraries(test_N_tau PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
 add_executable(test_interpolation demos/test_interpolation.cpp)
 target_link_libraries(test_interpolation PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
-add_executable(test_field demos/test_field.cpp)
-target_link_libraries(test_field PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test_time_oper demos/test_time_oper.cpp)
 target_link_libraries(test_time_oper PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
-
-add_executable(test_field_2 demos/test_field_2.cpp)
-target_link_libraries(test_field_2 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test_ve demos/test_ve.cpp)
 target_link_libraries(test_ve PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
@@ -100,9 +103,6 @@ target_link_libraries(beam PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRAR
 
 add_executable(beam_t demos/beam_t.cpp)
 target_link_libraries(beam_t PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
-
-add_executable(MatrixLinearForm demos/MatrixLinearForm.cpp)
-target_link_libraries(MatrixLinearForm PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

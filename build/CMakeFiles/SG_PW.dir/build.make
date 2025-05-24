@@ -95,7 +95,9 @@ SG_PW: CMakeFiles/SG_PW.dir/build.make
 SG_PW: libgiafem_lib.a
 SG_PW: /home/sssou/local/mfem/lib/libmfem.so
 SG_PW: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+SG_PW: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 SG_PW: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+SG_PW: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 SG_PW: CMakeFiles/SG_PW.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable SG_PW"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/SG_PW.dir/link.txt --verbose=$(VERBOSE)

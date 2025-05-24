@@ -585,7 +585,7 @@ SUNDIALS_INCLUDE_DIR:PATH=/home/sssou/source/sundials/installed/include
 SUNDIALS_LIBRARY:FILEPATH=/home/sssou/source/sundials/installed/lib/libsundials_cvode.so
 
 //Dependencies for the target
-giafem_lib_LIB_DEPENDS:STATIC=general;/home/sssou/local/mfem/lib/libmfem.so;general;/home/sssou/source/petsc/arch-opt/lib/libmpi.so;general;/home/sssou/source/petsc/arch-opt/lib/libmpi.so;
+giafem_lib_LIB_DEPENDS:STATIC=general;/home/sssou/local/mfem/lib/libmfem.so;general;/home/sssou/source/petsc/arch-opt/lib/libmpi.so;general;/home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a;general;/home/sssou/source/petsc/arch-opt/lib/libmpi.so;
 
 
 ########################

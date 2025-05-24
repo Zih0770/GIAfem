@@ -95,7 +95,9 @@ test_ve: CMakeFiles/test_ve.dir/build.make
 test_ve: libgiafem_lib.a
 test_ve: /home/sssou/local/mfem/lib/libmfem.so
 test_ve: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+test_ve: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 test_ve: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+test_ve: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 test_ve: CMakeFiles/test_ve.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable test_ve"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_ve.dir/link.txt --verbose=$(VERBOSE)

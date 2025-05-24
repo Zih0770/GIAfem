@@ -95,7 +95,9 @@ viscoelastic_sphere: CMakeFiles/viscoelastic_sphere.dir/build.make
 viscoelastic_sphere: libgiafem_lib.a
 viscoelastic_sphere: /home/sssou/local/mfem/lib/libmfem.so
 viscoelastic_sphere: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+viscoelastic_sphere: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 viscoelastic_sphere: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+viscoelastic_sphere: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 viscoelastic_sphere: CMakeFiles/viscoelastic_sphere.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable viscoelastic_sphere"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/viscoelastic_sphere.dir/link.txt --verbose=$(VERBOSE)

@@ -315,6 +315,10 @@ CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o: /home/sssou/
   /home/sssou/source/ginkgo/installed/include/ginkgo/core/stop/time.hpp \
   /home/sssou/source/ginkgo/installed/include/ginkgo/core/synthesizer/containers.hpp \
   /home/sssou/source/ginkgo/installed/include/ginkgo/ginkgo.hpp \
+  /home/sssou/source/mfemElasticity/installed/include/mfemElasticity.hpp \
+  /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/bilininteg.hpp \
+  /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/lininteg.hpp \
+  /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/solvers.hpp \
   /home/sssou/source/petsc/arch-opt/include/HYPRE_IJ_mv.h \
   /home/sssou/source/petsc/arch-opt/include/HYPRE_MatvecFunctions.h \
   /home/sssou/source/petsc/arch-opt/include/HYPRE_config.h \
@@ -1073,8 +1077,6 @@ CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o: /home/sssou/
 
 /usr/include/x86_64-linux-gnu/bits/fp-fast.h:
 
-/usr/include/x86_64-linux-gnu/bits/flt-eval-method.h:
-
 /usr/include/x86_64-linux-gnu/bits/errno.h:
 
 /usr/include/x86_64-linux-gnu/bits/environments.h:
@@ -1477,6 +1479,10 @@ CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o: /home/sssou/
 
 /home/sssou/source/sundials/installed/include/arkode/arkode_arkstep.h:
 
+/home/sssou/source/raja/installed/include/camp/value.hpp:
+
+/home/sssou/source/raja/installed/include/camp/size.hpp:
+
 /home/sssou/source/ginkgo/installed/include/ginkgo/core/matrix/diagonal.hpp:
 
 /usr/include/c++/13/tr1/riemann_zeta.tcc:
@@ -1707,8 +1713,6 @@ CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o: /home/sssou/
 
 /home/sssou/source/ginkgo/installed/include/ginkgo/core/base/memory.hpp:
 
-/home/sssou/local/mfem/include/mfem/fem/tmop.hpp:
-
 /usr/include/c++/13/bits/range_access.h:
 
 /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/VectorRegister.hpp:
@@ -1730,8 +1734,6 @@ CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o: /home/sssou/
 /home/sssou/source/SuiteSparse/installed/include/suitesparse/klu.h:
 
 /home/sssou/source/raja/installed/include/RAJA/pattern/forall.hpp:
-
-/home/sssou/local/mfem/include/mfem/mesh/hexahedron.hpp:
 
 /home/sssou/local/mfem/include/mfem/mfem.hpp:
 
@@ -1948,8 +1950,6 @@ CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o: /home/sssou/
 /home/sssou/local/mfem/include/mfem/linalg/auxiliary.hpp:
 
 /home/sssou/local/mfem/include/mfem/mesh/nurbs.hpp:
-
-/home/sssou/source/raja/installed/include/camp/size.hpp:
 
 /home/sssou/local/mfem/include/mfem/fem/coefficient.hpp:
 
@@ -2173,8 +2173,6 @@ CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o: /home/sssou/
 
 /home/sssou/local/mfem/include/mfem/general/cuda.hpp:
 
-/home/sssou/source/raja/installed/include/camp/value.hpp:
-
 /home/sssou/giafem/demos/viscoelastic_sphere.cpp:
 
 /home/sssou/source/petsc/include/petsccxxcomplexfix.h:
@@ -2383,6 +2381,8 @@ CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o: /home/sssou/
 
 /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/cg.hpp:
 
+/home/sssou/source/mfemElasticity/installed/include/mfemElasticity.hpp:
+
 /home/sssou/source/ginkgo/installed/include/ginkgo/core/solver/cgs.hpp:
 
 /home/sssou/local/mfem/include/mfem/general/arrays_by_name.hpp:
@@ -2431,6 +2431,10 @@ CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o: /home/sssou/
 
 /home/sssou/source/raja/installed/include/RAJA/pattern/kernel/Param.hpp:
 
+/home/sssou/local/mfem/include/mfem/fem/tmop.hpp:
+
+/home/sssou/source/mfemElasticity/installed/include/mfemElasticity/bilininteg.hpp:
+
 /home/sssou/source/raja/installed/include/RAJA/policy/sequential/WorkGroup/WorkRunner.hpp:
 
 /home/sssou/source/petsc/arch-opt/include/HYPRE_IJ_mv.h:
@@ -2444,6 +2448,14 @@ CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o: /home/sssou/
 /usr/include/c++/13/bits/locale_conv.h:
 
 /home/sssou/source/raja/installed/include/RAJA/pattern/tensor/internal/TensorRegisterBase.hpp:
+
+/usr/include/x86_64-linux-gnu/bits/flt-eval-method.h:
+
+/home/sssou/source/mfemElasticity/installed/include/mfemElasticity/lininteg.hpp:
+
+/home/sssou/local/mfem/include/mfem/mesh/hexahedron.hpp:
+
+/home/sssou/source/mfemElasticity/installed/include/mfemElasticity/solvers.hpp:
 
 /usr/include/c++/13/backward/binders.h:
 

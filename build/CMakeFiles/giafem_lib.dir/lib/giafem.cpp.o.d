@@ -993,4 +993,8 @@ CMakeFiles/giafem_lib.dir/lib/giafem.cpp.o: \
  /home/sssou/local/mfem/include/mfem/fem/lor/lor.hpp \
  /home/sssou/local/mfem/include/mfem/fem/bilinearform.hpp \
  /home/sssou/local/mfem/include/mfem/fem/dgmassinv.hpp \
- /home/sssou/local/mfem/include/mfem/fem/hyperbolic.hpp
+ /home/sssou/local/mfem/include/mfem/fem/hyperbolic.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/bilininteg.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/lininteg.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/solvers.hpp

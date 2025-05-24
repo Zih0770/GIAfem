@@ -95,7 +95,9 @@ elastostatic: CMakeFiles/elastostatic.dir/build.make
 elastostatic: libgiafem_lib.a
 elastostatic: /home/sssou/local/mfem/lib/libmfem.so
 elastostatic: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+elastostatic: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 elastostatic: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+elastostatic: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 elastostatic: CMakeFiles/elastostatic.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable elastostatic"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/elastostatic.dir/link.txt --verbose=$(VERBOSE)

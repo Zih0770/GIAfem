@@ -95,7 +95,9 @@ beam: CMakeFiles/beam.dir/build.make
 beam: libgiafem_lib.a
 beam: /home/sssou/local/mfem/lib/libmfem.so
 beam: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+beam: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 beam: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+beam: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 beam: CMakeFiles/beam.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable beam"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/beam.dir/link.txt --verbose=$(VERBOSE)

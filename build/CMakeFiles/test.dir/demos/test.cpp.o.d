@@ -992,4 +992,8 @@ CMakeFiles/test.dir/demos/test.cpp.o: /home/sssou/giafem/demos/test.cpp \
  /home/sssou/local/mfem/include/mfem/fem/bilinearform.hpp \
  /home/sssou/local/mfem/include/mfem/fem/dgmassinv.hpp \
  /home/sssou/local/mfem/include/mfem/fem/hyperbolic.hpp \
- /home/sssou/giafem/include/giafem.hpp
+ /home/sssou/giafem/include/giafem.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/bilininteg.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/lininteg.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/solvers.hpp

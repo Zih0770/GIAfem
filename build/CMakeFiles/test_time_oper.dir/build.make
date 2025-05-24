@@ -95,7 +95,9 @@ test_time_oper: CMakeFiles/test_time_oper.dir/build.make
 test_time_oper: libgiafem_lib.a
 test_time_oper: /home/sssou/local/mfem/lib/libmfem.so
 test_time_oper: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+test_time_oper: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 test_time_oper: /home/sssou/source/petsc/arch-opt/lib/libmpi.so
+test_time_oper: /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a
 test_time_oper: CMakeFiles/test_time_oper.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable test_time_oper"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/test_time_oper.dir/link.txt --verbose=$(VERBOSE)

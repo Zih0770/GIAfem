@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 {
     const char *mesh_file = "mesh/examples/beam-tet.mesh";
     const char *output_file = "output.dat";
-    real_t tau = 5.0;
+    real_t tau = 1.0;
     real_t lamb = 15.0;
     real_t mu = 10.0;
     int ode_solver_type = 23;
@@ -172,9 +172,9 @@ int main(int argc, char *argv[])
     //ODESolver *ode_solver = new AB3Solver;
     //ODESolver *ode_solver = new AB4Solver;
     //ODESolver *ode_solver = new AB5Solver;
-    ODESolver *ode_solver = new BaileySolver;
+    //ODESolver *ode_solver = new BaileySolver;
 
-    //ODESolver *ode_solver = new BackwardEulerSolver;
+    ODESolver *ode_solver = new BackwardEulerSolver;
     //ODESolver *ode_solver = new SDIRK23Solver(2);
     //ODESolver *ode_solver = new SDIRK33Solver;
     //ODESolver *ode_solver = new ImplicitMidpointSolver;

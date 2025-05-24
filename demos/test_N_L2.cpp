@@ -9,6 +9,27 @@ using namespace std;
 using namespace mfem;
 using namespace giafem;
 
+/*
+  5-Component Vector Field Relaxation on 3D Mesh
+  -------------------------------------------------------------
+  Solves the system:
+    dm(x,t)/dt = (1/tau) [ d(x,t) - m(x,t) ],
+  where m(x,t) and d(x,t) are vector fields in R^5 defined on a 3D mesh.
+
+  Forcing:
+    d(x,t) = d0(x) e^{-alp*t},
+    d0_j(x) = (j+1) sin(π x) sin(π y) sin(π z),  j = 0,...,4.
+
+  Analytical solution at each degree of freedom:
+    m_ana(x,t) = m0(x) e^{-t/tau} + [ d0(x)/(1 - alp*tau) ] [ e^{-alp*t} - e^{-t/tau} ].
+
+  Initial condition:
+    m(x,0) = m0(x),
+    m0_j(x) given by a smooth 5-vector FunctionCoefficient.
+
+  Outputs error data in error.dat for L2( m_num - m_ana ).
+*/
+
 class CountingRelaxOp : public TimeDependentOperator
 {
 private:

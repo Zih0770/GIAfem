@@ -993,4 +993,8 @@ CMakeFiles/SG_PW_p.dir/demos/SG_PW_p.cpp.o: \
  /home/sssou/local/mfem/include/mfem/fem/bilinearform.hpp \
  /home/sssou/local/mfem/include/mfem/fem/dgmassinv.hpp \
  /home/sssou/local/mfem/include/mfem/fem/hyperbolic.hpp \
- /home/sssou/giafem/include/giafem.hpp
+ /home/sssou/giafem/include/giafem.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/bilininteg.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/lininteg.hpp \
+ /home/sssou/source/mfemElasticity/installed/include/mfemElasticity/solvers.hpp
