@@ -1,3 +1,5 @@
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 cmake_minimum_required (VERSION 3.5)
 
 project(GIAfem LANGUAGES CXX)
@@ -61,17 +63,26 @@ target_link_libraries(giafem_lib PUBLIC ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 add_executable(test demos/test.cpp)
 target_link_libraries(test PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
-add_executable(test_N_L2 demos/test_N_L2.cpp)
-target_link_libraries(test_N_L2 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+#add_executable(test_ode demos/test_ode.cpp)
+#target_link_libraries(test_ode PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
-add_executable(test_N_alp demos/test_N_alp.cpp)
-target_link_libraries(test_N_alp PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+#add_executable(test_ode_l2 demos/test_ode_l2.cpp)
+#target_link_libraries(test_ode_l2 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
-add_executable(test_N_tau demos/test_N_tau.cpp)
-target_link_libraries(test_N_tau PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+#add_executable(test_ode_tau demos/test_ode_tau.cpp)
+#target_link_libraries(test_ode_tau PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
-add_executable(test_interpolation demos/test_interpolation.cpp)
-target_link_libraries(test_interpolation PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+#add_executable(test_N_L2 demos/test_N_L2.cpp)
+#target_link_libraries(test_N_L2 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+#add_executable(test_N_alp demos/test_N_alp.cpp)
+#target_link_libraries(test_N_alp PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+#add_executable(test_N_tau demos/test_N_tau.cpp)
+#target_link_libraries(test_N_tau PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+#add_executable(test_interpolation demos/test_interpolation.cpp)
+#target_link_libraries(test_interpolation PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 
 add_executable(test_time_oper demos/test_time_oper.cpp)
@@ -82,6 +93,9 @@ target_link_libraries(test_ve PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIB
 
 add_executable(viscoelastic_sphere demos/viscoelastic_sphere.cpp)
 target_link_libraries(viscoelastic_sphere PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(viscoelastic demos/viscoelastic.cpp)
+target_link_libraries(viscoelastic PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(SG_PW demos/SG_PW.cpp)
 target_link_libraries(SG_PW PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
@@ -107,6 +121,25 @@ target_link_libraries(beam_t PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBR
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# Set output directory for executables
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+
+include_directories(/home/sssou/local/gmsh/include)
+link_directories(/home/sssou/local/gmsh/lib)
+
+set(MESH_GENERATORS
+    geomesh.cpp
+    geomesh_Earth.cpp
+    geomesh_f.cpp
+)
+
+foreach(mesh_src ${MESH_GENERATORS})
+    get_filename_component(exec_name ${mesh_src} NAME_WE)
+    add_executable(${exec_name} ${mesh_src})
+    target_link_libraries(${exec_name} gmsh)
+endforeach()
+
 
 
 #add_subdirectory(lib)

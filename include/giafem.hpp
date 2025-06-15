@@ -14,9 +14,94 @@ namespace giafem
     using namespace std;
     using namespace mfem;
 
-void visualize(std::ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
-               GridFunction *field, const char *field_name = NULL, bool init_vis = false);
+    //Utilities
+    inline void Visualize(ostream &os, ParMesh *mesh, ParGridFunction *deformed_nodes,
+                          ParGridFunction *field, const char *field_name, bool init_vis = false)
+    {
+        if (!os)
+        {
+            return;
+        }
 
+        GridFunction *nodes = deformed_nodes;
+
+        int owns_nodes = 0;
+        mesh->SwapNodes(nodes, owns_nodes);
+
+        os << "parallel " << mesh->GetNRanks() << " " << mesh->GetMyRank() << "\n";
+        os << "solution\n" << *mesh << *field;
+        mesh->SwapNodes(nodes, owns_nodes);
+
+        if (init_vis)
+        {
+            os << "window_size 800 800\n";
+            os << "window_title '" << field_name << "'\n";
+            if (mesh->SpaceDimension() == 2)
+            {
+                os << "view 0 0\n"; 
+                os << "keys jl\n";  
+            }
+            os << "keys cm\n";        
+            os << "autoscale value\n";
+            os << "pause\n";
+        }
+        os << flush;
+
+        delete nodes;
+    }
+
+
+//Operators
+class ViscoelasticOperator : public TimeDependentOperator
+{
+protected:
+    Coefficient &tau, &lamb, &mu, &loading;
+    ParFiniteElementSpace &fes_u, &fes_m, &fes_w, &fes_properties;
+    ParGridFunction &u_gf, &m_gf, &d_gf;
+    mutable ParGridFunction lamb_gf, mu_gf, tau_gf;
+    Array<int> ess_tdof_list;
+    ParBilinearForm *K;
+    mutable PetscParMatrix Kmat;
+    PetscPreconditioner *K_prec = NULL;
+    mutable PetscPCGSolver K_solver;
+    mutable mfemElasticity::RigidBodySolver rigid_solver;
+    MixedBilinearForm B;
+    MixedBilinearForm B2;
+    DiscreteLinearOperator Dev;
+    real_t current_dt;
+    real_t rel_tol = 1e-8;
+    real_t res_max = 1e-3;
+
+    mutable Vector u_vec, d_vec, tau_vec;
+    mutable Vector x_vec, b_vec;
+
+public:
+    ViscoelasticOperator(ParFiniteElementSpace &fes_u_, ParFiniteElementSpace &fes_m_, ParFiniteElementSpace &fes_properties_, ParFiniteElementSpace &fes_w_, 
+               ParGridFunction &u_gf_, ParGridFunction &m_gf_, ParGridFunction &d_gf_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, Coefficient &loading_);
+
+    void Mult(const Vector &m_vec, Vector &dm_dt_vec) const override;
+
+    void ImplicitSolve(const real_t dt, const Vector &m_vec, Vector &dm_dt_vec) override;
+
+    void CalcStrainEnergyDensity(ParGridFunction &w_gf);
+
+    const ParGridFunction &GetTau() const { return tau_gf; }
+    const ParGridFunction &GetLamb() const { return lamb_gf; }
+    const ParGridFunction &GetMu()  const { return mu_gf; }
+
+    ~ViscoelasticOperator() override {delete K, K_prec;}
+};
+
+
+
+
+
+
+
+
+
+
+//Interpolators
 class GradInterpolator : public DiscreteInterpolator
 {
 protected:
@@ -28,15 +113,6 @@ public:
                                 const FiniteElement &e_fe,
                                 ElementTransformation &Trans,
                                 DenseMatrix &elmat) override;
-
-    /*using BilinearFormIntegrator::AssemblePA;
-   
-    void AssemblePA(const FiniteElementSpace &u_fes,
-                    const FiniteElementSpace &e_fes) override;
- 
-    void AddMultPA(const Vector &x, Vector &y) const override;
-   
-    void AddMultTransposePA(const Vector &x, Vector &y) const override;*/
 };
 
 class StrainInterpolator : public DiscreteInterpolator
@@ -59,15 +135,6 @@ public:
                                 const FiniteElement &e_fe,
                                 ElementTransformation &Trans,
                                 DenseMatrix &elmat) override;
-
-    /*using BilinearFormIntegrator::AssemblePA;
-   
-    void AssemblePA(const FiniteElementSpace &u_fes,
-                    const FiniteElementSpace &e_fes) override;
- 
-    void AddMultPA(const Vector &x, Vector &y) const override;
-   
-    void AddMultTransposePA(const Vector &x, Vector &y) const override;*/
 };
 
 class DevStrainInterpolator : public DiscreteInterpolator
@@ -89,16 +156,38 @@ public:
                                 const FiniteElement &e_fe,
                                 ElementTransformation &Trans,
                                 DenseMatrix &elmat) override;
-
-    /*using BilinearFormIntegrator::AssemblePA;
-   
-    void AssemblePA(const FiniteElementSpace &u_fes,
-                    const FiniteElementSpace &e_fes) override;
- 
-    void AddMultPA(const Vector &x, Vector &y) const override;
-   
-    void AddMultTransposePA(const Vector &x, Vector &y) const override;*/
 };
+
+//Integrators
+inline void OperatorContractionTracefree(DenseMatrix &B0, int dof, int dim, DenseMatrix &B)
+{
+   if (dim == 2){
+       std::vector<DenseMatrix> columns(4);
+       for (int i = 0; i < 4; i++)
+           B0.GetSubMatrix(0, B0.Height(), i*dof, (i+1)*dof, columns[i]);
+
+           columns[0].AddMatrix(-1.0, columns[3], 0, 0);
+           B.SetSubMatrix(0, 0, columns[0]);
+           columns[1].AddMatrix(columns[2], 0, 0);
+           B.SetSubMatrix(0, dof, columns[1]);
+   } else {
+       std::vector<DenseMatrix> columns(9);
+       for (int i = 0; i < 9; i++){
+           B0.GetSubMatrix(0, B0.Height(), i*dof, (i+1)*dof, columns[i]); //cout<<"Column "<<i<<": "<<columns[i].FNorm()<<endl;
+       }
+       columns[0].AddMatrix(-1.0, columns[8], 0, 0);
+       B.SetSubMatrix(0, 0, columns[0]);
+       columns[1].AddMatrix(columns[3], 0, 0);
+       B.SetSubMatrix(0, dof, columns[1]);
+       columns[2].AddMatrix(columns[6], 0, 0);
+       B.SetSubMatrix(0, 2 * dof, columns[2]);
+       columns[4].AddMatrix(-1.0, columns[8], 0, 0);
+       B.SetSubMatrix(0, 3 * dof, columns[4]);
+       columns[5].AddMatrix(columns[7], 0, 0);
+       B.SetSubMatrix(0, 4 * dof, columns[5]);
+   }
+}
+
 
 class ViscoelasticForcing : public BilinearFormIntegrator
 {
@@ -124,10 +213,22 @@ public:
 };
 
 
+class ViscoelasticRHSIntegrator : public LinearFormIntegrator
+{
+    private:
+        Coefficient &mu;
+        VectorCoefficient &m;
+
+    public:
+        ViscoelasticRHSIntegrator(Coefficient &mu_, VectorCoefficient &m_) : mu(mu_), m(m_) { }
+
+        void AssembleRHSElementVect(const FiniteElement &el, ElementTransformation &Tr, Vector &elvec);
+
+        using LinearFormIntegrator::AssembleRHSElementVect;
+};
 
 
-
-
+//Coefficients
 class StrainEnergyCoefficient : public Coefficient
 {
 protected:
@@ -168,6 +269,8 @@ public:
 };
 
 
+
+//Solver-related
 class RigidTranslation : public mfem::VectorCoefficient {
     private:
         int _component;
@@ -385,6 +488,65 @@ class RigidBodySolver : public Solver {
 
 
 
+class BaileySolver : public ODESolver
+{
+    private:
+        Vector dxdt;
+        Vector d_vec_old, d_vec_new;
+
+    public:
+        void Init(TimeDependentOperator &f_) override;
+        void Step(Vector &x, real_t &t, real_t &dt) override;
+};
+
+
+
+//Plotting
+class plot
+{
+    public:
+        // Constructor to initialize with solution and mesh
+        plot(const GridFunction &solution, Mesh &mesh);
+
+        ~plot();
+
+        // Subroutine to evaluate the radial solution at evenly spaced points
+        void EvaluateRadialSolution(int num_samples, double min_radius, double max_radius, std::vector<double> &radii, 
+                std::vector<double> &values);
+
+        // Optional subroutine to save the evaluated radial solution data to a file
+        void SaveRadialSolution(const std::string &filename, int num_samples, double min_radius, double max_radius);
+
+    private:
+        const GridFunction &solution;  // Reference to the solution GridFunction
+        Mesh &mesh;              // Reference to the mesh
+};
+
+
+class parse
+{
+    public:
+        ~parse();
+        // Function to parse 1D properties from a file with dynamic columns
+        static std::vector<std::vector<double>> properties_1d(const std::string &filename);
+};
+
+
+class interp
+{
+    public:
+        ~interp();
+        // Function to interpolate a 1D property from dynamic data
+        static mfem::Array<mfem::FunctionCoefficient *>
+            PWCoef_1D(const std::vector<std::pair<double, double>> &radius_property,
+                    int num_attributes,
+                    const std::string &method = "linear");
+};
+
+//Legacy
+void visualize(std::ostream &os, Mesh *mesh, GridFunction *deformed_nodes,
+               GridFunction *field, const char *field_name = NULL, bool init_vis = false);
+
 class VeOperator : public TimeDependentOperator
 {
 protected:
@@ -423,7 +585,6 @@ public:
 
     ~VeOperator() override {delete K;}
 };
-
 
 class VeOperator_beam : public TimeDependentOperator
 {
@@ -470,146 +631,23 @@ public:
 };
 
 
-
-
-class BaileySolver : public ODESolver
-{
-    private:
-        Vector dxdt;
-        Vector d_vec_old, d_vec_new;
-
-    public:
-        void Init(TimeDependentOperator &f_) override;
-        void Step(Vector &x, real_t &t, real_t &dt) override;
-};
-
 class BaileySolver_test : public ODESolver
 {
     private:
         Vector dxdt;
         Vector d_vec_old, d_vec_new;
+        real_t tau = 1.0;
 
     public:
         void Init(TimeDependentOperator &f_) override;
         void Step(Vector &x, real_t &t, real_t &dt) override;
+        void SetTau(real_t tau_) { tau = tau_; }
+
 };
 
-class TensorFieldCoefficient : public mfem::MatrixCoefficient
-{
-    private:
-        const std::vector<std::vector<mfem::DenseMatrix>> &m_storage;
-        mfem::FiniteElementSpace *fespace;
 
-    public:
-        TensorFieldCoefficient(const std::vector<std::vector<mfem::DenseMatrix>> &storage,
-                mfem::FiniteElementSpace *fes)
-            : mfem::MatrixCoefficient(fes->GetMesh()->Dimension()), m_storage(storage), fespace(fes) {}
 
-        virtual void Eval(mfem::DenseMatrix &M, mfem::ElementTransformation &T, const mfem::IntegrationPoint &ip);
-};
-
-class ViscoelasticRHSIntegrator : public LinearFormIntegrator
-{
-    private:
-        Coefficient &mu;
-        VectorCoefficient &m;
-
-    public:
-        ViscoelasticRHSIntegrator(Coefficient &mu_, VectorCoefficient &m_) : mu(mu_), m(m_) { }
-
-        void AssembleRHSElementVect(const FiniteElement &el, ElementTransformation &Tr, Vector &elvec);
-
-        using LinearFormIntegrator::AssembleRHSElementVect;
-};
-
-class ViscoelasticIntegrator : public BilinearFormIntegrator
-{
-    private:
-        double tau, dt;                    
-        mfem::Coefficient &mu;         
-
-    public:
-        ViscoelasticIntegrator(double tau_, double dt_, mfem::Coefficient &mu_)
-            : tau(tau_), dt(dt_), mu(mu_) {}
-
-        virtual void AssembleElementMatrix(const mfem::FiniteElement &el,
-                mfem::ElementTransformation &Tr,
-                mfem::DenseMatrix &elmat) override;
-};
-
-inline void OperatorContractionTracefree(DenseMatrix &B0, int dof, int dim, DenseMatrix &B)
-{
-   if (dim == 2){
-       std::vector<DenseMatrix> columns(4);
-       for (int i = 0; i < 4; i++)
-           B0.GetSubMatrix(0, B0.Height(), i*dof, (i+1)*dof, columns[i]);
-
-           columns[0].AddMatrix(-1.0, columns[3], 0, 0);
-           B.SetSubMatrix(0, 0, columns[0]);
-           columns[1].AddMatrix(columns[2], 0, 0);
-           B.SetSubMatrix(0, dof, columns[1]);
-   } else {
-       std::vector<DenseMatrix> columns(9);
-       for (int i = 0; i < 9; i++){
-           B0.GetSubMatrix(0, B0.Height(), i*dof, (i+1)*dof, columns[i]); //cout<<"Column "<<i<<": "<<columns[i].FNorm()<<endl;
-       }
-       columns[0].AddMatrix(-1.0, columns[8], 0, 0);
-       B.SetSubMatrix(0, 0, columns[0]);
-       columns[1].AddMatrix(columns[3], 0, 0);
-       B.SetSubMatrix(0, dof, columns[1]);
-       columns[2].AddMatrix(columns[6], 0, 0);
-       B.SetSubMatrix(0, 2 * dof, columns[2]);
-       columns[4].AddMatrix(-1.0, columns[8], 0, 0);
-       B.SetSubMatrix(0, 3 * dof, columns[4]);
-       columns[5].AddMatrix(columns[7], 0, 0);
-       B.SetSubMatrix(0, 4 * dof, columns[5]);
-   }
 }
-
-
-
-class plot
-{
-    public:
-        // Constructor to initialize with solution and mesh
-        plot(const GridFunction &solution, Mesh &mesh);
-
-        ~plot();
-
-        // Subroutine to evaluate the radial solution at evenly spaced points
-        void EvaluateRadialSolution(int num_samples, double min_radius, double max_radius, std::vector<double> &radii, 
-                std::vector<double> &values);
-
-        // Optional subroutine to save the evaluated radial solution data to a file
-        void SaveRadialSolution(const std::string &filename, int num_samples, double min_radius, double max_radius);
-
-    private:
-        const GridFunction &solution;  // Reference to the solution GridFunction
-        Mesh &mesh;              // Reference to the mesh
-};
-
-
-class parse
-{
-    public:
-        ~parse();
-        // Function to parse 1D properties from a file with dynamic columns
-        static std::vector<std::vector<double>> properties_1d(const std::string &filename);
-};
-
-
-class interp
-{
-    public:
-        ~interp();
-        // Function to interpolate a 1D property from dynamic data
-        static mfem::Array<mfem::FunctionCoefficient *>
-            PWCoef_1D(const std::vector<std::pair<double, double>> &radius_property,
-                    int num_attributes,
-                    const std::string &method = "linear");
-};
-
-} // namespace giafem
 
 #endif // GIAFEM_HPP
 
