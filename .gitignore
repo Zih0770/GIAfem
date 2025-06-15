@@ -25,6 +25,10 @@ git rm --cached *.msh
 *.dat
 *.png
 *.sh
+/compile_commands.json
+Makefile
+CMakeFiles/
+CMakeCache.txt
 data/*.gf
 data/*.mesh
 
