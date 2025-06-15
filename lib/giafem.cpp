@@ -15,7 +15,7 @@ ElasticityModel ParseElasticityModel(const char *str)
     if (strcmp(str, "linear") == 0) return ElasticityModel::linear;
     if (strcmp(str, "neo-hookean") == 0) return ElasticityModel::neoHookean;
 
-    mfem::err << "Unknown elasticity model: " << str << std::endl;
+    //mfem::err << "Unknown elasticity model: " << str << std::endl;
     MFEM_ABORT("Invalid elasticity model.");
     return ElasticityModel::linear;  // unreachable
 }
@@ -26,7 +26,6 @@ RheologyModel ParseRheologyModel(const char *str)
     if (strcmp(str, "Maxwell_nonlinear") == 0) return RheologyModel::Maxwell_nonlinear;
     if (strcmp(str, "Kelvin-Voigt") == 0) return RheologyModel::KelvinVoigt;
 
-    mfem::err << "Unknown rheology model: " << str << std::endl;
     MFEM_ABORT("Invalid rheology model.");
     return RheologyModel::Maxwell;
 }
