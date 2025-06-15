@@ -25,7 +25,6 @@ git rm --cached *.msh
 
 *.dat
 *.png
-*.sh
 /compile_commands.json
 Makefile
 CMakeFiles/
@@ -38,3 +37,4 @@ data/*.mesh
 build/
 py/
 
+update_git.sh
