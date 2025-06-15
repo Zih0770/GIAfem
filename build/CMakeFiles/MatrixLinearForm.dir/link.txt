@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/MatrixLinearForm.dir/demos/MatrixLinearForm.cpp.o -o MatrixLinearForm   -L/home/sssou/source/petsc/arch-opt/lib  -Wl,-rpath,/home/sssou/source/petsc/arch-opt/lib:/home/sssou/local/mfem/lib libgiafem_lib.a /home/sssou/local/mfem/lib/libmfem.so /home/sssou/source/petsc/arch-opt/lib/libmpi.so /home/sssou/source/petsc/arch-opt/lib/libmpi.so 

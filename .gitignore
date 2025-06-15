@@ -24,5 +24,10 @@ git rm --cached *.msh
 
 *.dat
 *.png
+*.sh
 data/*.gf
 data/*.mesh
+
+build/
+py/
+
