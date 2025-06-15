@@ -17,3 +17,5 @@ git add .
 git commit -m "Merged develop into main"
 git push origin main
 
+git checkout develop
+
