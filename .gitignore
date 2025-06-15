@@ -29,6 +29,7 @@ git rm --cached *.msh
 /compile_commands.json
 Makefile
 CMakeFiles/
+build/CMakeFiles/
 CMakeCache.txt
 .cache/
 data/*.gf
