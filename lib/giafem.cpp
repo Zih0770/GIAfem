@@ -9,18 +9,46 @@ namespace giafem
 {
 //Utilities
 
+//Material Models
+ElasticityModel ParseElasticityModel(const char *str)
+{
+    if (strcmp(str, "linear") == 0) return ElasticityModel::linear;
+    if (strcmp(str, "neo-hookean") == 0) return ElasticityModel::neoHookean;
+
+    mfem::err << "Unknown elasticity model: " << str << std::endl;
+    MFEM_ABORT("Invalid elasticity model.");
+    return ElasticityModel::linear;  // unreachable
+}
+
+RheologyModel ParseRheologyModel(const char *str)
+{
+    if (strcmp(str, "Maxwell") == 0) return RheologyModel::Maxwell;
+    if (strcmp(str, "Maxwell_nonlinear") == 0) return RheologyModel::Maxwell_nonlinear;
+    if (strcmp(str, "Kelvin-Voigt") == 0) return RheologyModel::KelvinVoigt;
+
+    mfem::err << "Unknown rheology model: " << str << std::endl;
+    MFEM_ABORT("Invalid rheology model.");
+    return RheologyModel::Maxwell;
+}
+
 
 //Operators
 ViscoelasticOperator::ViscoelasticOperator(ParFiniteElementSpace &fes_u_, ParFiniteElementSpace &fes_m_, ParFiniteElementSpace &fes_properties_, ParFiniteElementSpace &fes_w_, 
                                            ParGridFunction &u_gf_, ParGridFunction &m_gf_, ParGridFunction &d_gf_, 
-                                           Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, Coefficient &loading_)   
+                                           Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, Coefficient &loading_,
+                                           const real_t rel_tol_, const real_t implicit_scheme_res_,
+                                           const char *elasticity_model_str, const char *rheology_model_str)   
                                            : TimeDependentOperator(fes_m_.GlobalTrueVSize(), (real_t) 0.0), 
                                            fes_u(fes_u_), fes_m(fes_m_), fes_properties(fes_properties_), fes_w(fes_w_), 
                                            u_gf(u_gf_), m_gf(m_gf_), d_gf(d_gf_), lamb_gf(&fes_properties), mu_gf(&fes_properties), tau_gf(&fes_properties), 
                                            lamb(lamb_), mu(mu_), tau(tau_), loading(loading_), K(NULL), 
-                                           B(&fes_m, &fes_u), B2(&fes_u, &fes_m), current_dt(0.0), Dev(&fes_u_, &fes_m_), 
-                                           K_solver(fes_u_.GetComm()), rigid_solver(&fes_u_) 
+                                           B(&fes_m, &fes_u), current_dt(0.0), Dev(&fes_u_, &fes_m_), 
+                                           K_solver(fes_u_.GetComm()), rigid_solver(&fes_u_),
+                                           rel_tol(rel_tol_), implicit_scheme_res(implicit_scheme_res_)
 {
+    EM = ParseElasticityModel(elasticity_model_str);
+    RM = ParseRheologyModel(rheology_model_str);
+
     tau_gf.ProjectCoefficient(tau);
     tau_gf.GetTrueDofs(tau_vec);
 
@@ -29,7 +57,15 @@ ViscoelasticOperator::ViscoelasticOperator(ParFiniteElementSpace &fes_u_, ParFin
     fes_u.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
 
     K = new ParBilinearForm(&fes_u);
-    K->AddDomainIntegrator(new ElasticityIntegrator(lamb, mu));
+    switch (EM)
+    {
+        case ElasticityModel::linear:
+            {
+                K->AddDomainIntegrator(new ElasticityIntegrator(lamb, mu));
+            }
+        default:
+            MFEM_ABORT("Unhandled elasticity model.");
+    }
     K->Assemble();
     K->FormSystemMatrix(ess_tdof_list, Kmat);
     
@@ -41,11 +77,16 @@ ViscoelasticOperator::ViscoelasticOperator(ParFiniteElementSpace &fes_u_, ParFin
     K_solver.SetOperator(Kmat);
     rigid_solver.SetSolver(K_solver);
 
-    B.AddDomainIntegrator(new ViscoelasticForcing(mu));
+    switch (RM)
+    {
+        case RheologyModel::Maxwell:
+            {
+                B.AddDomainIntegrator(new ViscoelasticForcing(mu));
+            }
+        default:
+            MFEM_ABORT("Unhandled rheology model.");
+    }
     B.Assemble();
-
-    B2.AddDomainIntegrator(new mfemElasticity::DomainTraceFreeSymmetricMatrixDeviatoricStrainIntegrator(mu));
-    B2.Assemble();
 
     Dev.AddDomainInterpolator(new DevStrainInterpolator);
     Dev.Assemble();
@@ -63,13 +104,7 @@ void ViscoelasticOperator::Mult(const Vector &m_vec, Vector &dm_dt_vec) const
     B.AddMult(m_vec, *b);
 
     Vector b1 (b->Size());
-    Vector b2 (b->Size());
     B.Mult(m_vec, b1);
-    B2.MultTranspose(m_vec, b2);
-    cout<<B.Height()<<" "<<B2.Height()<<endl;
-    cout<<B.Width()<<" "<<B2.Width()<<endl;
-    cout<<"b1: "<<b1.Norml2()<<endl;
-    cout<<"b2: "<<b2.Norml2()<<endl;
 
     K->FormLinearSystem(ess_tdof_list, u_gf, *b, Kmat, x_vec, b_vec);
     rigid_solver.Mult(*b, x_vec);
@@ -91,7 +126,7 @@ void ViscoelasticOperator::ImplicitSolve(const real_t dt, const Vector &m_vec, V
     this->Mult(m_vec, dm_dt_vec);
     Vector dm_dt_old;
     Vector res;
-    int iter=0;
+    int iter = 0;
     do {
     dm_dt_old = dm_dt_vec;
     Vector m_est;
@@ -105,11 +140,11 @@ void ViscoelasticOperator::ImplicitSolve(const real_t dt, const Vector &m_vec, V
     }
     res = dm_dt_vec.Add(-1.0, dm_dt_old);
     //res = dm_dt_vec; res -= dm_dt_old;
-    } while (res.Norml2()/dm_dt_old.Norml2() > res_max);
+    } while (res.Norml2()/dm_dt_old.Norml2() > implicit_scheme_res);
 
 }
 
-void ViscoelasticOperator::CalcStrainEnergyDensity(ParGridFunction &w_gf)
+void ViscoelasticOperator::CalcStrainEnergyDensity(ParGridFunction &w_gf) const
 {
     StrainEnergyCoefficient w_coeff(u_gf, lamb, mu);
     w_gf.ProjectCoefficient(w_coeff);

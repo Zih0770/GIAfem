@@ -22,9 +22,13 @@ int main(int argc, char *argv[])
 
     const char *mesh_file = "mesh/single_sphere.msh";
     const char *output_name = "single_sphere";
+    const char *elasticity_model = "linear";
+    const char *rheology_model = "Maxwell";
     int ode_solver_type = 1;
     real_t t_final = 10000; //year
     real_t dt = 10;
+    real_t rel_tol = 1e-8;
+    real_t dt_res = 1e-3;
     int order = 2;
     int ser_ref_levels = -1;
     int par_ref_levels = -1;
@@ -43,10 +47,18 @@ int main(int argc, char *argv[])
     OptionsParser args(argc, argv);
     args.AddOption(&output_name, "-f", "--file",
                    "Output file.");
+    args.AddOption(&elasticity_model, "-em", "--elasticity-model",
+                   "Elasticity model to use: linear, neo-hookean, etc.");
+    args.AddOption(&rheology_model, "-rm", "--rheology-model",
+                   "Rheology model to use: Maxwell, Kelvin-Voigt, etc.");
     args.AddOption(&t_final, "-tf", "--t-final",
                   "Final time; start time is 0.");
     args.AddOption(&dt, "-dt", "--time-step",
                   "Time step.");
+    args.AddOption(&rel_tol, "-rt", "--rel-tol",
+                  "Relative tolerance for linear solving.");
+    args.AddOption(&dt_res, "-im_res", "--implicit-res",
+                  "Relative iteration residue in implicit time schemes.");
     args.AddOption(&ode_solver_type, "-s", "--ode-solver",
                   ODESolver::Types.c_str());
     args.AddOption(&order, "-o", "--order",
@@ -120,8 +132,8 @@ int main(int argc, char *argv[])
     }
     ParGridFunction u_gf(&fes_u); ParGridFunction m_gf(&fes_m); ParGridFunction d_gf(&fes_m); ParGridFunction w_gf(&fes_w);
     u_gf = 0.0; m_gf = 0.0; d_gf = 0.0; w_gf = 0.0;
-    Vector u_vec, m_vec;
-    u_gf.GetTrueDofs(u_vec); m_gf.GetTrueDofs(m_vec);
+    Vector m_vec;
+    m_gf.GetTrueDofs(m_vec);
     FunctionCoefficient mu_coeff(mu_func);
     FunctionCoefficient lamb_coeff(lamb_func);
     FunctionCoefficient tau_coeff(tau_func);
@@ -134,7 +146,8 @@ int main(int argc, char *argv[])
     MFEM_VERIFY(pmesh->GetNodes(), "Mesh has no nodal coordinates!");
            
     //Time-depednet operator
-    ViscoelasticOperator oper(fes_u, fes_m, fes_properties, fes_w, u_gf, m_gf, d_gf, lamb_coeff, mu_coeff, tau_coeff, loading_coeff);
+    ViscoelasticOperator oper(fes_u, fes_m, fes_properties, fes_w, u_gf, m_gf, d_gf, lamb_coeff, mu_coeff, tau_coeff, loading_coeff,
+                              rel_tol, dt_res, elasticity_model, rheology_model);
     unique_ptr<ODESolver> ode_solver = ODESolver::Select(ode_solver_type);
     //ODESolver *ode_solver = new BaileySolver;
     ode_solver->Init(oper);

@@ -69,28 +69,28 @@ include CMakeFiles/geomesh_Earth.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/geomesh_Earth.dir/flags.make
 
-CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o: CMakeFiles/geomesh_Earth.dir/flags.make
-CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o: /home/sssou/giafem/geomesh_Earth.cpp
-CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o: CMakeFiles/geomesh_Earth.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o -MF CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o.d -o CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o -c /home/sssou/giafem/geomesh_Earth.cpp
+CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o: CMakeFiles/geomesh_Earth.dir/flags.make
+CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o: /home/sssou/giafem/mesh/cpp/geomesh_Earth.cpp
+CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o: CMakeFiles/geomesh_Earth.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o -MF CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o.d -o CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o -c /home/sssou/giafem/mesh/cpp/geomesh_Earth.cpp
 
-CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sssou/giafem/geomesh_Earth.cpp > CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.i
+CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sssou/giafem/mesh/cpp/geomesh_Earth.cpp > CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.i
 
-CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sssou/giafem/geomesh_Earth.cpp -o CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.s
+CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sssou/giafem/mesh/cpp/geomesh_Earth.cpp -o CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.s
 
 # Object files for target geomesh_Earth
 geomesh_Earth_OBJECTS = \
-"CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o"
+"CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o"
 
 # External object files for target geomesh_Earth
 geomesh_Earth_EXTERNAL_OBJECTS =
 
-/home/sssou/giafem/bin/geomesh_Earth: CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o
+/home/sssou/giafem/bin/geomesh_Earth: CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o
 /home/sssou/giafem/bin/geomesh_Earth: CMakeFiles/geomesh_Earth.dir/build.make
 /home/sssou/giafem/bin/geomesh_Earth: CMakeFiles/geomesh_Earth.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable /home/sssou/giafem/bin/geomesh_Earth"

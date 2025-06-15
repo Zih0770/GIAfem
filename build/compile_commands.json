@@ -1,92 +1,92 @@
 [
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/giafem/include -I/home/sssou/local/gmsh/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/giafem_lib.dir/lib/giafem.cpp.o -c /home/sssou/giafem/lib/giafem.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/giafem/include -I/home/sssou/local/gmsh/include -std=gnu++20 -o CMakeFiles/giafem_lib.dir/lib/giafem.cpp.o -c /home/sssou/giafem/lib/giafem.cpp",
   "file": "/home/sssou/giafem/lib/giafem.cpp",
   "output": "CMakeFiles/giafem_lib.dir/lib/giafem.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/test.dir/demos/test.cpp.o -c /home/sssou/giafem/demos/test.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/test.dir/demos/test.cpp.o -c /home/sssou/giafem/demos/test.cpp",
   "file": "/home/sssou/giafem/demos/test.cpp",
   "output": "CMakeFiles/test.dir/demos/test.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o -c /home/sssou/giafem/demos/test_time_oper.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o -c /home/sssou/giafem/demos/test_time_oper.cpp",
   "file": "/home/sssou/giafem/demos/test_time_oper.cpp",
   "output": "CMakeFiles/test_time_oper.dir/demos/test_time_oper.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/test_ve.dir/demos/test_ve.cpp.o -c /home/sssou/giafem/demos/test_ve.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/test_ve.dir/demos/test_ve.cpp.o -c /home/sssou/giafem/demos/test_ve.cpp",
   "file": "/home/sssou/giafem/demos/test_ve.cpp",
   "output": "CMakeFiles/test_ve.dir/demos/test_ve.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o -c /home/sssou/giafem/demos/viscoelastic_sphere.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o -c /home/sssou/giafem/demos/viscoelastic_sphere.cpp",
   "file": "/home/sssou/giafem/demos/viscoelastic_sphere.cpp",
   "output": "CMakeFiles/viscoelastic_sphere.dir/demos/viscoelastic_sphere.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/viscoelastic.dir/demos/viscoelastic.cpp.o -c /home/sssou/giafem/demos/viscoelastic.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/viscoelastic.dir/demos/viscoelastic.cpp.o -c /home/sssou/giafem/demos/viscoelastic.cpp",
   "file": "/home/sssou/giafem/demos/viscoelastic.cpp",
   "output": "CMakeFiles/viscoelastic.dir/demos/viscoelastic.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o -c /home/sssou/giafem/demos/SG_PW.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o -c /home/sssou/giafem/demos/SG_PW.cpp",
   "file": "/home/sssou/giafem/demos/SG_PW.cpp",
   "output": "CMakeFiles/SG_PW.dir/demos/SG_PW.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/SG_PW_theta.dir/demos/SG_PW_theta.cpp.o -c /home/sssou/giafem/demos/SG_PW_theta.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/SG_PW_theta.dir/demos/SG_PW_theta.cpp.o -c /home/sssou/giafem/demos/SG_PW_theta.cpp",
   "file": "/home/sssou/giafem/demos/SG_PW_theta.cpp",
   "output": "CMakeFiles/SG_PW_theta.dir/demos/SG_PW_theta.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/SG_PW_p.dir/demos/SG_PW_p.cpp.o -c /home/sssou/giafem/demos/SG_PW_p.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/SG_PW_p.dir/demos/SG_PW_p.cpp.o -c /home/sssou/giafem/demos/SG_PW_p.cpp",
   "file": "/home/sssou/giafem/demos/SG_PW_p.cpp",
   "output": "CMakeFiles/SG_PW_p.dir/demos/SG_PW_p.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o -c /home/sssou/giafem/demos/elastostatic.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o -c /home/sssou/giafem/demos/elastostatic.cpp",
   "file": "/home/sssou/giafem/demos/elastostatic.cpp",
   "output": "CMakeFiles/elastostatic.dir/demos/elastostatic.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/beam.dir/demos/beam.cpp.o -c /home/sssou/giafem/demos/beam.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/beam.dir/demos/beam.cpp.o -c /home/sssou/giafem/demos/beam.cpp",
   "file": "/home/sssou/giafem/demos/beam.cpp",
   "output": "CMakeFiles/beam.dir/demos/beam.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/beam_t.dir/demos/beam_t.cpp.o -c /home/sssou/giafem/demos/beam_t.cpp",
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -I/home/sssou/giafem/include -std=gnu++20 -o CMakeFiles/beam_t.dir/demos/beam_t.cpp.o -c /home/sssou/giafem/demos/beam_t.cpp",
   "file": "/home/sssou/giafem/demos/beam_t.cpp",
   "output": "CMakeFiles/beam_t.dir/demos/beam_t.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/geomesh.dir/geomesh.cpp.o -c /home/sssou/giafem/geomesh.cpp",
-  "file": "/home/sssou/giafem/geomesh.cpp",
-  "output": "CMakeFiles/geomesh.dir/geomesh.cpp.o"
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -std=gnu++20 -o CMakeFiles/geomesh.dir/mesh/cpp/geomesh.cpp.o -c /home/sssou/giafem/mesh/cpp/geomesh.cpp",
+  "file": "/home/sssou/giafem/mesh/cpp/geomesh.cpp",
+  "output": "CMakeFiles/geomesh.dir/mesh/cpp/geomesh.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o -c /home/sssou/giafem/geomesh_Earth.cpp",
-  "file": "/home/sssou/giafem/geomesh_Earth.cpp",
-  "output": "CMakeFiles/geomesh_Earth.dir/geomesh_Earth.cpp.o"
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -std=gnu++20 -o CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o -c /home/sssou/giafem/mesh/cpp/geomesh_Earth.cpp",
+  "file": "/home/sssou/giafem/mesh/cpp/geomesh_Earth.cpp",
+  "output": "CMakeFiles/geomesh_Earth.dir/mesh/cpp/geomesh_Earth.cpp.o"
 },
 {
   "directory": "/home/sssou/giafem/build",
-  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -isystem /home/sssou/source/petsc/arch-opt/include -std=gnu++20 -o CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o -c /home/sssou/giafem/geomesh_f.cpp",
-  "file": "/home/sssou/giafem/geomesh_f.cpp",
-  "output": "CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o"
+  "command": "/usr/bin/c++  -I/home/sssou/source/mfemElasticity/installed/include -I/usr/local/cuda-12.9/targets/x86_64-linux/include -I/home/sssou/source/raja/installed/include -I/home/sssou/source/amgx/installed/include -I/home/sssou/source/sundials/installed/include -I/home/sssou/source/ginkgo/installed/include -I/home/sssou/source/petsc/include -I/home/sssou/local/gmsh/include -std=gnu++20 -o CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o -c /home/sssou/giafem/mesh/cpp/geomesh_f.cpp",
+  "file": "/home/sssou/giafem/mesh/cpp/geomesh_f.cpp",
+  "output": "CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o"
 }
 ]

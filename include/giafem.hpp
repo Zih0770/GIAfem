@@ -50,11 +50,30 @@ namespace giafem
         delete nodes;
     }
 
+//Material Models
+enum class ElasticityModel
+{
+    linear,
+    neoHookean
+};
+
+enum class RheologyModel
+{
+    Maxwell,
+    Maxwell_nonlinear,
+    KelvinVoigt
+};
+
+ElasticityModel ParseElasticityModel(const char *str);
+RheologyModel ParseRheologyModel(const char *str);
+
 
 //Operators
 class ViscoelasticOperator : public TimeDependentOperator
 {
 protected:
+    ElasticityModel EM;
+    RheologyModel RM;
     Coefficient &tau, &lamb, &mu, &loading;
     ParFiniteElementSpace &fes_u, &fes_m, &fes_w, &fes_properties;
     ParGridFunction &u_gf, &m_gf, &d_gf;
@@ -63,27 +82,29 @@ protected:
     ParBilinearForm *K;
     mutable PetscParMatrix Kmat;
     PetscPreconditioner *K_prec = NULL;
-    mutable PetscPCGSolver K_solver;
+    mutable PetscLinearSolver K_solver;
     mutable mfemElasticity::RigidBodySolver rigid_solver;
-    MixedBilinearForm B;
-    MixedBilinearForm B2;
-    DiscreteLinearOperator Dev;
+    ParMixedBilinearForm B;
+    ParDiscreteLinearOperator Dev;
     real_t current_dt;
-    real_t rel_tol = 1e-8;
-    real_t res_max = 1e-3;
+    real_t rel_tol;
+    real_t implicit_scheme_res;
+    bool nonlinear = false;
 
     mutable Vector u_vec, d_vec, tau_vec;
     mutable Vector x_vec, b_vec;
 
 public:
     ViscoelasticOperator(ParFiniteElementSpace &fes_u_, ParFiniteElementSpace &fes_m_, ParFiniteElementSpace &fes_properties_, ParFiniteElementSpace &fes_w_, 
-               ParGridFunction &u_gf_, ParGridFunction &m_gf_, ParGridFunction &d_gf_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, Coefficient &loading_);
+               ParGridFunction &u_gf_, ParGridFunction &m_gf_, ParGridFunction &d_gf_, Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, Coefficient &loading_,
+               const real_t rel_tol_, const real_t implicit_scheme_res_,
+               const char *elasticity_model_str = "linear", const char *rheology_model_str = "Maxwell");
 
     void Mult(const Vector &m_vec, Vector &dm_dt_vec) const override;
 
     void ImplicitSolve(const real_t dt, const Vector &m_vec, Vector &dm_dt_vec) override;
 
-    void CalcStrainEnergyDensity(ParGridFunction &w_gf);
+    void CalcStrainEnergyDensity(ParGridFunction &w_gf) const;
 
     const ParGridFunction &GetTau() const { return tau_gf; }
     const ParGridFunction &GetLamb() const { return lamb_gf; }
@@ -232,13 +253,13 @@ class ViscoelasticRHSIntegrator : public LinearFormIntegrator
 class StrainEnergyCoefficient : public Coefficient
 {
 protected:
-    GridFunction &u_gf;
+    const GridFunction &u_gf;
     Coefficient &lambda, &mu;
     DenseMatrix grad_u;
 
 public:
-    StrainEnergyCoefficient(GridFunction &displacement, Coefficient &lambda_, Coefficient &mu_)
-        : u_gf(displacement), lambda(lambda_), mu(mu_) {}
+    StrainEnergyCoefficient(const GridFunction &displacement, Coefficient &lambda_, Coefficient &mu_)
+        : u_gf(displacement), lambda(lambda_), mu(mu_) { }
 
     real_t Eval(ElementTransformation &T, const IntegrationPoint &ip) override{
         real_t lambda_val = lambda.Eval(T, ip);

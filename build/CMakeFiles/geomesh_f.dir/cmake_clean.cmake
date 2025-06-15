@@ -1,8 +1,8 @@
 file(REMOVE_RECURSE
   "/home/sssou/giafem/bin/geomesh_f"
   "/home/sssou/giafem/bin/geomesh_f.pdb"
-  "CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o"
-  "CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o.d"
+  "CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o"
+  "CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o.d"
 )
 
 # Per-language clean rules from dependency scanning.

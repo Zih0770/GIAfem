@@ -1,5 +1,6 @@
 # Compiled source codes
 *.class
+*.a
 *.o
 *.so
 *.dll
@@ -29,6 +30,7 @@ git rm --cached *.msh
 Makefile
 CMakeFiles/
 CMakeCache.txt
+.cache/
 data/*.gf
 data/*.mesh
 

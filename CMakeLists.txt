@@ -129,9 +129,9 @@ include_directories(/home/sssou/local/gmsh/include)
 link_directories(/home/sssou/local/gmsh/lib)
 
 set(MESH_GENERATORS
-    geomesh.cpp
-    geomesh_Earth.cpp
-    geomesh_f.cpp
+    mesh/cpp/geomesh.cpp
+    mesh/cpp/geomesh_Earth.cpp
+    mesh/cpp/geomesh_f.cpp
 )
 
 foreach(mesh_src ${MESH_GENERATORS})

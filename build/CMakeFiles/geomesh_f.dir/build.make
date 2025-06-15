@@ -69,28 +69,28 @@ include CMakeFiles/geomesh_f.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/geomesh_f.dir/flags.make
 
-CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o: CMakeFiles/geomesh_f.dir/flags.make
-CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o: /home/sssou/giafem/geomesh_f.cpp
-CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o: CMakeFiles/geomesh_f.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o -MF CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o.d -o CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o -c /home/sssou/giafem/geomesh_f.cpp
+CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o: CMakeFiles/geomesh_f.dir/flags.make
+CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o: /home/sssou/giafem/mesh/cpp/geomesh_f.cpp
+CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o: CMakeFiles/geomesh_f.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o -MF CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o.d -o CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o -c /home/sssou/giafem/mesh/cpp/geomesh_f.cpp
 
-CMakeFiles/geomesh_f.dir/geomesh_f.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/geomesh_f.dir/geomesh_f.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sssou/giafem/geomesh_f.cpp > CMakeFiles/geomesh_f.dir/geomesh_f.cpp.i
+CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sssou/giafem/mesh/cpp/geomesh_f.cpp > CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.i
 
-CMakeFiles/geomesh_f.dir/geomesh_f.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/geomesh_f.dir/geomesh_f.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sssou/giafem/geomesh_f.cpp -o CMakeFiles/geomesh_f.dir/geomesh_f.cpp.s
+CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sssou/giafem/mesh/cpp/geomesh_f.cpp -o CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.s
 
 # Object files for target geomesh_f
 geomesh_f_OBJECTS = \
-"CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o"
+"CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o"
 
 # External object files for target geomesh_f
 geomesh_f_EXTERNAL_OBJECTS =
 
-/home/sssou/giafem/bin/geomesh_f: CMakeFiles/geomesh_f.dir/geomesh_f.cpp.o
+/home/sssou/giafem/bin/geomesh_f: CMakeFiles/geomesh_f.dir/mesh/cpp/geomesh_f.cpp.o
 /home/sssou/giafem/bin/geomesh_f: CMakeFiles/geomesh_f.dir/build.make
 /home/sssou/giafem/bin/geomesh_f: CMakeFiles/geomesh_f.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sssou/giafem/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable /home/sssou/giafem/bin/geomesh_f"
