@@ -138,7 +138,6 @@ void ViscoelasticOperator::ImplicitSolve(const real_t dt, const Vector &m_vec, V
         dm_dt_vec[i] /= tau_vec[i % tau_vec.Size()] + current_dt;
     }
     res = dm_dt_vec.Add(-1.0, dm_dt_old);
-    //res = dm_dt_vec; res -= dm_dt_old;
     } while (res.Norml2()/dm_dt_old.Norml2() > implicit_scheme_res);
 
 }
