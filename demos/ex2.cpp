@@ -281,7 +281,6 @@ int main(int argc, char *argv[])
     EGOp.SetDiagonalBlock(0, &prec11);
     EGOp.SetDiagonalBlock(1, &prec22);
 
-    //MINRESSolver solver;
     GMRESSolver solver;
     solver.SetRelTol(rel_tol);
     solver.SetMaxIter(5000);
