@@ -132,11 +132,8 @@ int main(int argc, char *argv[])
     H1_FECollection fec_phi(order_phi, dim);
     L2_FECollection fec_properties(order_properties, dim);
     L2_FECollection fec_w(order_w, dim);
-    cout<<"Hi"<<endl;
     ParFiniteElementSpace fes_phi(pmesh, &fec_phi);
-    cout<<"Hi"<<endl;
     ParFiniteElementSpace fes_u(&pmesh0, &fec_u, 3);
-    cout<<"Hi"<<endl;
     ParFiniteElementSpace fes_properties(&pmesh0, &fec_properties);
     ParFiniteElementSpace fes_w(&pmesh0, &fec_w);
     HYPRE_BigInt u_size = fes_u.GlobalTrueVSize();

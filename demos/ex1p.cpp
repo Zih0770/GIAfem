@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     Array<int> ess_tdof_list;
 
     //DtN
-    auto DtN = ParDirichletToNeumannOperator(&fes_phi, lMax, Constants::R);
+    auto DtN = ParDirichletToNeumannOperator(&fes_phi, lMax, Constants::R_ext);
 
     //Construct the linear system
     FunctionCoefficient rho_coeff(rho_func);
@@ -128,9 +128,10 @@ int main(int argc, char *argv[])
 
     auto S = SumOperator(A.Ptr(), 1, &DtN, 1, false, false);
 
-    //OperatorJacobiSmoother prec(a, ess_tdof_list);;
+    OperatorJacobiSmoother prec(a, ess_tdof_list);;
     //prec.SetOperator(S);
-    HypreBoomerAMG prec((HypreParMatrix &)(*A));
+    //HypreBoomerAMG prec((HypreParMatrix &)(*A));
+    //HypreBoomerAMG prec;
 
     CGSolver solver(MPI_COMM_WORLD);
     //BiCGSTABSolver solver(MPI_COMM_WORLD);
@@ -139,7 +140,7 @@ int main(int argc, char *argv[])
     solver.SetOperator(S);
     solver.SetPreconditioner(prec);
     solver.SetRelTol(rel_tol);
-    solver.SetMaxIter(1000);
+    solver.SetMaxIter(3000);
     solver.SetPrintLevel(1);
     solver.Mult(B, Phi);
     } 
@@ -161,7 +162,7 @@ int main(int argc, char *argv[])
 
         solver.SetOperator(S);
         solver.SetTol(rel_tol);
-        solver.SetMaxIter(1000);
+        solver.SetMaxIter(3000);
         solver.SetPrintLevel(1);
         solver.Mult(B, Phi);
     }
@@ -170,8 +171,8 @@ int main(int argc, char *argv[])
     //Saving
     {
         ostringstream mesh_name, sol_name;
-        mesh_name << "data/mesh." << setfill('0') << setw(6) << myid;
-        sol_name << "data/sol." << setfill('0') << setw(6) << myid;
+        mesh_name << "data/ex1p_mesh." << setfill('0') << setw(6) << myid;
+        sol_name << "data/ex1p_sol." << setfill('0') << setw(6) << myid;
 
         ofstream mesh_ofs(mesh_name.str().c_str());
         mesh_ofs.precision(8);

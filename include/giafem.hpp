@@ -531,6 +531,7 @@ struct Constants {
     public:
         static constexpr real_t G = 6.6743e-11;
         static constexpr real_t R = 6371e3;
+        static constexpr real_t R_ext = 8e6;
 };
 
 
@@ -569,10 +570,6 @@ private:
     real_t radius;
     Array<int> marker;
     vector<HypreParVector *> u;
-    
-    int NumberOfSphericalHarmonicCoefficients() const {
-        return pow(lMax + 1, 2);
-    }
 
     void SetMarker() {
         auto *pmesh = fes->GetParMesh();
@@ -632,14 +629,15 @@ public:
     void Mult(const Vector &x, Vector &y) const override {
         y.SetSize(x.Size());
         y = 0.0;
-        //auto ir3 = 1.0 / pow(radius, 3);
-        auto ir3 = 1.0 / radius;
+        auto ir3 = 1.0 / pow(radius, 3);
+        //auto ir3 = 1.0 / radius;
         auto i = 0;
         for (auto l = 0; l <= lMax; l++) {
             for (auto m = -l; m <= l; m++) {
                 auto &_u = *u[i++];
                 //auto product = (l + 1) * ir3 * (_u * x); //!
                 auto product = (l + 1) * ir3 * InnerProduct(fes->GetComm(), _u, x);
+                if (l==3 && m==0) {cout<<"Value: "<<InnerProduct(fes->GetComm(), _u, x)<<endl;}
                 y.Add(product, _u);
             }
         }
@@ -1071,7 +1069,7 @@ class DirichletToNeumannOperator : public Operator {
       : Operator(fes->GetTrueVSize()), _fes{fes}, _lMax{lMax} {
     SetMarker();
     GetBoundingRadius();
-    //_radius = Constants::R;
+    //_radius = Constants::R_ext;
     for (auto l = 0; l <= _lMax; l++) {
       for (auto m = -l; m <= l; m++) {
         auto f = SphericalHarmonicCoefficient(l, m);
@@ -1094,8 +1092,7 @@ class DirichletToNeumannOperator : public Operator {
   void Mult(const Vector &x, Vector &y) const override {
     y.SetSize(x.Size());
     y = 0.0;
-    //auto ir3 = 1.0 / pow(_radius, 3);
-    auto ir3 = 1.0 / _radius;
+    auto ir3 = 1.0 / pow(_radius, 3);
     auto i = 0;
     for (auto l = 0; l <= _lMax; l++) {
       for (auto m = -l; m <= l; m++) {
