@@ -79,7 +79,7 @@ void createConcentricSphericalLayers(const std::vector<double> &radii, double me
     gmsh::model::mesh::field::setNumber(2, "SizeMin", meshSizeMin); 
     gmsh::model::mesh::field::setNumber(2, "SizeMax", meshSizeMax);  
     gmsh::model::mesh::field::setNumber(2, "DistMin", 0.0);
-    gmsh::model::mesh::field::setNumber(2, "DistMax", radii.back() * 0.1);
+    gmsh::model::mesh::field::setNumber(2, "DistMax", meshSizeMax * 10);
 
     gmsh::model::mesh::field::setAsBackgroundMesh(2);
 

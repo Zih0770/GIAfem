@@ -37,50 +37,56 @@ ViscoelasticOperator::ViscoelasticOperator(ParFiniteElementSpace &fes_u_, ParFin
                                            Coefficient &lamb_, Coefficient &mu_, Coefficient &tau_, Coefficient &loading_,
                                            const real_t rel_tol_, const real_t implicit_scheme_res_,
                                            const char *elasticity_model_str, const char *rheology_model_str)   
-                                           : TimeDependentOperator(fes_m_.GlobalTrueVSize(), (real_t) 0.0), 
+                                           : TimeDependentOperator(fes_m_.GetTrueVSize(), (real_t) 0.0), 
                                            fes_u(fes_u_), fes_m(fes_m_), fes_properties(fes_properties_), fes_w(fes_w_), 
                                            u_gf(u_gf_), m_gf(m_gf_), d_gf(d_gf_), lamb_gf(&fes_properties), mu_gf(&fes_properties), tau_gf(&fes_properties), 
-                                           lamb(lamb_), mu(mu_), tau(tau_), loading(loading_), K(NULL), 
+                                           lamb(lamb_), mu(mu_), tau(tau_), loading(loading_), 
                                            B(&fes_m, &fes_u), current_dt(0.0), Dev(&fes_u_, &fes_m_), 
-                                           K_solver(fes_u_.GetComm()), rigid_solver(&fes_u_),
+                                           K_solver(fes_u_.GetComm()), rigid_solver(fes_u_.GetComm(), &fes_u_),
                                            rel_tol(rel_tol_), implicit_scheme_res(implicit_scheme_res_)
 {
+    comm = fes_u.GetComm();
+    dim = fes_u.GetMesh()->SpaceDimension();
     EM = ParseElasticityModel(elasticity_model_str);
     RM = ParseRheologyModel(rheology_model_str);
-
     tau_gf.ProjectCoefficient(tau);
     tau_gf.GetTrueDofs(tau_vec);
-
     Array<int> ess_bdr(fes_u.GetMesh()->bdr_attributes.Max());
     ess_bdr = 0;
     fes_u.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
-
     K = new ParBilinearForm(&fes_u);
     switch (EM)
     {
         case ElasticityModel::linear:
             {
                 K->AddDomainIntegrator(new ElasticityIntegrator(lamb, mu));
+                break;
             }
         default:
             MFEM_ABORT("Unhandled elasticity model.");
     }
+    K->SetOperatorType(Operator::PETSC_MATAIJ);
     K->Assemble();
-    K->FormSystemMatrix(ess_tdof_list, Kmat);
-    
-    //K_solver.iterative_mode = false;
+    K->Finalize();
+
+    //K->FormSystemMatrix(ess_tdof_list, *hK);
+    hK = K->ParallelAssemble();
+    Kmat = new PetscParMatrix(hK, Operator::PETSC_MATAIJ);
+
+    K_prec = new PetscPreconditioner(*Kmat, "solver_");
+    K_solver.iterative_mode = true;
     K_solver.SetTol(rel_tol);
     K_solver.SetMaxIter(500);
-    K_solver.SetPrintLevel(2);
+    K_solver.SetPrintLevel(0);
+    K_solver.SetOperator(*Kmat);
     K_solver.SetPreconditioner(*K_prec);
-    K_solver.SetOperator(Kmat);
     rigid_solver.SetSolver(K_solver);
-
     switch (RM)
     {
         case RheologyModel::Maxwell:
             {
                 B.AddDomainIntegrator(new ViscoelasticForcing(mu));
+                break;
             }
         default:
             MFEM_ABORT("Unhandled rheology model.");
@@ -89,6 +95,7 @@ ViscoelasticOperator::ViscoelasticOperator(ParFiniteElementSpace &fes_u_, ParFin
 
     Dev.AddDomainInterpolator(new DevStrainInterpolator);
     Dev.Assemble();
+    Dev.Finalize();
 }
 
 void ViscoelasticOperator::Mult(const Vector &m_vec, Vector &dm_dt_vec) const
@@ -99,21 +106,24 @@ void ViscoelasticOperator::Mult(const Vector &m_vec, Vector &dm_dt_vec) const
     //b->AddDomainIntegrator(new ViscoelasticRHSIntegrator(mu, m_coeff));
     b->AddBoundaryIntegrator(new VectorBoundaryFluxLFIntegrator(loading));
     b->Assemble();
+    //b->ParallelAssemble(b_vec);
+    m_gf.SetFromTrueDofs(m_vec);
+    B.AddMult(m_gf, *b);
+    K->FormLinearSystem(ess_tdof_list, u_gf, *b, *Kmat, x_vec, b_vec);
+    Kmat->SetBlockSize(dim);
 
-    B.AddMult(m_vec, *b);
-
-    Vector b1 (b->Size());
-    B.Mult(m_vec, b1);
-
-    K->FormLinearSystem(ess_tdof_list, u_gf, *b, Kmat, x_vec, b_vec);
-    rigid_solver.Mult(*b, x_vec);
+    rigid_solver.Mult(b_vec, x_vec);
+    //Kmat->Mult(b_vec, x_vec);
     K->RecoverFEMSolution(x_vec, *b, u_gf);
+    u_gf.SetTrueVector();
 
     Dev.Mult(u_gf, d_gf);
     d_gf.GetTrueDofs(d_vec);
     for (int i = 0; i < d_vec.Size(); i++)
     {
         dm_dt_vec[i] = (d_vec[i] - m_vec[i]) / tau_vec[i % tau_vec.Size()];
+        //real_t tau_val = 1000 * 3.15576e7;
+        //dm_dt_vec[i] = (d_vec[i] - m_vec[i]) / tau_val;
     }
 
     delete b;
@@ -146,6 +156,80 @@ void ViscoelasticOperator::CalcStrainEnergyDensity(ParGridFunction &w_gf) const
 {
     StrainEnergyCoefficient w_coeff(u_gf, lamb, mu);
     w_gf.ProjectCoefficient(w_coeff);
+}
+
+
+CondTrialMixedBilinearForm::CondTrialMixedBilinearForm (FiniteElementSpace *tr_fes,
+                                                        FiniteElementSpace *tr_fes_cond,
+                                                        FiniteElementSpace *te_fes,
+                                                        FiniteElementSpace *te_fes_cond)
+    : MixedBilinearForm(tr_fes_cond, te_fes)
+{
+   trial_fes_cond = tr_fes_cond;
+   test_fes_cond = te_fes_cond;
+   trial_fes = tr_fes;
+}
+
+void CondTrialMixedBilinearForm::Assemble(int skip_zeros)
+{
+    if (ext)
+    {
+        ext->Assemble();
+        return;
+    }
+
+    ElementTransformation *eltrans;
+    DofTransformation * dom_dof_trans;
+    DofTransformation * ran_dof_trans;
+    DenseMatrix elmat;
+
+    Mesh *mesh = test_fes -> GetMesh();
+
+    if (mat == NULL)
+    {
+        mat = new SparseMatrix(height, width);
+    }
+
+    if (domain_integs.Size())
+    {
+        for (int k = 0; k < domain_integs.Size(); k++)
+        {
+            if (domain_integs_marker[k] != NULL)
+            {
+                MFEM_VERIFY(domain_integs_marker[k]->Size() ==
+                        (mesh->attributes.Size() ? mesh->attributes.Max() : 0),
+                        "invalid element marker for domain integrator #"
+                        << k << ", counting from zero");
+            }
+        }
+
+        for (int i = 0; i < test_fes_cond -> GetNE(); i++)
+        {
+            //const int elem_attr = mesh->GetAttribute(i);
+            dom_dof_trans = trial_fes_cond -> GetElementVDofs (i, trial_vdofs);
+            ran_dof_trans = test_fes_cond  -> GetElementVDofs (i, test_vdofs);
+            eltrans = test_fes_cond -> GetElementTransformation (i);
+
+            elmat.SetSize(test_vdofs.Size(), trial_vdofs.Size());
+            elmat = 0.0;
+            for (int k = 0; k < domain_integs.Size(); k++)
+            {
+                //if (domain_integs_marker[k] == NULL ||
+                //    (*(domain_integs_marker[k]))[elem_attr-1] == 1)
+                {
+                    domain_integs[k] -> AssembleElementMatrix2 (*trial_fes_cond -> GetFE(i),
+                                                                *test_fes_cond  -> GetFE(i),
+                                                                *eltrans, elemmat);
+                    elmat += elemmat;
+                }
+            }
+            if (ran_dof_trans || dom_dof_trans)
+            {
+                TransformDual(ran_dof_trans, dom_dof_trans, elmat);
+            }
+            mat -> AddSubMatrix (test_vdofs, trial_vdofs, elmat, skip_zeros);
+        }
+    }
 }
 
 
@@ -306,6 +390,305 @@ void ViscoelasticForcing::AssembleElementMatrix2(const FiniteElement &trial_fe,
 }
 
 
+const IntegrationRule& AdvectionScalarIntegrator::GetRule(const FiniteElement &trial_fe, 
+                                                          const FiniteElement &test_fe,
+                                                          const ElementTransformation &Trans) 
+{
+    //const auto order = trial_fe.GetOrder() + test_fe.GetOrder() + Trans.OrderW() - 1;
+    int order = trial_fe.GetOrder() + Trans.OrderGrad(&test_fe) + Trans.OrderJ();
+    return IntRules.Get(trial_fe.GetGeomType(), order);
+}
+
+void AdvectionScalarIntegrator::AssembleElementMatrix2(
+    const FiniteElement &trial_fe, const FiniteElement &test_fe,
+    ElementTransformation &Trans, DenseMatrix &elmat) 
+{
+    auto dim = Trans.GetSpaceDim();
+    auto Nn = trial_fe.GetDof();
+    auto Nm = test_fe.GetDof();
+
+    elmat.SetSize(Nm, dim * Nn);
+    elmat = 0.0;
+
+#ifdef MFEM_THREAD_SAFE
+    Vector trial_shape, qv;
+    DenseMatrix test_dshape, pelmats, qm, tm;
+#endif
+    trial_shape.SetSize(Nn);
+    test_dshape.SetSize(Nm, dim);
+    pelmats.SetSize(Nm, Nn);
+
+    if (QM) {
+        qm.SetSize(dim);
+        tm.SetSize(Nm, dim);
+    } else if (QV) {
+        qv.SetSize(dim);
+    }
+
+    const auto* ir = GetIntegrationRule(trial_fe, test_fe, Trans);
+
+    for (auto i = 0; i < ir->GetNPoints(); i++) {
+        const auto& ip = ir->IntPoint(i);
+        Trans.SetIntPoint(&ip);
+        auto w = Trans.Weight() * ip.weight;
+
+        trial_fe.CalcShape(ip, trial_shape);
+        test_fe.CalcPhysDShape(Trans, test_dshape);
+
+        if (QM) {//
+            QM->Eval(qm, Trans, ip);
+            MultABt(test_dshape, qm, tm);
+            for (auto j = 0; j < dim; j++) {
+                auto tm_column = Vector(tm.GetColumn(j), Nm);
+                MultVWt(tm_column, trial_shape, pelmats);
+                elmat.AddMatrix(w, pelmats, j * Nm, 0);
+            }
+        } else if (QV) {//
+            QV->Eval(qv, Trans, ip);
+            qv *= w;
+            for (auto j = 0; j < dim; j++) {
+                auto test_dshape_column = Vector(test_dshape.GetColumn(j), Nm);
+                MultVWt(test_dshape_column, trial_shape, pelmats);
+                elmat.AddMatrix(qv(j), pelmats, j * Nm, 0);
+            }
+        } else {
+            if (Q) {
+                w *= Q->Eval(Trans, ip);
+            }
+            for (auto j = 0; j < dim; j++) {
+                auto test_dshape_column = Vector(test_dshape.GetColumn(j), Nm);
+                //gshape.GetColumnReference(d, d_col);
+                MultVWt(test_dshape_column, trial_shape, pelmats);
+                elmat.AddMatrix(w, pelmats, 0, j * Nn);
+            }
+        }
+    }
+}
+
+
+const IntegrationRule& GradProjectionIntegrator::GetRule(
+    const FiniteElement &trial_fe, const FiniteElement &test_fe,
+    const ElementTransformation &Trans) {
+    const auto order = trial_fe.GetOrder() + test_fe.GetOrder() + Trans.OrderW() - 1;
+    return IntRules.Get(trial_fe.GetGeomType(), order);
+}
+
+void GradProjectionIntegrator::AssembleElementMatrix2(
+    const FiniteElement &trial_fe, const FiniteElement &test_fe,
+    ElementTransformation &Trans, DenseMatrix &elmat) 
+{
+    auto dim = Trans.GetSpaceDim();
+    auto Nn = trial_fe.GetDof();
+    auto Nm = test_fe.GetDof();
+
+    elmat.SetSize(dim * Nm, dim * Nn);
+    elmat = 0.0;
+
+#ifdef MFEM_THREAD_SAFE
+    Vector trial_shape, test_shape, g;
+    DenseMatrix trial_dshape, pelmats_l, pelmats_r, dg;
+#endif
+    trial_shape.SetSize(Nn);
+    test_shape.SetSize(Nm);
+    trial_dshape.SetSize(Nn, dim);
+    pelmats_l.SetSize(Nm, Nn);
+    pelmats_r.SetSize(Nm, Nn);
+    g.SetSize(dim);
+    dg.SetSize(dim, dim);
+
+    const auto* ir = GetIntegrationRule(trial_fe, test_fe, Trans);
+
+    for (auto i = 0; i < ir->GetNPoints(); i++) {
+        const auto& ip = ir->IntPoint(i);
+        Trans.SetIntPoint(&ip);
+        auto w = Trans.Weight() * ip.weight;
+
+        trial_fe.CalcShape(ip, trial_shape);
+        test_fe.CalcShape(ip, test_shape);
+        trial_fe.CalcPhysDShape(Trans, trial_dshape);
+
+        QV->Eval(g, Trans, ip);
+        QM->Eval(dg, Trans, ip);
+        w *= Q->Eval(Trans, ip); 
+        MultVWt(test_shape, trial_shape, pelmats_r);
+        for (auto k = 0; k < dim; k++) {
+            auto trial_dshape_column = Vector(trial_dshape.GetColumn(k), Nn);
+            MultVWt(test_shape, trial_dshape_column, pelmats_l);
+            for (auto l = 0; l < dim; l++) {
+                real_t w_l = g(l) * w; 
+                elmat.AddMatrix(w_l, pelmats_l, k * Nm, l * Nn);
+                real_t w_r = dg(l, k) * w;
+                elmat.AddMatrix(w_r, pelmats_r, k * Nm, l * Nn);
+            }
+        }
+    }
+}
+
+
+const IntegrationRule& AdvectionProjectionIntegrator::GetRule(
+    const FiniteElement &trial_fe, const FiniteElement &test_fe,
+    const ElementTransformation &Trans) {
+    const auto order = trial_fe.GetOrder() + test_fe.GetOrder() + Trans.OrderW() - 1;
+    return IntRules.Get(trial_fe.GetGeomType(), order);
+}
+
+void AdvectionProjectionIntegrator::AssembleElementMatrix2(
+    const FiniteElement &trial_fe, const FiniteElement &test_fe,
+    ElementTransformation &Trans, DenseMatrix &elmat) 
+{
+    auto dim = Trans.GetSpaceDim();
+    auto Nn = trial_fe.GetDof();
+    auto Nm = test_fe.GetDof();
+
+    elmat.SetSize(dim * Nm, dim * Nn);
+    elmat = 0.0;
+
+#ifdef MFEM_THREAD_SAFE
+    Vector trial_shape, test_shape, g;
+    DenseMatrix test_dshape, pelmats_l, pelmats_r, dg;
+#endif
+    trial_shape.SetSize(Nn);
+    test_shape.SetSize(Nm);
+    test_dshape.SetSize(Nm, dim);
+    pelmats_l.SetSize(Nm, Nn);
+    pelmats_r.SetSize(Nm, Nn);
+    g.SetSize(dim);
+    dg.SetSize(dim, dim);
+
+    const auto* ir = GetIntegrationRule(trial_fe, test_fe, Trans);
+
+    for (auto i = 0; i < ir->GetNPoints(); i++) {
+        const auto& ip = ir->IntPoint(i);
+        Trans.SetIntPoint(&ip);
+        auto w = Trans.Weight() * ip.weight;
+
+        trial_fe.CalcShape(ip, trial_shape);
+        test_fe.CalcShape(ip, test_shape);
+        test_fe.CalcPhysDShape(Trans, test_dshape);
+
+        QV->Eval(g, Trans, ip);
+        QM->Eval(dg, Trans, ip);
+        w *= Q->Eval(Trans, ip); 
+        MultVWt(test_shape, trial_shape, pelmats_r);
+        for (auto k = 0; k < dim; k++) {
+            for (auto l = 0; l < dim; l++) {
+                auto test_dshape_column = Vector(test_dshape.GetColumn(l), Nm);
+                MultVWt(test_dshape_column, trial_shape, pelmats_l);
+                real_t w_l = g(k) * w; 
+                elmat.AddMatrix(w_l, pelmats_l, k * Nm, l * Nn);
+                real_t w_r = dg(k, l) * w;
+                elmat.AddMatrix(w_r, pelmats_r, k * Nm, l * Nn);
+            }
+        }
+    }
+}
+
+
+const IntegrationRule& DivVecIntegrator::GetRule(
+    const FiniteElement &trial_fe, const FiniteElement &test_fe,
+    const ElementTransformation &Trans) {
+    const auto order = trial_fe.GetOrder() + test_fe.GetOrder() + Trans.OrderW() - 1;
+    return IntRules.Get(trial_fe.GetGeomType(), order);
+}
+
+void DivVecIntegrator::AssembleElementMatrix2(
+    const FiniteElement &trial_fe, const FiniteElement &test_fe,
+    ElementTransformation &Trans, DenseMatrix &elmat) 
+{
+    auto dim = Trans.GetSpaceDim();
+    auto Nn = trial_fe.GetDof();
+    auto Nm = test_fe.GetDof();
+
+    elmat.SetSize(dim * Nm, dim * Nn);
+    elmat = 0.0;
+
+#ifdef MFEM_THREAD_SAFE
+    Vector test_shape, g;
+    DenseMatrix trial_dshape, pelmats;
+#endif
+    trial_dshape.SetSize(Nn, dim);
+    test_shape.SetSize(Nm);
+    pelmats.SetSize(Nm, Nn);
+    g.SetSize(dim);
+
+    const auto* ir = GetIntegrationRule(trial_fe, test_fe, Trans);
+
+    for (auto i = 0; i < ir->GetNPoints(); i++) {
+        const auto& ip = ir->IntPoint(i);
+        Trans.SetIntPoint(&ip);
+        auto w = Trans.Weight() * ip.weight;
+
+        trial_fe.CalcPhysDShape(Trans, trial_dshape);
+        test_fe.CalcShape(ip, test_shape);
+
+        QV->Eval(g, Trans, ip);
+        w *= Q->Eval(Trans, ip); 
+        for (auto k = 0; k < dim; k++) {
+            for (auto l = 0; l < dim; l++) {
+                auto trial_dshape_column = Vector(trial_dshape.GetColumn(l), Nn);
+                MultVWt(test_shape, trial_dshape_column, pelmats);
+                w *= g(k);
+                elmat.AddMatrix(w, pelmats, k * Nm, l * Nn);
+            }
+        }
+    }
+}
+
+
+const IntegrationRule& ProjDivIntegrator::GetRule(
+    const FiniteElement &trial_fe, const FiniteElement &test_fe,
+    const ElementTransformation &Trans) {
+    const auto order = trial_fe.GetOrder() + test_fe.GetOrder() + Trans.OrderW() - 1;
+    return IntRules.Get(trial_fe.GetGeomType(), order);
+}
+
+void ProjDivIntegrator::AssembleElementMatrix2(
+    const FiniteElement &trial_fe, const FiniteElement &test_fe,
+    ElementTransformation &Trans, DenseMatrix &elmat) 
+{
+    auto dim = Trans.GetSpaceDim();
+    auto Nn = trial_fe.GetDof();
+    auto Nm = test_fe.GetDof();
+
+    elmat.SetSize(dim * Nm, dim * Nn);
+    elmat = 0.0;
+
+#ifdef MFEM_THREAD_SAFE
+    Vector trial_shape, g;
+    DenseMatrix test_dshape, pelmats;
+#endif
+    test_dshape.SetSize(Nm, dim);
+    trial_shape.SetSize(Nn);
+    pelmats.SetSize(Nm, Nn);
+    g.SetSize(dim);
+
+    const auto* ir = GetIntegrationRule(trial_fe, test_fe, Trans);
+
+    for (auto i = 0; i < ir->GetNPoints(); i++) {
+        const auto& ip = ir->IntPoint(i);
+        Trans.SetIntPoint(&ip);
+        auto w = Trans.Weight() * ip.weight;
+
+        test_fe.CalcPhysDShape(Trans, test_dshape);
+        trial_fe.CalcShape(ip, trial_shape);
+
+        QV->Eval(g, Trans, ip);
+        w *= Q->Eval(Trans, ip); 
+        for (auto k = 0; k < dim; k++) {
+            auto test_dshape_column = Vector(test_dshape.GetColumn(k), Nm);
+            MultVWt(test_dshape_column, trial_shape, pelmats);
+            for (auto l = 0; l < dim; l++) {
+                w *= g(l);
+                elmat.AddMatrix(w, pelmats, k * Nm, l * Nn);
+            }
+        }
+    }
+}
+
+
+
+
+
 void ViscoelasticRHSIntegrator::AssembleRHSElementVect(const FiniteElement &el, ElementTransformation &Tr, Vector &elvec)
 {
     int dof = el.GetDof();
@@ -355,6 +738,54 @@ void ViscoelasticRHSIntegrator::AssembleRHSElementVect(const FiniteElement &el, 
         }
     }
 }
+
+
+GradientVectorGridFunctionCoefficient::GradientVectorGridFunctionCoefficient(
+    const GridFunction *gf) : MatrixCoefficient((gf) ? gf->VectorDim() : 0,
+                                                (gf) ? gf->FESpace()->GetMesh()->SpaceDimension() : 0), GridFunc(gf)
+{ }
+
+void GradientVectorGridFunctionCoefficient::SetGridFunction(
+    const GridFunction *gf)
+{
+    GridFunc = gf;
+    height = (gf) ? gf->VectorDim() : 0;
+    width = (gf) ? gf->FESpace()->GetMesh()->SpaceDimension() : 0;
+}
+
+void GradientVectorGridFunctionCoefficient::Eval(
+    DenseMatrix &M,
+    ElementTransformation &T,
+    const IntegrationPoint &ip)
+{
+    Mesh *gf_mesh = GridFunc->FESpace()->GetMesh();
+    //if (T.mesh->GetNE() == gf_mesh->GetNE())
+    {
+        GridFunc->GetVectorGradient(T, M);
+    }/*
+    else
+    {
+        IntegrationPoint coarse_ip;
+        ElementTransformation *coarse_T = RefinedToCoarse(*gf_mesh, T, ip, coarse_ip);
+        GridFunc->GetVectorGradient(*coarse_T, M);
+    }*/
+}
+/*
+void GradientVectorGridFunctionCoefficient::Eval(
+    mfem::DenseTensor &T,
+    mfem::ElementTransformation &Tr,
+    const mfem::IntegrationRule &ir)
+{
+    if (Tr.mesh == GridFunc->FESpace()->GetMesh())
+    {
+        GridFunc->GetVectorGradients(Tr, ir, T);
+    }
+    else
+    {
+        mfem::MatrixCoefficient::Eval(T, Tr, ir);
+    }
+}
+*/
 
 
 //Solver-related
