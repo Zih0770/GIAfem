@@ -8,6 +8,8 @@
 #include <string>
 #include <utility>
 #include <iostream>
+//#include <boost/math/special_functions/math_fwd.hpp>
+#include <boost/math/special_functions/spherical_harmonic.hpp>
 
 namespace giafem
 {
@@ -16,21 +18,24 @@ namespace giafem
 
     //Utilities
     inline void Visualize(ostream &os, ParMesh *mesh, ParGridFunction *deformed_nodes,
-                          ParGridFunction *field, const char *field_name, bool init_vis = false)
+                          ParGridFunction *field, const char *field_name, bool init_vis = false, real_t fac = 1000)
     {
         if (!os)
         {
             return;
         }
 
-        GridFunction *nodes = deformed_nodes;
+        //GridFunction *deformation = deformed_nodes;
+        GridFunction *displaced_nodes = new GridFunction(deformed_nodes->FESpace());
+        *displaced_nodes = *mesh->GetNodes();          // base geometry
+        displaced_nodes->Add(fac, *deformed_nodes);
 
         int owns_nodes = 0;
-        mesh->SwapNodes(nodes, owns_nodes);
+        mesh->SwapNodes(displaced_nodes, owns_nodes);
 
         os << "parallel " << mesh->GetNRanks() << " " << mesh->GetMyRank() << "\n";
         os << "solution\n" << *mesh << *field;
-        mesh->SwapNodes(nodes, owns_nodes);
+        mesh->SwapNodes(displaced_nodes, owns_nodes);
 
         if (init_vis)
         {
@@ -46,8 +51,6 @@ namespace giafem
             os << "pause\n";
         }
         os << flush;
-
-        delete nodes;
     }
 
 //Material Models
@@ -72,6 +75,8 @@ RheologyModel ParseRheologyModel(const char *str);
 class ViscoelasticOperator : public TimeDependentOperator
 {
 protected:
+    MPI_Comm comm;
+    int dim;
     ElasticityModel EM;
     RheologyModel RM;
     Coefficient &tau, &lamb, &mu, &loading;
@@ -79,10 +84,11 @@ protected:
     ParGridFunction &u_gf, &m_gf, &d_gf;
     mutable ParGridFunction lamb_gf, mu_gf, tau_gf;
     Array<int> ess_tdof_list;
-    ParBilinearForm *K;
-    mutable PetscParMatrix Kmat;
-    PetscPreconditioner *K_prec = NULL;
-    mutable PetscLinearSolver K_solver;
+    ParBilinearForm *K = nullptr;
+    HypreParMatrix *hK = nullptr;
+    mutable PetscParMatrix *Kmat = nullptr;
+    PetscPreconditioner *K_prec = nullptr;
+    PetscLinearSolver K_solver;
     mutable mfemElasticity::RigidBodySolver rigid_solver;
     ParMixedBilinearForm B;
     ParDiscreteLinearOperator Dev;
@@ -110,11 +116,24 @@ public:
     const ParGridFunction &GetLamb() const { return lamb_gf; }
     const ParGridFunction &GetMu()  const { return mu_gf; }
 
-    ~ViscoelasticOperator() override {delete K, K_prec;}
+    ~ViscoelasticOperator() override {delete K, hK, Kmat, K_prec;}
 };
 
 
+class CondTrialMixedBilinearForm : public MixedBilinearForm
+{
+    protected:
+        FiniteElementSpace *trial_fes_cond, *test_fes_cond;
+    public:
+        CondTrialMixedBilinearForm(FiniteElementSpace *tr_fes,
+                                   FiniteElementSpace *tr_fes_cond,
+                                   FiniteElementSpace *te_fes,
+                                   FiniteElementSpace *te_fes_cond);
 
+        void Assemble(int skip_zeros = 1);
+
+        ~CondTrialMixedBilinearForm() {}
+};
 
 
 
@@ -234,6 +253,165 @@ public:
 };
 
 
+class AdvectionScalarIntegrator : public BilinearFormIntegrator {
+private:
+    Coefficient* Q = nullptr;
+    VectorCoefficient* QV = nullptr;
+    MatrixCoefficient* QM = nullptr;
+
+#ifndef MFEM_THREAD_SAFE
+    mfem::Vector trial_shape, qv;
+    mfem::DenseMatrix test_dshape, pelmats, qm, tm;
+#endif
+
+public:
+    AdvectionScalarIntegrator(const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir) {}
+
+    AdvectionScalarIntegrator(Coefficient& q, const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir), Q{&q} {}
+
+    AdvectionScalarIntegrator(VectorCoefficient& qv, const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir), QV{&qv} {}
+
+    AdvectionScalarIntegrator(MatrixCoefficient& qm, const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir), QM{&qm} {}
+
+    static const IntegrationRule& GetRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                          const ElementTransformation& Trans);
+
+    void AssembleElementMatrix2(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                ElementTransformation& Trans, DenseMatrix& elmat) override;
+
+protected:
+    const IntegrationRule* GetDefaultIntegrationRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                                     const ElementTransformation& trans) const override 
+    { return &GetRule(trial_fe, test_fe, trans); }
+};
+
+
+class GradProjectionIntegrator : public BilinearFormIntegrator {
+private:
+    Coefficient *Q = nullptr;
+    VectorCoefficient *QV =nullptr;
+    MatrixCoefficient *QM = nullptr;
+
+#ifndef MFEM_THREAD_SAFE
+    mfem::Vector trial_shape, test_shape, g;
+    mfem::DenseMatrix trial_dshape, pelmats_l, pelmats_r, dg;
+#endif
+
+public:
+    GradProjectionIntegrator(const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir) {}
+
+    GradProjectionIntegrator(Coefficient &q, VectorCoefficient &qv, MatrixCoefficient &qm, const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir), Q{&q}, QV{&qv}, QM(&qm) {}
+
+    static const IntegrationRule& GetRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                          const ElementTransformation& Trans);
+
+    void AssembleElementMatrix2(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                ElementTransformation& Trans, DenseMatrix& elmat) override;
+
+protected:
+    const IntegrationRule* GetDefaultIntegrationRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                                     const ElementTransformation& trans) const override 
+    { return &GetRule(trial_fe, test_fe, trans); }
+};
+
+
+class AdvectionProjectionIntegrator : public BilinearFormIntegrator {
+private:
+    Coefficient *Q = nullptr;
+    VectorCoefficient *QV =nullptr;
+    MatrixCoefficient *QM = nullptr;
+
+#ifndef MFEM_THREAD_SAFE
+    mfem::Vector trial_shape, test_shape, g;
+    mfem::DenseMatrix test_dshape, pelmats_l, pelmats_r, dg;
+#endif
+
+public:
+    AdvectionProjectionIntegrator(const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir) {}
+
+    AdvectionProjectionIntegrator(Coefficient &q, VectorCoefficient &qv, MatrixCoefficient &qm, const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir), Q{&q}, QV{&qv}, QM(&qm) {}
+
+    static const IntegrationRule& GetRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                          const ElementTransformation& Trans);
+
+    void AssembleElementMatrix2(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                ElementTransformation& Trans, DenseMatrix& elmat) override;
+
+protected:
+    const IntegrationRule* GetDefaultIntegrationRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                                     const ElementTransformation& trans) const override 
+    { return &GetRule(trial_fe, test_fe, trans); }
+};
+
+
+class DivVecIntegrator : public BilinearFormIntegrator {
+private:
+    Coefficient *Q = nullptr;
+    VectorCoefficient *QV =nullptr;
+
+#ifndef MFEM_THREAD_SAFE
+    mfem::Vector test_shape, g;
+    mfem::DenseMatrix trial_dshape, pelmats;
+#endif
+
+public:
+    DivVecIntegrator(const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir) {}
+
+    DivVecIntegrator(Coefficient &q, VectorCoefficient &qv, const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir), Q{&q}, QV{&qv} {}
+
+    static const IntegrationRule& GetRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                          const ElementTransformation& Trans);
+
+    void AssembleElementMatrix2(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                ElementTransformation& Trans, DenseMatrix& elmat) override;
+
+protected:
+    const IntegrationRule* GetDefaultIntegrationRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                                     const ElementTransformation& trans) const override 
+    { return &GetRule(trial_fe, test_fe, trans); }
+};
+
+
+class ProjDivIntegrator : public BilinearFormIntegrator {
+private:
+    Coefficient *Q = nullptr;
+    VectorCoefficient *QV =nullptr;
+
+#ifndef MFEM_THREAD_SAFE
+    mfem::Vector trial_shape, g;
+    mfem::DenseMatrix test_dshape, pelmats;
+#endif
+
+public:
+    ProjDivIntegrator(const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir) {}
+
+    ProjDivIntegrator(Coefficient &q, VectorCoefficient &qv, const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir), Q{&q}, QV{&qv} {}
+
+    static const IntegrationRule& GetRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                          const ElementTransformation& Trans);
+
+    void AssembleElementMatrix2(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                ElementTransformation& Trans, DenseMatrix& elmat) override;
+
+protected:
+    const IntegrationRule* GetDefaultIntegrationRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
+                                                     const ElementTransformation& trans) const override 
+    { return &GetRule(trial_fe, test_fe, trans); }
+};
+
+
 class ViscoelasticRHSIntegrator : public LinearFormIntegrator
 {
     private:
@@ -290,8 +468,187 @@ public:
 };
 
 
+class SphericalHarmonicCoefficient : public mfem::Coefficient {
+private:
+    int _l;
+    int _m;
+    bool _solid;
+    const mfem::real_t sqrt2 = sqrt(2);
+    mutable mfem::Vector _x;
+
+public:
+    SphericalHarmonicCoefficient(int l, int m, bool solid = false)
+        : _l{l}, _m{m}, _solid{solid} {}
+
+    mfem::real_t Eval(mfem::ElementTransformation &T,
+            const mfem::IntegrationPoint &ip) {
+        T.Transform(ip, _x);
+        mfem::real_t theta = atan2(sqrt(_x[0] * _x[0] + _x[1] * _x[1]), _x[2]);
+        mfem::real_t phi = atan2(_x[1], _x[0]);
+
+        mfem::real_t rfac = _m == 0 ? 1 : sqrt2;
+        if (_solid) {
+            mfem::real_t r = _x.Norml2();
+            rfac *= std::pow(r, _l);
+        }
+
+        if (_m < 0) {
+            return rfac * boost::math::spherical_harmonic_r(_l, -_m, theta, phi);
+        } else if (_m == 0) {
+            return rfac * boost::math::spherical_harmonic_r(_l, 0, theta, phi);
+        } else {
+            return rfac * boost::math::spherical_harmonic_i(_l, _m, theta, phi);
+        }
+    }
+};
+
+
+class GradientVectorGridFunctionCoefficient : public MatrixCoefficient
+{
+protected:
+   const GridFunction *GridFunc;
+
+public:
+   GradientVectorGridFunctionCoefficient(const GridFunction *gf);
+
+   void SetGridFunction(const GridFunction *gf);
+
+   const GridFunction *GetGridFunction() const { return GridFunc; }
+
+   virtual void Eval(DenseMatrix &M,
+                     ElementTransformation &T,
+                     const IntegrationPoint &ip) override;
+/*
+   virtual void Eval(DenseTensor &T,
+                     ElementTransformation &Tr,
+                     const IntegrationRule &ir) override;
+*/
+   virtual ~GradientVectorGridFunctionCoefficient() {}
+};
+
+
+struct Constants {
+    public:
+        static constexpr real_t G = 6.6743e-11;
+        static constexpr real_t R = 6371e3;
+};
+
 
 //Solver-related
+inline SparseMatrix* DenseToSparse(const DenseMatrix &dense_mat, real_t tol=1e-12)
+{
+    int m = dense_mat.Height();
+    int n = dense_mat.Width();
+
+    std::vector<int> I(m+1), J;
+    std::vector<real_t> data;
+
+    I[0] = 0;
+    for (int row = 0; row < m; ++row)
+    {
+        for (int col = 0; col < n; ++col)
+        {
+            real_t val = dense_mat(row, col);
+            if (std::abs(val) > tol) // consider as nonzero
+            {
+                J.push_back(col);
+                data.push_back(val);
+            }
+        }
+        I[row+1] = J.size();
+    }
+
+    return new SparseMatrix(I.data(), J.data(), data.data(), m, n);
+}
+
+
+class ParDirichletToNeumannOperator : public Operator {
+private:
+    ParFiniteElementSpace *fes;
+    int lMax;
+    real_t radius;
+    Array<int> marker;
+    vector<HypreParVector *> u;
+    
+    int NumberOfSphericalHarmonicCoefficients() const {
+        return pow(lMax + 1, 2);
+    }
+
+    void SetMarker() {
+        auto *pmesh = fes->GetParMesh();
+        auto size = pmesh->bdr_attributes.Size(); //!
+        marker = Array<int>(size);
+        marker = 0;
+        marker[size - 1] = 1;
+    }
+
+    void GetBoundingRadius() {
+        radius = 0;
+        auto *pmesh = fes->GetParMesh();
+        auto x = Vector();
+        for (int i = 0; i < fes->GetNBE(); i++) {
+            const int bdr_attr = pmesh->GetBdrAttribute(i);
+            if (marker[bdr_attr - 1] == 1) {
+                const auto *el = fes->GetBE(i);
+                auto *T = fes->GetBdrElementTransformation(i);
+                const auto ir = el->GetNodes();
+                for (auto j = 0; j < ir.GetNPoints(); j++) {
+                    const IntegrationPoint &ip = ir.IntPoint(j);
+                    T->SetIntPoint(&ip);
+                    T->Transform(ip, x);
+                    auto r = x.Norml2();
+                    if (r > radius) radius = r;
+                }
+            }
+        }
+    }
+
+public:
+    ParDirichletToNeumannOperator(ParFiniteElementSpace *fes_, int lMax_, real_t radius_)
+        : Operator(fes_->GetTrueVSize()), fes{fes_}, lMax{lMax_}, radius(radius_) {
+            SetMarker();
+            //GetBoundingRadius();
+            //cout<<"Bounding radius: "<<radius<<endl;
+            for (auto l = 0; l <= lMax; l++) {
+                for (auto m = -l; m <= l; m++) {
+                    auto f = SphericalHarmonicCoefficient(l, m);
+                    auto b = ParLinearForm(fes);
+                    b.AddBoundaryIntegrator(new BoundaryLFIntegrator(f), marker);
+                    b.Assemble();
+                    auto *tv = new HypreParVector();
+                    tv = b.ParallelAssemble();
+                    //b.ParallelAssemble(*tv);
+                    u.push_back(tv);
+                }
+            }
+        }
+
+    ~ParDirichletToNeumannOperator() {
+        for (auto i = 0; i < u.size(); i++) {
+            delete u[i];
+        }
+    }
+
+    void Mult(const Vector &x, Vector &y) const override {
+        y.SetSize(x.Size());
+        y = 0.0;
+        //auto ir3 = 1.0 / pow(radius, 3);
+        auto ir3 = 1.0 / radius;
+        auto i = 0;
+        for (auto l = 0; l <= lMax; l++) {
+            for (auto m = -l; m <= l; m++) {
+                auto &_u = *u[i++];
+                //auto product = (l + 1) * ir3 * (_u * x); //!
+                auto product = (l + 1) * ir3 * InnerProduct(fes->GetComm(), _u, x);
+                y.Add(product, _u);
+            }
+        }
+    }
+
+    void MultTranspose(const Vector &x, Vector &y) const override { Mult(x, y); }
+};
+
+
 class RigidTranslation : public mfem::VectorCoefficient {
     private:
         int _component;
@@ -459,6 +816,7 @@ class RigidBodySolver : public Solver {
                     _u.push_back(tv);
                 }
 
+
                 // Set the rotations.
                 if (vDim == 2) {
                     auto v = RigidRotation(vDim, 2);
@@ -501,7 +859,7 @@ class RigidBodySolver : public Solver {
 
         void Mult(const Vector &b, Vector &x) const {
             ProjectOrthogonalToRigidBody(b, _b);
-            _solver->iterative_mode = iterative_mode;
+            //_solver->iterative_mode = iterative_mode;
             _solver->Mult(_b, x);
             ProjectOrthogonalToRigidBody(x, x);
         }
@@ -664,6 +1022,91 @@ class BaileySolver_test : public ODESolver
         void Step(Vector &x, real_t &t, real_t &dt) override;
         void SetTau(real_t tau_) { tau = tau_; }
 
+};
+
+
+class DirichletToNeumannOperator : public Operator {
+ private:
+  FiniteElementSpace *_fes;
+  int _lMax;
+  real_t _radius;
+  Array<int> _marker;
+  vector<Vector *> _u;
+
+  int NumberOfSphericalHarmonicCoefficients() const {
+    return pow(_lMax + 1, 2);
+  }
+
+  void SetMarker() {
+    auto *mesh = _fes->GetMesh();
+    auto size = mesh->bdr_attributes.Size();
+    _marker = Array<int>(size);
+    _marker = 0;
+    _marker[size - 1] = 1;
+  }
+
+  void GetBoundingRadius() {
+    _radius = 0;
+    auto *mesh = _fes->GetMesh();
+    auto x = Vector();
+    for (int i = 0; i < _fes->GetNBE(); i++) {
+      const int bdr_attr = mesh->GetBdrAttribute(i);
+      if (_marker[bdr_attr - 1] == 1) {
+        const auto *el = _fes->GetBE(i);
+        auto *T = _fes->GetBdrElementTransformation(i);
+        const auto ir = el->GetNodes();
+        for (auto j = 0; j < ir.GetNPoints(); j++) {
+          const IntegrationPoint &ip = ir.IntPoint(j);
+          T->SetIntPoint(&ip);
+          T->Transform(ip, x);
+          auto r = x.Norml2();
+          if (r > _radius) _radius = r;
+        }
+      }
+    }
+  }
+
+ public:
+  DirichletToNeumannOperator(FiniteElementSpace *fes, int lMax)
+      : Operator(fes->GetTrueVSize()), _fes{fes}, _lMax{lMax} {
+    SetMarker();
+    GetBoundingRadius();
+    //_radius = Constants::R;
+    for (auto l = 0; l <= _lMax; l++) {
+      for (auto m = -l; m <= l; m++) {
+        auto f = SphericalHarmonicCoefficient(l, m);
+        auto b = LinearForm(_fes);
+        b.AddBoundaryIntegrator(new BoundaryLFIntegrator(f), _marker);
+        b.Assemble();
+        auto *tv = new Vector();
+        *tv = b;
+        _u.push_back(tv);
+      }
+    }
+  }
+
+  ~DirichletToNeumannOperator() {
+    for (auto i = 0; i < _u.size(); i++) {
+      delete _u[i];
+    }
+  }
+
+  void Mult(const Vector &x, Vector &y) const override {
+    y.SetSize(x.Size());
+    y = 0.0;
+    //auto ir3 = 1.0 / pow(_radius, 3);
+    auto ir3 = 1.0 / _radius;
+    auto i = 0;
+    for (auto l = 0; l <= _lMax; l++) {
+      for (auto m = -l; m <= l; m++) {
+        auto &u = *_u[i++];
+        auto product = (l + 1) * ir3 * (u * x);
+        y.Add(product, u);
+      }
+    }
+  }
+
+  void MultTranspose(const Vector &x, Vector &y) const override { Mult(x, y); }
 };
 
 

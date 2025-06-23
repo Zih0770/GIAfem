@@ -1,0 +1,4 @@
+-ksp_converged_reason
+-ksp_view
+
+#-pc_type gamg

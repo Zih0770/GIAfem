@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     int myid = Mpi::WorldRank();
     Hypre::Init();
 
-    const char *mesh_file = "mesh/single_sphere.msh";
+    const char *mesh_file = "mesh/single_sphere_test.msh";
     const char *output_name = "single_sphere";
     const char *elasticity_model = "linear";
     const char *rheology_model = "Maxwell";
@@ -33,11 +33,12 @@ int main(int argc, char *argv[])
     int ser_ref_levels = -1;
     int par_ref_levels = -1;
     bool amg_elast = 0;
-    const char *petscrc_file = "";
+    const char *petscrc_file = "demos/petscopts_viscoelastic";
     //bool petscmonitor = false;
     //bool forcewrap = false;
     //bool useh2 = false;
     //bool use_nonoverlapping = false;
+    //bool petsc_use_jfnk = false;
     bool static_cond = false;
     const char *device_config = "cpu";
     bool visualization = false;
@@ -45,6 +46,8 @@ int main(int argc, char *argv[])
 
     //Parsing
     OptionsParser args(argc, argv);
+    args.AddOption(&mesh_file, "-m", "--mesh",
+                  "Mesh file to use.");
     args.AddOption(&output_name, "-f", "--file",
                    "Output file.");
     args.AddOption(&elasticity_model, "-em", "--elasticity-model",
@@ -75,6 +78,10 @@ int main(int argc, char *argv[])
             "or standard AMG for systems (unknown approach).");
     args.AddOption(&static_cond, "-sc", "--static-condensation", "-no-sc",
             "--no-static-condensation", "Enable static condensation.");
+    //args.AddOption(&use_nonoverlapping, "-nonoverlapping", "--nonoverlapping",
+    //              "-no-nonoverlapping", "--no-nonoverlapping",
+    //              "Use or not the block diagonal PETSc's matrix format "
+    //              "for non-overlapping domain decomposition.");
     args.AddOption(&device_config, "-d", "--device",
             "Device configuration string, see Device::Configure().");
     args.AddOption(&visualization, "-vis", "--visualization", "-no-vis",
@@ -95,6 +102,9 @@ int main(int argc, char *argv[])
     {
         args.PrintOptions(cout);
     }
+
+    Device device(device_config);
+    if (myid == 0) { device.Print(); }
 
     MFEMInitializePetsc(NULL,NULL,petscrc_file,NULL);
 
@@ -139,12 +149,18 @@ int main(int argc, char *argv[])
     FunctionCoefficient tau_coeff(tau_func);
     FunctionCoefficient loading_coeff(loading_func);
 
+    //ParGridFunction nodes(&fes_u);
+    //pmesh->GetNodes(nodes);
     ParGridFunction *nodes = new ParGridFunction(&fes_u);
     VectorFunctionCoefficient identity(dim, [](const Vector &x, Vector &y) { y = x; });
     nodes->ProjectCoefficient(identity);
     pmesh->NewNodes(*nodes, false);
     MFEM_VERIFY(pmesh->GetNodes(), "Mesh has no nodal coordinates!");
-           
+
+    u_gf.SetTrueVector();
+    u_gf.SetFromTrueVector();
+
+
     //Time-depednet operator
     ViscoelasticOperator oper(fes_u, fes_m, fes_properties, fes_w, u_gf, m_gf, d_gf, lamb_coeff, mu_coeff, tau_coeff, loading_coeff,
                               rel_tol, dt_res, elasticity_model, rheology_model);
@@ -160,7 +176,9 @@ int main(int argc, char *argv[])
        int  visport   = 19916;
        vis_w.open(vishost, visport);
        vis_w.precision(8);
+       w_gf = 0.0;
        Visualize(vis_w, pmesh, &u_gf, &w_gf, "Elastic energy density", true);
+       MPI_Barrier(pmesh->GetComm());
     }
     real_t year2sec = 3.15576e7;
     real_t t = 0.0;
@@ -168,15 +186,19 @@ int main(int argc, char *argv[])
     bool last_step = false;
     for (int ti = 1; !last_step; ti++)
     {
-        cout<<"t = "<<round(t/year2sec)<<" year:"<<endl;
+        if (myid == 0)
+            cout<<"t = "<<round(t/year2sec)<<" year:"<<endl;
         real_t dt_real = min(dt, t_final - t);
         ode_solver->Step(m_vec, t, dt_real);
         last_step = (t >= t_final - 1e-8*dt);
         if (last_step || (ti % vis_steps) == 0 )
         {
+            u_gf.SetFromTrueVector();
             if (visualization)
             {
                 oper.CalcStrainEnergyDensity(w_gf);
+                cout<<"u_max: "<<u_gf.Normlinf()<<endl;
+                cout<<"W_max: "<<w_gf.Normlinf()<<endl;
                 Visualize(vis_w, pmesh, &u_gf, &w_gf, "Elastic energy density");
             }
         }
@@ -184,7 +206,7 @@ int main(int argc, char *argv[])
     }
 
     //Saving
-    //pmesh->SetNodalFESpace(fespace);
+    //pmesh->SetNodalFESpace(fes_u);
     *pmesh->GetNodes() += u_gf;
     u_gf.Neg();
     ostringstream mesh_name;
@@ -199,13 +221,12 @@ int main(int argc, char *argv[])
     u_gf.Save(osol);
 
     delete pmesh;
-    delete nodes;
+    //delete nodes;
 
     MFEMFinalizePetsc();
 
     return 0;
 }
-
 
 real_t mu_func(const Vector &coord)
 {
@@ -246,7 +267,7 @@ real_t tau_func(const Vector &coord)
     real_t base_tau = tau_center + (tau_surface - tau_center) * r_norm;
     real_t polar_perturb = 15.0 * (1.0 + cos(2.0 * theta));
     real_t azimuthal_perturb = 10.0 * (1 + sin(2.0 * phi));
-    return base_tau * (1.0 + polar_perturb) * (1.0 + azimuthal_perturb) / 100;
+    return base_tau * (1.0 + polar_perturb) * (1.0 + azimuthal_perturb);
 }
 
 real_t loading_func(const Vector &coord)
