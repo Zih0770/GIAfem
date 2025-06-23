@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
 
-set(MFEM_LIBRARIES "/home/sssou/local/mfem/lib/libmfem.so" "/home/sssou/source/petsc/arch-opt/lib/libmpi.so" /home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a)
+set(MFEM_LIBRARIES "/home/sssou/local/mfem/lib/libmfem.so" "/home/sssou/source/petsc/arch-opt/lib/libmpi.so" "~/source/hypre/build/lib/libHYPRE.so" "/home/sssou/source/mfemElasticity/installed/lib/libmfemElasticity.a")
 set(MFEM_INCLUDE "/home/sssou/local/mfem/include" /home/sssou/source/mfemElasticity/installed/include)
 include_directories(${MFEM_INCLUDE})
 
@@ -48,6 +48,8 @@ include_directories("${PETSC_DIR}/${PETSC_ARCH}/include")
 include_directories("${PETSC_DIR}/include")
 link_directories("${PETSC_DIR}/${PETSC_ARCH}/lib")
 
+find_package(Boost REQUIRED)
+
 set(MPI_CXX_LIBRARIES "${PETSC_DIR}/${PETSC_ARCH}/lib/libmpi.so")
 set(MPI_CXX_INCLUDE_PATH "${PETSC_DIR}/${PETSC_ARCH}/include")
 #find_package(MPI REQUIRED)
@@ -62,6 +64,28 @@ target_link_libraries(giafem_lib PUBLIC ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test demos/test.cpp)
 target_link_libraries(test PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(ex demos/ex.cpp)
+target_link_libraries(ex PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(ex1 demos/ex1.cpp)
+target_link_libraries(ex1 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(ex1p demos/ex1p.cpp)
+target_link_libraries(ex1p PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(ex2 demos/ex2.cpp)
+target_link_libraries(ex2 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(ex2p demos/ex2p.cpp)
+target_link_libraries(ex2p PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+#add_executable(ex3 demos/ex3.cpp)
+#target_link_libraries(ex3 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(ex3p demos/ex3p.cpp)
+target_link_libraries(ex3p PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
 
 #add_executable(test_ode demos/test_ode.cpp)
 #target_link_libraries(test_ode PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
@@ -93,9 +117,6 @@ target_link_libraries(test_ve PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIB
 
 add_executable(viscoelastic_sphere demos/viscoelastic_sphere.cpp)
 target_link_libraries(viscoelastic_sphere PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
-
-add_executable(viscoelastic demos/viscoelastic.cpp)
-target_link_libraries(viscoelastic PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(SG_PW demos/SG_PW.cpp)
 target_link_libraries(SG_PW PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
