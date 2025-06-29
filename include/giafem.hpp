@@ -120,19 +120,39 @@ public:
 };
 
 
-class CondTrialMixedBilinearForm : public MixedBilinearForm
+class ExtTrialMixedBilinearForm : public MixedBilinearForm
 {
     protected:
-        FiniteElementSpace *trial_fes_cond, *test_fes_cond;
+        FiniteElementSpace *trial_fes_cond;
+        SubMesh::From from;
+        Array<int> parent_element_ids;
+        Array<int> *vdof_to_vdof_map = nullptr;
     public:
-        CondTrialMixedBilinearForm(FiniteElementSpace *tr_fes,
-                                   FiniteElementSpace *tr_fes_cond,
-                                   FiniteElementSpace *te_fes,
-                                   FiniteElementSpace *te_fes_cond);
+        ExtTrialMixedBilinearForm(FiniteElementSpace *tr_fes,
+                                  FiniteElementSpace *te_fes,
+                                  FiniteElementSpace *tr_fes_cond, SubMesh *mesh_cond);
 
         void Assemble(int skip_zeros = 1);
 
-        ~CondTrialMixedBilinearForm() {}
+        ~ExtTrialMixedBilinearForm() { delete vdof_to_vdof_map; }
+};
+
+
+class ExtTestMixedBilinearForm : public MixedBilinearForm
+{
+    protected:
+        FiniteElementSpace *test_fes_cond;
+        SubMesh::From from;
+        Array<int> parent_element_ids;
+        Array<int> *vdof_to_vdof_map = nullptr;
+    public:
+        ExtTestMixedBilinearForm(FiniteElementSpace *tr_fes,
+                                 FiniteElementSpace *te_fes,
+                                 FiniteElementSpace *te_fes_cond, SubMesh *mesh_cond);
+
+        void Assemble(int skip_zeros = 1);
+
+        ~ExtTestMixedBilinearForm() { delete vdof_to_vdof_map; }
 };
 
 
@@ -142,12 +162,26 @@ class CondTrialMixedBilinearForm : public MixedBilinearForm
 
 
 //Interpolators
+enum class VecMode {
+    FULL,
+    REDUCED
+};
+
 class GradInterpolator : public DiscreteInterpolator
 {
 protected:
-    int dim;
+    int dim, vdim;
+    VecMode mode;
+    std::vector<std::pair<int, int>> IndexMap;
 public:
-    GradInterpolator(int dim_ = 3) : dim(dim_) {}
+    GradInterpolator(int dim_ = 3, VecMode mode_ = VecMode::FULL) : dim(dim_), mode(mode_) {
+        vdim = dim * (dim + 1) / 2;
+        if (dim == 2){
+            IndexMap = {{0, 0}, {1, 0}, {1, 1}};
+        } else{
+            IndexMap = {{0, 0}, {1, 0}, {2, 0}, {1, 1}, {2, 1}, {2,2}};
+        }
+    }
 
     void AssembleElementMatrix2(const FiniteElement &u_fe,
                                 const FiniteElement &e_fe,
@@ -159,10 +193,11 @@ class StrainInterpolator : public DiscreteInterpolator
 {
 protected:
     int dim, vdim;
+    VecMode mode;
     std::vector<std::pair<int, int>> IndexMap;
 
 public:
-    StrainInterpolator(int dim_ = 3) : dim(dim_) {
+    StrainInterpolator(int dim_ = 3, VecMode mode_ = VecMode::REDUCED) : dim(dim_), mode(mode_) {
         vdim = dim * (dim + 1) / 2;
         if (dim == 2){
             IndexMap = {{0, 0}, {1, 0}, {1, 1}};
@@ -181,9 +216,10 @@ class DevStrainInterpolator : public DiscreteInterpolator
 {
 protected:
     int dim, vdim;
+    VecMode mode;
     std::vector<std::pair<int, int>> IndexMap;
 public:
-    DevStrainInterpolator(int dim_ = 3) : dim(dim_) {
+    DevStrainInterpolator(int dim_ = 3, VecMode mode_ = VecMode::REDUCED) : dim(dim_), mode(mode_) {
         vdim = dim * (dim + 1) / 2 - 1;
         if (dim == 2){
             IndexMap = {{0, 0}, {1, 0}};
@@ -253,7 +289,7 @@ public:
 };
 
 
-class AdvectionScalarIntegrator : public BilinearFormIntegrator {
+class AdvectionIntegrator : public BilinearFormIntegrator {
 private:
     Coefficient* Q = nullptr;
     VectorCoefficient* QV = nullptr;
@@ -265,20 +301,24 @@ private:
 #endif
 
 public:
-    AdvectionScalarIntegrator(const IntegrationRule* ir = nullptr)
+    AdvectionIntegrator(const IntegrationRule* ir = nullptr)
         : BilinearFormIntegrator(ir) {}
 
-    AdvectionScalarIntegrator(Coefficient& q, const IntegrationRule* ir = nullptr)
+    AdvectionIntegrator(Coefficient& q, const IntegrationRule* ir = nullptr)
         : BilinearFormIntegrator(ir), Q{&q} {}
 
-    AdvectionScalarIntegrator(VectorCoefficient& qv, const IntegrationRule* ir = nullptr)
+    AdvectionIntegrator(VectorCoefficient& qv, const IntegrationRule* ir = nullptr)
         : BilinearFormIntegrator(ir), QV{&qv} {}
 
-    AdvectionScalarIntegrator(MatrixCoefficient& qm, const IntegrationRule* ir = nullptr)
+    AdvectionIntegrator(MatrixCoefficient& qm, const IntegrationRule* ir = nullptr)
         : BilinearFormIntegrator(ir), QM{&qm} {}
 
     static const IntegrationRule& GetRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
-                                          const ElementTransformation& Trans);
+            const ElementTransformation& Trans)
+    {
+        int order = trial_fe.GetOrder() + Trans.OrderGrad(&test_fe) + Trans.OrderJ();
+        return IntRules.Get(trial_fe.GetGeomType(), order);
+    }
 
     void AssembleElementMatrix2(const FiniteElement& trial_fe, const FiniteElement& test_fe,
                                 ElementTransformation& Trans, DenseMatrix& elmat) override;
@@ -290,34 +330,25 @@ protected:
 };
 
 
-class GradProjectionIntegrator : public BilinearFormIntegrator {
+class ProjectionGradientIntegrator : public BilinearFormIntegrator {
 private:
     Coefficient *Q = nullptr;
     VectorCoefficient *QV =nullptr;
     MatrixCoefficient *QM = nullptr;
 
 #ifndef MFEM_THREAD_SAFE
-    mfem::Vector trial_shape, test_shape, g;
-    mfem::DenseMatrix trial_dshape, pelmats_l, pelmats_r, dg;
+    Vector shape, g;
+    DenseMatrix dshape, pelmat_l, pelmat_r, dg;
 #endif
 
 public:
-    GradProjectionIntegrator(const IntegrationRule* ir = nullptr)
+    ProjectionGradientIntegrator(const IntegrationRule* ir = nullptr)
         : BilinearFormIntegrator(ir) {}
 
-    GradProjectionIntegrator(Coefficient &q, VectorCoefficient &qv, MatrixCoefficient &qm, const IntegrationRule* ir = nullptr)
+    ProjectionGradientIntegrator(Coefficient &q, VectorCoefficient &qv, MatrixCoefficient &qm, const IntegrationRule* ir = nullptr)
         : BilinearFormIntegrator(ir), Q{&q}, QV{&qv}, QM(&qm) {}
 
-    static const IntegrationRule& GetRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
-                                          const ElementTransformation& Trans);
-
-    void AssembleElementMatrix2(const FiniteElement& trial_fe, const FiniteElement& test_fe,
-                                ElementTransformation& Trans, DenseMatrix& elmat) override;
-
-protected:
-    const IntegrationRule* GetDefaultIntegrationRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
-                                                     const ElementTransformation& trans) const override 
-    { return &GetRule(trial_fe, test_fe, trans); }
+    void AssembleElementMatrix(const FiniteElement &el, ElementTransformation &Trans, DenseMatrix &elmat) override;
 };
 
 
@@ -328,8 +359,8 @@ private:
     MatrixCoefficient *QM = nullptr;
 
 #ifndef MFEM_THREAD_SAFE
-    mfem::Vector trial_shape, test_shape, g;
-    mfem::DenseMatrix test_dshape, pelmats_l, pelmats_r, dg;
+    Vector shape, g;
+    DenseMatrix dshape, pelmat_l, pelmat_r, dg;
 #endif
 
 public:
@@ -339,49 +370,53 @@ public:
     AdvectionProjectionIntegrator(Coefficient &q, VectorCoefficient &qv, MatrixCoefficient &qm, const IntegrationRule* ir = nullptr)
         : BilinearFormIntegrator(ir), Q{&q}, QV{&qv}, QM(&qm) {}
 
-    static const IntegrationRule& GetRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
-                                          const ElementTransformation& Trans);
-
-    void AssembleElementMatrix2(const FiniteElement& trial_fe, const FiniteElement& test_fe,
-                                ElementTransformation& Trans, DenseMatrix& elmat) override;
-
-protected:
-    const IntegrationRule* GetDefaultIntegrationRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
-                                                     const ElementTransformation& trans) const override 
-    { return &GetRule(trial_fe, test_fe, trans); }
+    void AssembleElementMatrix(const FiniteElement &el, ElementTransformation &Trans, DenseMatrix &elmat) override;
 };
 
 
-class DivVecIntegrator : public BilinearFormIntegrator {
+class DivergenceVectorIntegrator : public BilinearFormIntegrator {
 private:
     Coefficient *Q = nullptr;
     VectorCoefficient *QV =nullptr;
 
 #ifndef MFEM_THREAD_SAFE
-    mfem::Vector test_shape, g;
-    mfem::DenseMatrix trial_dshape, pelmats;
+    mfem::Vector shape, g;
+    mfem::DenseMatrix dshape, pelmat;
 #endif
 
 public:
-    DivVecIntegrator(const IntegrationRule* ir = nullptr)
+    DivergenceVectorIntegrator(const IntegrationRule* ir = nullptr)
         : BilinearFormIntegrator(ir) {}
 
-    DivVecIntegrator(Coefficient &q, VectorCoefficient &qv, const IntegrationRule* ir = nullptr)
+    DivergenceVectorIntegrator(Coefficient &q, VectorCoefficient &qv, const IntegrationRule* ir = nullptr)
         : BilinearFormIntegrator(ir), Q{&q}, QV{&qv} {}
 
-    static const IntegrationRule& GetRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
-                                          const ElementTransformation& Trans);
-
-    void AssembleElementMatrix2(const FiniteElement& trial_fe, const FiniteElement& test_fe,
-                                ElementTransformation& Trans, DenseMatrix& elmat) override;
-
-protected:
-    const IntegrationRule* GetDefaultIntegrationRule(const FiniteElement& trial_fe, const FiniteElement& test_fe,
-                                                     const ElementTransformation& trans) const override 
-    { return &GetRule(trial_fe, test_fe, trans); }
+    void AssembleElementMatrix(const FiniteElement& el, ElementTransformation& Trans, DenseMatrix& elmat) override;
 };
 
 
+class ProjectionDivergenceIntegrator : public BilinearFormIntegrator {
+private:
+    Coefficient *Q = nullptr;
+    VectorCoefficient *QV =nullptr;
+
+#ifndef MFEM_THREAD_SAFE
+    mfem::Vector shape, g;
+    mfem::DenseMatrix dshape, pelmat;
+#endif
+
+public:
+    ProjectionDivergenceIntegrator(const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir) {}
+
+    ProjectionDivergenceIntegrator(Coefficient &q, VectorCoefficient &qv, const IntegrationRule* ir = nullptr)
+        : BilinearFormIntegrator(ir), Q{&q}, QV{&qv} {}
+
+    void AssembleElementMatrix(const FiniteElement &el, ElementTransformation& Trans, DenseMatrix& elmat) override;
+};
+
+
+/*
 class ProjDivIntegrator : public BilinearFormIntegrator {
 private:
     Coefficient *Q = nullptr;
@@ -410,7 +445,7 @@ protected:
                                                      const ElementTransformation& trans) const override 
     { return &GetRule(trial_fe, test_fe, trans); }
 };
-
+*/
 
 class ViscoelasticRHSIntegrator : public LinearFormIntegrator
 {
@@ -630,14 +665,12 @@ public:
         y.SetSize(x.Size());
         y = 0.0;
         auto ir3 = 1.0 / pow(radius, 3);
-        //auto ir3 = 1.0 / radius;
         auto i = 0;
         for (auto l = 0; l <= lMax; l++) {
             for (auto m = -l; m <= l; m++) {
                 auto &_u = *u[i++];
                 //auto product = (l + 1) * ir3 * (_u * x); //!
                 auto product = (l + 1) * ir3 * InnerProduct(fes->GetComm(), _u, x);
-                if (l==3 && m==0) {cout<<"Value: "<<InnerProduct(fes->GetComm(), _u, x)<<endl;}
                 y.Add(product, _u);
             }
         }
@@ -647,7 +680,7 @@ public:
 };
 
 
-class RigidTranslation : public mfem::VectorCoefficient {
+class RigidTranslation : public VectorCoefficient {
     private:
         int _component;
 
@@ -668,7 +701,7 @@ class RigidTranslation : public mfem::VectorCoefficient {
         }
 };
 
-class RigidRotation : public mfem::VectorCoefficient {
+class RigidRotation : public VectorCoefficient {
     private:
         int _component;
         Vector _x;
@@ -862,6 +895,301 @@ class RigidBodySolver : public Solver {
             ProjectOrthogonalToRigidBody(x, x);
         }
 };
+
+
+class BlockRigidBodySolver : public Solver {
+    private:
+        FiniteElementSpace *_fes_u;
+        FiniteElementSpace *_fes_phi;
+        Array<int> _block_offsets;
+        std::vector<Vector *> _ns; //block?
+        Solver *_solver = nullptr;
+        mutable Vector _b;
+        const bool _parallel; //
+
+#ifdef MFEM_USE_MPI
+        ParFiniteElementSpace *_pfes_u;
+        ParFiniteElementSpace *_pfes_phi;
+        MPI_Comm _comm;
+#endif
+
+        real_t Dot(const Vector &x, const Vector &y) const {
+#ifdef MFEM_USE_MPI
+            return _parallel ? InnerProduct(_comm, x, y) : InnerProduct(x, y);
+#else
+            return InnerProduct(x, y);
+#endif
+        }
+
+        real_t BlockDot(const Vector &x, const Vector &y) const {
+#ifdef MFEM_USE_MPI
+            if (!_parallel)
+            {
+                real_t alpha_u = 1.0;
+                real_t alpha_phi = 1.0 / (9.8 * 9.8);  // example scaling
+                Vector x_u(const_cast<Vector&>(x), _block_offsets[0], _fes_u->GetTrueVSize()); 
+                Vector y_u(const_cast<Vector&>(y), _block_offsets[0], _fes_u->GetTrueVSize());
+                Vector x_phi(const_cast<Vector&>(x), _block_offsets[1], _fes_phi->GetTrueVSize());
+                Vector y_phi(const_cast<Vector&>(y), _block_offsets[1], _fes_phi->GetTrueVSize());
+
+                return alpha_u * InnerProduct(x_u, y_u) + alpha_phi * InnerProduct(x_phi, y_phi);
+            }
+            else
+            {
+                real_t alpha_u = 1.0;
+                real_t alpha_phi = 1.0 / (9.8 * 9.8);  // example scaling
+                Vector x_u(const_cast<Vector&>(x), _block_offsets[0], _fes_u->GetTrueVSize()); 
+                Vector y_u(const_cast<Vector&>(y), _block_offsets[0], _fes_u->GetTrueVSize());
+                Vector x_phi(const_cast<Vector&>(x), _block_offsets[1], _fes_phi->GetTrueVSize());
+                Vector y_phi(const_cast<Vector&>(y), _block_offsets[1], _fes_phi->GetTrueVSize());
+
+                return alpha_u * InnerProduct(_comm, x_u, y_u) + alpha_phi * InnerProduct(_comm, x_phi, y_phi);
+
+            }
+#else
+            real_t alpha_u = 1.0;
+            real_t alpha_phi = 1.0 / (9.8 * 9.8);  // example scaling
+            Vector x_u(const_cast<Vector&>(x), _block_offsets[0], _fes_u->GetTrueVSize()); 
+            Vector y_u(const_cast<Vector&>(y), _block_offsets[0], _fes_u->GetTrueVSize());
+            Vector x_phi(const_cast<Vector&>(x), _block_offsets[1], _fes_phi->GetTrueVSize());
+            Vector y_phi(const_cast<Vector&>(y), _block_offsets[1], _fes_phi->GetTrueVSize());
+
+            return alpha_u * InnerProduct(x_u, y_u) + alpha_phi * InnerProduct(x_phi, y_phi);
+#endif
+        }
+
+        real_t Norm(const Vector &x) const {
+            return std::sqrt(Dot(x, x));
+        }
+
+        real_t BlockNorm(const Vector &x) const {
+            return std::sqrt(BlockDot(x, x));
+        }
+
+        void GramSchmidt() {
+            for (auto i = 0; i < GetNullDim(); i++) {
+                auto &nv1 = *_ns[i];
+                for (auto j = 0; j < i; j++) {
+                    auto &nv2 = *_ns[j];
+                    auto product = BlockDot(nv1, nv2);
+                    nv1.Add(-product, nv2);
+                }
+                auto norm = BlockNorm(nv1);
+                nv1 /= norm;
+            }
+        }
+
+        int GetNullDim() const {
+            auto vDim = _fes_u->GetVDim();
+            return vDim * (vDim + 1) / 2 + 1; //
+        }
+
+        void ProjectOrthogonalToRigidBody(const Vector &x, Vector &y) const {
+            y = x;
+            for (auto i = 0; i < GetNullDim(); i++) {
+                auto &nv = *_ns[i];
+                auto product = BlockDot(y, nv);
+                y.Add(-product, nv);
+            }
+        }
+
+    public:
+        BlockRigidBodySolver(FiniteElementSpace *fes_u, FiniteElementSpace *fes_phi) : Solver(0, false), _fes_u{fes_u}, _fes_phi{fes_phi}, _parallel{false} {
+            auto vDim = _fes_u->GetVDim();
+            MFEM_ASSERT(vDim == 2 || vDim == 3, "Dimensions must be two or three");
+
+            int size_u = _fes_u->GetTrueVSize();
+            int size_phi = _fes_phi->GetTrueVSize();
+
+            _block_offsets.SetSize(3);
+            _block_offsets[0] = 0;
+            _block_offsets[1] = size_u;
+            _block_offsets[2] = size_u + size_phi;
+
+            height = width = _block_offsets[2];
+            _b.SetSize(height);
+
+            // Set up a temporary gridfunction.
+            auto u_gf = GridFunction(_fes_u);
+            auto phi_gf = GridFunction(_fes_phi);
+
+            // Set the translations.
+            for (auto component = 0; component < vDim; component++) {
+                auto v = RigidTranslation(vDim, component);
+                u_gf.ProjectCoefficient(v);
+
+                Vector *nv = new Vector(height);
+                //nv->SetSize(height);
+                *nv = 0.0;
+
+                Vector tv;
+                u_gf.GetTrueDofs(tv);
+
+                nv->AddSubVector(tv, _block_offsets[0]);
+                _ns.push_back(nv);
+            }
+
+            // Set the rotations.
+            if (vDim == 2) {
+                auto v = RigidRotation(vDim, 2);
+                u_gf.ProjectCoefficient(v);
+
+                Vector *nv = new Vector(height);
+                *nv = 0.0;
+
+                Vector tv;
+                u_gf.GetTrueDofs(tv);
+
+                nv->AddSubVector(tv, _block_offsets[0]);
+                _ns.push_back(nv);
+            } else {
+                for (auto component = 0; component < vDim; component++) {
+                    auto v = RigidRotation(vDim, component);
+                    u_gf.ProjectCoefficient(v);
+
+                    Vector *nv = new Vector(height);
+                    *nv = 0.0;
+
+                    Vector tv;
+                    u_gf.GetTrueDofs(tv);
+
+                    nv->AddSubVector(tv, _block_offsets[0]);
+                    _ns.push_back(nv);
+                }
+            }
+
+            // Constant mode in phi
+            phi_gf = 0.0;
+            Vector tphi;
+            phi_gf.GetTrueDofs(tphi);
+            tphi = 1.0 / std::sqrt(tphi.Size()); 
+            Vector *nv = new Vector(height);
+            *nv = 0.0;
+            nv->AddSubVector(tphi, _block_offsets[1]);
+            _ns.push_back(nv);
+
+            GramSchmidt();
+        }
+
+#ifdef MFEM_USE_MPI
+        BlockRigidBodySolver(MPI_Comm comm, ParFiniteElementSpace *fes_u, ParFiniteElementSpace *fes_phi) : Solver(0, false),
+            //_fes_u{fes_u},
+            _pfes_u{fes_u},
+            //_fes_phi{fes_phi},
+            _pfes_phi{fes_phi},
+            _comm{comm},
+            _parallel{true} {
+                auto vDim = _pfes_u->GetVDim();
+                MFEM_ASSERT(vDim == 2 || vDim == 3, "Dimensions must be two or three");
+
+                int size_u = _pfes_u->GetTrueVSize();
+                int size_phi = _pfes_phi->GetTrueVSize();
+
+                _block_offsets.SetSize(3);
+                _block_offsets[0] = 0;
+                _block_offsets[1] = size_u;
+                _block_offsets[2] = size_u + size_phi;
+
+                height = width = _block_offsets[2];
+                _b.SetSize(height);
+
+                // Set up a temporary ParGridfunction.
+                auto u_gf = ParGridFunction(_pfes_u);
+                auto phi_gf = ParGridFunction(_pfes_phi);
+
+                // Set the translations.
+                for (auto component = 0; component < vDim; component++) {
+                    auto v = RigidTranslation(vDim, component);
+                    u_gf.ProjectCoefficient(v);
+
+                    Vector *nv = new Vector(height);
+                    nv->SetSize(height);
+                    *nv = 0.0;
+
+                    Vector tv;
+                    u_gf.GetTrueDofs(tv);
+
+                    nv->AddSubVector(tv, _block_offsets[0]);
+                    _ns.push_back(nv);
+                }
+
+                // Set the rotations.
+                if (vDim == 2) {
+                    auto v = RigidRotation(vDim, 2);
+                    u_gf.ProjectCoefficient(v);
+
+                    Vector *nv = new Vector(height);
+                    *nv = 0.0;
+
+                    Vector tv;
+                    u_gf.GetTrueDofs(tv);
+
+                    nv->AddSubVector(tv, _block_offsets[0]);
+                    _ns.push_back(nv);
+                } else {
+                    for (auto component = 0; component < vDim; component++) {
+                        auto v = RigidRotation(vDim, component);
+                        u_gf.ProjectCoefficient(v);
+
+                        Vector *nv = new Vector(height);
+                        *nv = 0.0;
+
+                        Vector tv;
+                        u_gf.GetTrueDofs(tv);
+
+                        nv->AddSubVector(tv, _block_offsets[0]);
+                        _ns.push_back(nv);
+                    }
+                }
+
+                // Constant mode in phi
+                //ConstantCoefficient one(1.0);
+                //phi_gf.ProjectCoefficient(one);
+                phi_gf = 0.0;
+                Vector tphi;
+                phi_gf.GetTrueDofs(tphi);
+                tphi = 1.0 / std::sqrt(tphi.Size()); 
+                Vector *nv = new Vector(height);
+                *nv = 0.0;
+                nv->AddSubVector(tphi, _block_offsets[1]);
+                _ns.push_back(nv);
+
+                GramSchmidt();
+            }
+#endif
+
+        ~BlockRigidBodySolver() {
+            for (auto i = 0; i < GetNullDim(); i++) {
+                delete _ns[i];
+            }
+        }
+
+        void SetSolver(Solver &solver) {
+            _solver = &solver;
+            height = _solver->Height();
+            width = _solver->Width();
+            MFEM_VERIFY(height == width, "Solver must be a square operator");
+        }
+
+        void SetOperator(const Operator &op) { //override
+            MFEM_VERIFY(_solver, "Solver hasn't been set, call SetSolver() first.");
+            _solver->SetOperator(op);
+            height = _solver->Height();
+            width = _solver->Width();
+            MFEM_VERIFY(height == width, "Solver must be a square operator");
+        }
+
+        void Mult(const Vector &b, Vector &x) const { //override
+            ProjectOrthogonalToRigidBody(b, _b);
+            //_solver->iterative_mode = iterative_mode;
+            Vector _x(x.Size());
+            _solver->Mult(_b, _x);
+            ProjectOrthogonalToRigidBody(const_cast<Vector&>(_x), x); //
+            //_solver->Mult(_b, x);
+            //ProjectOrthogonalToRigidBody(x, x); //
+        }
+};
+
 
 
 

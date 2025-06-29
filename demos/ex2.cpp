@@ -18,9 +18,8 @@ int main(int argc, char *argv[])
     const char *output_name = "data/ex2";
     const char *elasticity_model = "linear";
     real_t rel_tol = 1e-10;
-    int order = 1;
+    int order_u = 1;
     int lMax = 10;
-    int ref_levels = -1;
     bool static_cond = false;
     bool pa = false;
     const char *device_config = "cpu";
@@ -37,11 +36,9 @@ int main(int argc, char *argv[])
             "Elasticity model to use: linear, neo-hookean, etc.");
     args.AddOption(&rel_tol, "-rt", "--rel-tol",
             "Relative tolerance for linear solving.");
-    args.AddOption(&order, "-o", "--order",
+    args.AddOption(&order_u, "-o", "--order",
             "Order (degree) of the finite elements.");
     args.AddOption(&lMax, "-l", "--lMax", "Truncation degree for the DtN map.");
-    args.AddOption(&ref_levels, "-rs", "--refine-serial",
-            "Number of times to refine the mesh uniformly in serial.");
     args.AddOption(&static_cond, "-sc", "--static-condensation", "-no-sc",
             "--no-static-condensation", "Enable static condensation.");
     args.AddOption(&pa, "-pa", "--partial-assembly", "-no-pa",
@@ -65,39 +62,32 @@ int main(int argc, char *argv[])
     //Mesh
     Mesh *mesh = new Mesh(mesh_file, 1, 1);
     int dim = mesh->Dimension();
-    for (int l = 0; l < ref_levels; l++)
-    {
-        mesh->UniformRefinement();
-    }
-    mesh->SetAttributes();
-
+    //mesh->SetAttributes();
     Array<int> attr_cond = mesh->attributes;
     attr_cond.DeleteLast();
 
     SubMesh mesh_cond(SubMesh::CreateFromDomain(*mesh, attr_cond));
 
+
+    Vector r_min, r_max;
+    mesh->GetBoundingBox(r_min, r_max);
+    r_min.Print();
+    r_max.Print();
+
     //FE Space
-    int order_phi = order; int order_dphi = order_phi - 1; int order_properties = order - 1; int order_w = 2 * (order - 1); 
-    H1_FECollection fec_u(order, dim);
-    H1_FECollection fec_phi(order_phi, dim);
-    L2_FECollection fec_properties(order_properties, dim);
-    L2_FECollection fec_dphi(order_dphi, dim);
-    L2_FECollection fec_w(order_w, dim);
-    FiniteElementSpace fes_phi(mesh, &fec_phi);
-    FiniteElementSpace fes_phi_cond(&mesh_cond, &fec_phi);
-    FiniteElementSpace fes_dphi(mesh, &fec_dphi);
-    FiniteElementSpace fes_dphi_cond(&mesh_cond, &fec_dphi);
-    FiniteElementSpace fes_u_cond(&mesh_cond, &fec_u, 3);
-    FiniteElementSpace fes_properties_cond(&mesh_cond, &fec_properties);
-    FiniteElementSpace fes_w_cond(&mesh_cond, &fec_w);
-    int u_size = fes_u_cond.GetTrueVSize();
+    int order_phi = order_u; int order_dphi = order_phi - 1; int order_prop = order_u - 1; int order_w = 2 * (order_u - 1); 
+    H1_FECollection fec_u(order_u, dim), fec_phi(order_phi, dim);
+    L2_FECollection fec_prop(order_prop, dim), fec_dphi(order_dphi, dim), fec_w(order_w, dim);
+    FiniteElementSpace fes_phi(mesh, &fec_phi), fes_phi_cond(&mesh_cond, &fec_phi), fes_dphi(mesh, &fec_dphi), fes_dphi_cond(&mesh_cond, &fec_dphi);
+    FiniteElementSpace fes_u(&mesh_cond, &fec_u, dim), fes_prop(&mesh_cond, &fec_prop), fes_w(&mesh_cond, &fec_w);
+    int u_size = fes_u.GetTrueVSize();
     int phi_size = fes_phi.GetTrueVSize();
     cout << "Number of u-unknowns: " << u_size << endl;
     cout << "Number of phi-unknowns: " << phi_size << endl;
-    GridFunction u_gf_cond(&fes_u_cond); GridFunction phi_gf(&fes_phi); GridFunction phi_gf_cond(&fes_phi_cond); 
+    GridFunction u_gf(&fes_u); GridFunction phi_gf(&fes_phi); GridFunction phi_gf_cond(&fes_phi_cond); 
     GridFunction phi0_gf(&fes_phi); GridFunction phi0_gf_cond(&fes_phi_cond); GridFunction dphi0_gf(&fes_dphi); 
-    GridFunction dphi0_gf_cond(&fes_dphi_cond); GridFunction w_gf(&fes_w_cond);
-    u_gf_cond = 0.0; phi_gf = 0.0; phi_gf_cond = 0.0; phi0_gf = 0.0; phi0_gf_cond = 0.0; dphi0_gf = 0.0; dphi0_gf_cond = 0.0; w_gf = 0.0;
+    GridFunction dphi0_gf_cond(&fes_dphi_cond); GridFunction w_gf(&fes_w);
+    u_gf = 0.0; phi_gf = 0.0; phi_gf_cond = 0.0; phi0_gf = 0.0; phi0_gf_cond = 0.0; dphi0_gf = 0.0; dphi0_gf_cond = 0.0; w_gf = 0.0;
     FunctionCoefficient rho_coeff(rho_func);
     FunctionCoefficient mu_coeff(mu_func);
     FunctionCoefficient lamb_coeff(lamb_func);
@@ -105,7 +95,7 @@ int main(int argc, char *argv[])
 
     Array<int> block_offsets(3);
     block_offsets[0] = 0;
-    block_offsets[1] = fes_u_cond.GetVSize();
+    block_offsets[1] = fes_u.GetVSize();
     block_offsets[2] = fes_phi.GetVSize();
     block_offsets.PartialSum();
 
@@ -127,7 +117,7 @@ int main(int argc, char *argv[])
 
 
     Array<int> bdr_marker;
-    auto size = mesh->bdr_attributes.Size();
+    int size = mesh->bdr_attributes.Size();
     bdr_marker = Array<int>(size);
     bdr_marker = 0;
     bdr_marker[size - 2] = 1;
@@ -204,8 +194,8 @@ int main(int argc, char *argv[])
 
 
     //Coupled problem
-    LinearForm *b1(new LinearForm);
-    b1->Update(&fes_u_cond, Rhs.GetBlock(0), 0);
+    LinearForm *b1(new LinearForm); //
+    b1->Update(&fes_u, Rhs.GetBlock(0), 0);
     b1->AddBoundaryIntegrator(new VectorBoundaryLFIntegrator(dphi0_sig_cond_coeff), bdr_marker_cond); //! by luck
     b1->Assemble();
     b1->SyncAliasMemory(Rhs);
@@ -216,34 +206,35 @@ int main(int argc, char *argv[])
     b2->Assemble();
     b2->SyncAliasMemory(Rhs);
 
-    BilinearForm *a11(new BilinearForm(&fes_u_cond));
+    BilinearForm *a11(new BilinearForm(&fes_u));
     BilinearForm *a22(new BilinearForm(&fes_phi));
-    MixedBilinearForm *a12(new MixedBilinearForm(&fes_phi, &fes_u_cond));
-    //MixedBilinearForm *a21(new MixedBilinearForm(&fes_u, &fes_phi));
+        //MixedBilinearForm *a21(new MixedBilinearForm(&fes_u, &fes_phi));
     //FiniteElementSpace* fes_u_ptr = &fes_u_cond;
     //MixedBilinearForm *a21(new MixedBilinearForm(fes_u_ptr, &fes_phi));
-    FiniteElementSpace fes_u(mesh, &fec_u, 3);
+    FiniteElementSpace fes_u_ext(mesh, &fec_u, 3);
     //MixedBilinearForm *a21(new MixedBilinearForm(&fes_u_whole, &fes_phi));
-    CondTrialMixedBilinearForm *a21(new CondTrialMixedBilinearForm(&fes_u, &fes_u_cond, &fes_phi, &fes_phi_cond));
-    
+    ExtTrialMixedBilinearForm *a12(new ExtTrialMixedBilinearForm(&fes_phi, &fes_u, &fes_phi_cond, &mesh_cond));
+    ExtTestMixedBilinearForm *a21(new ExtTestMixedBilinearForm(&fes_u, &fes_phi, &fes_phi_cond, &mesh_cond));
+
+    ConstantCoefficient c0(1.0 / (4.0 * M_PI * Constants::G));
+    ProductCoefficient half_rho_coeff(0.5, rho_coeff);
+    ProductCoefficient minus_half_rho_coeff(-0.5, rho_coeff);
+
     //if (pa) { a11->SetAssemblyLevel(AssemblyLevel::PARTIAL); }
     a11->AddDomainIntegrator(new ElasticityIntegrator(lamb_coeff, mu_coeff));
+    a11->AddDomainIntegrator(new ProjectionGradientIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
+    a11->AddDomainIntegrator(new AdvectionProjectionIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
+    a11->AddDomainIntegrator(new DivergenceVectorIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
+    a11->AddDomainIntegrator(new ProjectionDivergenceIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
+
     a11->Assemble();
     a11->Finalize();
 
-    ConstantCoefficient c0(1.0 / (4.0 * M_PI * Constants::G)); 
     a22->AddDomainIntegrator(new DiffusionIntegrator(c0));
     a22->Assemble();
     a22->Finalize();
 
-    ProductCoefficient half_rho_coeff(0.5, rho_coeff);
-    ProductCoefficient minus_half_rho_coeff(-0.5, rho_coeff);
     //a12->AddDomainIntegrator(new mfemElasticity::DomainVectorGradVectorIntegrator(dphi0_cond_coeff, half_rho_coeff));
-    a12->AddDomainIntegrator(new GradProjectionIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
-    a12->AddDomainIntegrator(new AdvectionProjectionIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
-    a12->AddDomainIntegrator(new DivVecIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
-    a12->AddDomainIntegrator(new ProjDivIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
-
     a12->AddDomainIntegrator(new GradientIntegrator(rho_coeff));
     //a12->AddDomainIntegrator(new mfemElasticity::DomainVectorGradScalarIntegrator(rho_coeff));
     a12->Assemble(); //by luck
@@ -251,8 +242,7 @@ int main(int argc, char *argv[])
 
 
     //ProductCoefficient minus_rho_coeff(-1.0, rho_coeff);
-    cout << Earth_body_marker.Size()<<" "<<Earth_body_marker[1] << endl;
-    a21->AddDomainIntegrator(new AdvectionScalarIntegrator(rho_coeff), Earth_body_marker);
+    a21->AddDomainIntegrator(new AdvectionIntegrator(rho_coeff));
     //a21->AddDomainIntegrator(new MixedScalarWeakDerivativeIntegrator(minus_rho_coeff), Earth_body_marker);
     //fes_u_ptr = &fes_u;
     a21->Assemble();
@@ -261,7 +251,6 @@ int main(int argc, char *argv[])
 
 
     BlockOperator EGOp(block_offsets);
-    BlockDiagonalPreconditioner EGPrec(block_offsets);
 
     SparseMatrix &A11(a11->SpMat());
     SparseMatrix &A12(a12->SpMat());
@@ -275,21 +264,27 @@ int main(int argc, char *argv[])
     EGOp.SetBlock(1,0, &A21);
     EGOp.SetBlock(1,1, &A22);
 
-
+    BlockDiagonalPreconditioner EGPrec(block_offsets);
     GSSmoother prec11(A11);
     GSSmoother prec22(A22_0);
-    EGOp.SetDiagonalBlock(0, &prec11);
-    EGOp.SetDiagonalBlock(1, &prec22);
+    EGPrec.SetDiagonalBlock(0, &prec11);
+    EGPrec.SetDiagonalBlock(1, &prec22);
 
-    GMRESSolver solver;
+    MINRESSolver solver;
     solver.SetRelTol(rel_tol);
-    solver.SetMaxIter(5000);
+    solver.SetMaxIter(3000);
     solver.SetOperator(EGOp);
     solver.SetPreconditioner(EGPrec);
     solver.SetPrintLevel(1);
     X = 0.0;
-    solver.Mult(Rhs, X);
+    //solver.Mult(Rhs, X);
+    
+    BlockRigidBodySolver rigid_solver(&fes_u, &fes_phi);
+    rigid_solver.SetSolver(solver);
+    rigid_solver.Mult(Rhs, X);
+
     if (device.IsEnabled()) { X.HostRead(); }
+
 
     if (solver.GetConverged())
     {
@@ -304,7 +299,7 @@ int main(int argc, char *argv[])
             << ".\n";
     }
 
-    u_gf_cond.MakeRef(&fes_u_cond, X.GetBlock(0), 0);
+    u_gf.MakeRef(&fes_u, X.GetBlock(0), 0);
     phi_gf.MakeRef(&fes_phi, X.GetBlock(1), 0);
     mesh_cond.Transfer(phi_gf, phi_gf_cond);
 
@@ -315,7 +310,7 @@ int main(int argc, char *argv[])
         int  visport   = 19916;
         socketstream u_sock(vishost, visport);
         u_sock.precision(8);
-        u_sock << "solution\n" << mesh_cond << u_gf_cond << "window_title 'Velocity'" << endl;
+        u_sock << "solution\n" << mesh_cond << u_gf << "window_title 'Deformation'" << endl;
         socketstream phi_sock(vishost, visport);
         phi_sock.precision(8);
         phi_sock << "solution\n" << mesh_cond << phi_gf_cond << "window_title 'Gravity Potential'" << endl;
@@ -329,7 +324,7 @@ int main(int argc, char *argv[])
 
         ofstream u_ofs("data/ex2_u.gf");
         u_ofs.precision(8);
-        u_gf_cond.Save(u_ofs);
+        u_gf.Save(u_ofs);
 
         ofstream phi_ofs("data/ex2_phi.gf");
         phi_ofs.precision(8);
