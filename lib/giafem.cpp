@@ -159,31 +159,114 @@ void ViscoelasticOperator::CalcStrainEnergyDensity(ParGridFunction &w_gf) const
 }
 
 
-CondTrialMixedBilinearForm::CondTrialMixedBilinearForm (FiniteElementSpace *tr_fes,
-                                                        FiniteElementSpace *tr_fes_cond,
-                                                        FiniteElementSpace *te_fes,
-                                                        FiniteElementSpace *te_fes_cond)
-    : MixedBilinearForm(tr_fes_cond, te_fes)
+ExtTrialMixedBilinearForm::ExtTrialMixedBilinearForm (FiniteElementSpace *tr_fes,
+        FiniteElementSpace *te_fes,
+        FiniteElementSpace *tr_fes_cond, SubMesh *mesh_cond)
+    : MixedBilinearForm(tr_fes, te_fes)
 {
-   trial_fes_cond = tr_fes_cond;
-   test_fes_cond = te_fes_cond;
-   trial_fes = tr_fes;
+    trial_fes_cond = tr_fes_cond;
+    from = mesh_cond->GetFrom();
+    parent_element_ids = mesh_cond->GetParentElementIDMap(); //&
 }
 
-void CondTrialMixedBilinearForm::Assemble(int skip_zeros)
+void ExtTrialMixedBilinearForm::Assemble(int skip_zeros)
 {
-    if (ext)
+    /*if (ext)
     {
         ext->Assemble();
         return;
-    }
+    }*/
 
     ElementTransformation *eltrans;
-    DofTransformation * dom_dof_trans;
-    DofTransformation * ran_dof_trans;
+    DofTransformation *dom_dof_trans;
+    DofTransformation *ran_dof_trans;
     DenseMatrix elmat;
 
-    Mesh *mesh = test_fes -> GetMesh();
+    Mesh *mesh = trial_fes_cond -> GetMesh();
+
+    if (mat == NULL)
+    {
+        mat = new SparseMatrix(height, width);
+    }
+
+    if (domain_integs.Size())
+    {
+        for (int k = 0; k < domain_integs.Size(); k++)
+        {
+            if (domain_integs_marker[k] != NULL)
+            {
+                MFEM_VERIFY(domain_integs_marker[k]->Size() ==
+                        (mesh->attributes.Size() ? mesh->attributes.Max() : 0),
+                        "invalid element marker for domain integrator #"
+                        << k << ", counting from zero");
+            }
+        }
+
+        for (int i = 0; i < trial_fes_cond -> GetNE(); i++)
+        {
+            //const int elem_attr = mesh->GetAttribute(i);
+            dom_dof_trans = trial_fes_cond -> GetElementVDofs (i, trial_vdofs);
+            ran_dof_trans = test_fes  -> GetElementVDofs (i, test_vdofs);
+            eltrans = trial_fes_cond -> GetElementTransformation (i);
+
+            elmat.SetSize(test_vdofs.Size(), trial_vdofs.Size());
+            elmat = 0.0;
+            for (int k = 0; k < domain_integs.Size(); k++)
+            {
+                //if (domain_integs_marker[k] == NULL ||
+                //    (*(domain_integs_marker[k]))[elem_attr-1] == 1)
+                {
+                    domain_integs[k] -> AssembleElementMatrix2 (*trial_fes_cond -> GetFE(i),
+                                                                *test_fes  -> GetFE(i),
+                                                                *eltrans, elemmat);
+                    elmat += elemmat;
+                }
+            }
+            if (ran_dof_trans || dom_dof_trans)
+            {
+                TransformDual(ran_dof_trans, dom_dof_trans, elmat);
+            }
+            if (!vdof_to_vdof_map)
+            {
+                vdof_to_vdof_map = new Array<int>();
+                SubMeshUtils::BuildVdofToVdofMap(*trial_fes_cond, *trial_fes, from, parent_element_ids, *vdof_to_vdof_map);
+            }
+
+            Array<int> trial_vdofs_ext(trial_vdofs.Size());
+            for (int l = 0; l < trial_vdofs.Size(); l++)
+                trial_vdofs_ext[l] = (*vdof_to_vdof_map)[trial_vdofs[l]];
+
+            mat->AddSubMatrix(test_vdofs, trial_vdofs_ext, elmat, skip_zeros);
+        }
+    }
+}
+
+
+
+ExtTestMixedBilinearForm::ExtTestMixedBilinearForm (FiniteElementSpace *tr_fes,
+                                                    FiniteElementSpace *te_fes,
+                                                    FiniteElementSpace *te_fes_cond, SubMesh *mesh_cond)
+    : MixedBilinearForm(tr_fes, te_fes)
+{
+   test_fes_cond = te_fes_cond;
+   from = mesh_cond->GetFrom();
+   parent_element_ids = mesh_cond->GetParentElementIDMap();
+}
+
+void ExtTestMixedBilinearForm::Assemble(int skip_zeros)
+{
+    /*if (ext)
+    {
+        ext->Assemble();
+        return;
+    }*/
+
+    ElementTransformation *eltrans;
+    DofTransformation *dom_dof_trans;
+    DofTransformation *ran_dof_trans;
+    DenseMatrix elmat;
+
+    Mesh *mesh = test_fes_cond -> GetMesh();
 
     if (mat == NULL)
     {
@@ -206,7 +289,7 @@ void CondTrialMixedBilinearForm::Assemble(int skip_zeros)
         for (int i = 0; i < test_fes_cond -> GetNE(); i++)
         {
             //const int elem_attr = mesh->GetAttribute(i);
-            dom_dof_trans = trial_fes_cond -> GetElementVDofs (i, trial_vdofs);
+            dom_dof_trans = trial_fes -> GetElementVDofs (i, trial_vdofs);
             ran_dof_trans = test_fes_cond  -> GetElementVDofs (i, test_vdofs);
             eltrans = test_fes_cond -> GetElementTransformation (i);
 
@@ -217,7 +300,7 @@ void CondTrialMixedBilinearForm::Assemble(int skip_zeros)
                 //if (domain_integs_marker[k] == NULL ||
                 //    (*(domain_integs_marker[k]))[elem_attr-1] == 1)
                 {
-                    domain_integs[k] -> AssembleElementMatrix2 (*trial_fes_cond -> GetFE(i),
+                    domain_integs[k] -> AssembleElementMatrix2 (*trial_fes -> GetFE(i),
                                                                 *test_fes_cond  -> GetFE(i),
                                                                 *eltrans, elemmat);
                     elmat += elemmat;
@@ -225,9 +308,19 @@ void CondTrialMixedBilinearForm::Assemble(int skip_zeros)
             }
             if (ran_dof_trans || dom_dof_trans)
             {
-                TransformDual(ran_dof_trans, dom_dof_trans, elmat);
+                TransformDual(ran_dof_trans, dom_dof_trans, elmat); //
             }
-            mat -> AddSubMatrix (test_vdofs, trial_vdofs, elmat, skip_zeros);
+            if (!vdof_to_vdof_map)
+            {
+                vdof_to_vdof_map = new Array<int>();
+                SubMeshUtils::BuildVdofToVdofMap(*test_fes_cond, *test_fes, from, parent_element_ids, *vdof_to_vdof_map);
+            }
+
+            Array<int> test_vdofs_ext(test_vdofs.Size());
+            for (int l = 0; l < test_vdofs.Size(); l++)
+                test_vdofs_ext[l] = (*vdof_to_vdof_map)[test_vdofs[l]];
+
+            mat->AddSubMatrix(test_vdofs_ext, trial_vdofs, elmat, skip_zeros);
         }
     }
 }
@@ -244,18 +337,38 @@ void GradInterpolator::AssembleElementMatrix2(const FiniteElement &u_fe,
  
     DenseMatrix dshape(N, dim);
  
-    elmat.SetSize(M*dim*dim, N*dim);
+    if (mode == VecMode::REDUCED) {
+    elmat.SetSize(vdim*M, dim*N);
+    } else {
+    elmat.SetSize(dim*dim*M, dim*N); }
     elmat = 0.0;
-    for (int m = 0; m < M; m++)
+
+    if (mode == VecMode::REDUCED)
     {
-        const auto &ip  = e_fe.GetNodes().IntPoint(m);    
-        Trans.SetIntPoint(&ip);
-        u_fe.CalcPhysDShape(Trans, dshape);
-        //if (map_type == INTEGRAL)
-        for (int n = 0; n < N; n++){
-            for (int i = 0; i < dim; i++){
-                for (int j = 0; j < dim; j++){
-                    elmat(m+i*M+j*dim*M,n+i*N) = dshape(n,j);
+        for (int m = 0; m < M; m++)
+        {
+            const auto &ip  = e_fe.GetNodes().IntPoint(m);    
+            Trans.SetIntPoint(&ip);
+            u_fe.CalcPhysDShape(Trans, dshape);
+            for (int n = 0; n < N; n++) {
+                for (int l = 0; l < vdim; l++) {
+                    auto [i, j] = this->IndexMap[l];
+                    elmat(m+l*M,n+i*N) = dshape(n,j);
+                }
+            }
+        }
+    }
+    else
+    {
+        for (int m = 0; m < M; m++)
+        {
+            const auto &ip  = e_fe.GetNodes().IntPoint(m);    
+            Trans.SetIntPoint(&ip);
+            u_fe.CalcPhysDShape(Trans, dshape);
+            for (int n = 0; n < N; n++) {
+                for (int i = 0; i < dim; i++) {
+                    for (int j = 0; j < dim; j++)
+                        elmat(m+i*M+j*dim*M,n+i*N) = dshape(n,j);
                 }
             }
         }
@@ -271,22 +384,46 @@ void StrainInterpolator::AssembleElementMatrix2(const FiniteElement &u_fe,
     int N = u_fe.GetDof(), M = e_fe.GetDof();
  
     DenseMatrix dshape(N, dim);
- 
-    elmat.SetSize(vdim*M, dim*N);
+
+    if (mode == VecMode::REDUCED) {
+        elmat.SetSize(vdim*M, dim*N);
+    } else {
+        elmat.SetSize(dim*dim*M, dim*N); }
     elmat = 0.0;
+
     constexpr auto half = static_cast<real_t>(1) / static_cast<real_t>(2);
-    for (int m = 0; m < M; m++)
+    if (mode == VecMode::REDUCED)
     {
-        const auto &ip  = e_fe.GetNodes().IntPoint(m);    
-        Trans.SetIntPoint(&ip);
-        u_fe.CalcPhysDShape(Trans, dshape);
-        //if (map_type == INTEGRAL)
-        for (int n = 0; n < N; n++){
-            for (int l = 0; l < vdim; l++){
+        for (int m = 0; m < M; m++)
+        {
+            const auto &ip  = e_fe.GetNodes().IntPoint(m);    
+            Trans.SetIntPoint(&ip);
+            u_fe.CalcPhysDShape(Trans, dshape);
+            for (int n = 0; n < N; n++) {
+                for (int l = 0; l < vdim; l++) {
                     auto [i, j] = this->IndexMap[l];
                     elmat(m+l*M,n+i*N) += dshape(n,j);
                     elmat(m+l*M,n+j*N) += dshape(n,i);
+                }
             }
+        }
+    }
+    else 
+    {
+        for (int m = 0; m < M; m++)
+        {
+            const auto &ip  = e_fe.GetNodes().IntPoint(m);    
+            Trans.SetIntPoint(&ip);
+            u_fe.CalcPhysDShape(Trans, dshape);
+            for (int n = 0; n < N; n++) {
+                for (int i = 0; i < dim; i++) {
+                    for (int j = 0; j < dim; j++) {
+                    elmat(m+i*M+j*dim*M,n+i*N) += dshape(n,j);
+                    elmat(m+i*M+j*dim*M,n+j*N) += dshape(n,i);
+                    }
+                }
+            }
+
         }
     }
     elmat *= half;
@@ -299,32 +436,55 @@ void DevStrainInterpolator::AssembleElementMatrix2(const FiniteElement &u_fe,
                                                    DenseMatrix &elmat)
 {
     int N = u_fe.GetDof(), M = e_fe.GetDof();
- 
+
     DenseMatrix dshape(N, dim);
- 
-    elmat.SetSize(vdim*M, dim*N);
+
+    if (mode == VecMode::REDUCED) {
+        elmat.SetSize(vdim*M, dim*N);
+    } else {
+        elmat.SetSize(dim*dim*M, dim*N); }
     elmat = 0.0;
+
     constexpr auto half = static_cast<real_t>(1) / static_cast<real_t>(2);
-    auto third = 1.0 / dim;
+    auto two_thirds = 2.0 / dim;
     for (int m = 0; m < M; m++)
     {
         const auto &ip  = e_fe.GetNodes().IntPoint(m);    
         Trans.SetIntPoint(&ip);
         u_fe.CalcPhysDShape(Trans, dshape);
-        //if (map_type == INTEGRAL)
-        for (int n = 0; n < N; n++){
-            for (int l = 0; l < vdim; l++){
+        if (mode == VecMode::REDUCED)
+        {
+            for (int n = 0; n < N; n++){
+                for (int l = 0; l < vdim; l++){
                     auto [i, j] = this->IndexMap[l];
-                    elmat(m+l*M,n+i*N) += dshape(n,j) * half;
-                    elmat(m+l*M,n+j*N) += dshape(n,i) * half;
+                    elmat(m+l*M,n+i*N) += dshape(n,j);
+                    elmat(m+l*M,n+j*N) += dshape(n,i);
                     if (i == j){
-                    for (int k = 0; k < dim; k++){
-                        elmat(m+l*M,n+k*N) -= third * dshape(n,k);
+                        for (int k = 0; k < dim; k++){
+                            elmat(m+l*M,n+k*N) -= two_thirds * dshape(n,k);
+                        }
                     }
-                    }
+                }
             }
         }
+        else
+        {
+            for (int n = 0; n < N; n++){
+                for (int i = 0; i < dim; i++) {
+                    for (int j = 0; j < dim; j++) {
+                        elmat(m+i*M+j*dim*M,n+i*N) += dshape(n,j);
+                        elmat(m+i*M+j*dim*M,n+j*N) += dshape(n,i);
+                        if (i == j){
+                            for (int k = 0; k < dim; k++)
+                                elmat(m+i*M+j*dim*M,n+k*N) -= two_thirds * dshape(n,k);
+                        }
+                    }
+                }
+            }
+
+        }
     }
+    elmat *= half;
 }
 
 
@@ -390,16 +550,7 @@ void ViscoelasticForcing::AssembleElementMatrix2(const FiniteElement &trial_fe,
 }
 
 
-const IntegrationRule& AdvectionScalarIntegrator::GetRule(const FiniteElement &trial_fe, 
-                                                          const FiniteElement &test_fe,
-                                                          const ElementTransformation &Trans) 
-{
-    //const auto order = trial_fe.GetOrder() + test_fe.GetOrder() + Trans.OrderW() - 1;
-    int order = trial_fe.GetOrder() + Trans.OrderGrad(&test_fe) + Trans.OrderJ();
-    return IntRules.Get(trial_fe.GetGeomType(), order);
-}
-
-void AdvectionScalarIntegrator::AssembleElementMatrix2(
+void AdvectionIntegrator::AssembleElementMatrix2(
     const FiniteElement &trial_fe, const FiniteElement &test_fe,
     ElementTransformation &Trans, DenseMatrix &elmat) 
 {
@@ -466,175 +617,203 @@ void AdvectionScalarIntegrator::AssembleElementMatrix2(
 }
 
 
-const IntegrationRule& GradProjectionIntegrator::GetRule(
-    const FiniteElement &trial_fe, const FiniteElement &test_fe,
-    const ElementTransformation &Trans) {
-    const auto order = trial_fe.GetOrder() + test_fe.GetOrder() + Trans.OrderW() - 1;
-    return IntRules.Get(trial_fe.GetGeomType(), order);
-}
-
-void GradProjectionIntegrator::AssembleElementMatrix2(
-    const FiniteElement &trial_fe, const FiniteElement &test_fe,
-    ElementTransformation &Trans, DenseMatrix &elmat) 
+void ProjectionGradientIntegrator::AssembleElementMatrix(const FiniteElement &el, ElementTransformation &Trans, DenseMatrix &elmat) 
 {
     auto dim = Trans.GetSpaceDim();
-    auto Nn = trial_fe.GetDof();
-    auto Nm = test_fe.GetDof();
+    auto N = el.GetDof();
 
-    elmat.SetSize(dim * Nm, dim * Nn);
+    elmat.SetSize(dim * N, dim * N);
     elmat = 0.0;
 
 #ifdef MFEM_THREAD_SAFE
-    Vector trial_shape, test_shape, g;
-    DenseMatrix trial_dshape, pelmats_l, pelmats_r, dg;
+    Vector shape, g;
+    DenseMatrix dshape, pelmat_l, pelmat_r, dg;
 #endif
-    trial_shape.SetSize(Nn);
-    test_shape.SetSize(Nm);
-    trial_dshape.SetSize(Nn, dim);
-    pelmats_l.SetSize(Nm, Nn);
-    pelmats_r.SetSize(Nm, Nn);
+    shape.SetSize(N);
+    dshape.SetSize(N, dim);
+    pelmat_l.SetSize(N, N);
+    pelmat_r.SetSize(N, N);
     g.SetSize(dim);
     dg.SetSize(dim, dim);
 
-    const auto* ir = GetIntegrationRule(trial_fe, test_fe, Trans);
+    const auto* ir = GetIntegrationRule(el, Trans);
+    if (ir == NULL)
+    {
+        int order = order = 2 * el.GetOrder() + Trans.OrderW() - 1; //
+        ir = &IntRules.Get(el.GetGeomType(), order);
+    }
 
     for (auto i = 0; i < ir->GetNPoints(); i++) {
         const auto& ip = ir->IntPoint(i);
         Trans.SetIntPoint(&ip);
         auto w = Trans.Weight() * ip.weight;
 
-        trial_fe.CalcShape(ip, trial_shape);
-        test_fe.CalcShape(ip, test_shape);
-        trial_fe.CalcPhysDShape(Trans, trial_dshape);
+        el.CalcShape(ip, shape);
+        el.CalcPhysDShape(Trans, dshape);
 
         QV->Eval(g, Trans, ip);
         QM->Eval(dg, Trans, ip);
         w *= Q->Eval(Trans, ip); 
-        MultVWt(test_shape, trial_shape, pelmats_r);
+        MultVWt(shape, shape, pelmat_r);
         for (auto k = 0; k < dim; k++) {
-            auto trial_dshape_column = Vector(trial_dshape.GetColumn(k), Nn);
-            MultVWt(test_shape, trial_dshape_column, pelmats_l);
+            auto dshape_column = Vector(dshape.GetColumn(k), N);
+            MultVWt(shape, dshape_column, pelmat_l);
             for (auto l = 0; l < dim; l++) {
                 real_t w_l = g(l) * w; 
-                elmat.AddMatrix(w_l, pelmats_l, k * Nm, l * Nn);
+                elmat.AddMatrix(w_l, pelmat_l, k * N, l * N);
                 real_t w_r = dg(l, k) * w;
-                elmat.AddMatrix(w_r, pelmats_r, k * Nm, l * Nn);
+                elmat.AddMatrix(w_r, pelmat_r, k * N, l * N);
             }
         }
     }
 }
 
 
-const IntegrationRule& AdvectionProjectionIntegrator::GetRule(
-    const FiniteElement &trial_fe, const FiniteElement &test_fe,
-    const ElementTransformation &Trans) {
-    const auto order = trial_fe.GetOrder() + test_fe.GetOrder() + Trans.OrderW() - 1;
-    return IntRules.Get(trial_fe.GetGeomType(), order);
-}
-
-void AdvectionProjectionIntegrator::AssembleElementMatrix2(
-    const FiniteElement &trial_fe, const FiniteElement &test_fe,
-    ElementTransformation &Trans, DenseMatrix &elmat) 
+void AdvectionProjectionIntegrator::AssembleElementMatrix(const FiniteElement &el, ElementTransformation &Trans, DenseMatrix &elmat)
 {
     auto dim = Trans.GetSpaceDim();
-    auto Nn = trial_fe.GetDof();
-    auto Nm = test_fe.GetDof();
+    auto N = el.GetDof();
 
-    elmat.SetSize(dim * Nm, dim * Nn);
+    elmat.SetSize(dim * N, dim * N);
     elmat = 0.0;
 
 #ifdef MFEM_THREAD_SAFE
-    Vector trial_shape, test_shape, g;
-    DenseMatrix test_dshape, pelmats_l, pelmats_r, dg;
+    Vector shape, g;
+    DenseMatrix dshape, pelmat_l, pelmat_r, dg;
 #endif
-    trial_shape.SetSize(Nn);
-    test_shape.SetSize(Nm);
-    test_dshape.SetSize(Nm, dim);
-    pelmats_l.SetSize(Nm, Nn);
-    pelmats_r.SetSize(Nm, Nn);
+    shape.SetSize(N);
+    dshape.SetSize(N, dim);
+    pelmat_l.SetSize(N);
+    pelmat_r.SetSize(N);
     g.SetSize(dim);
     dg.SetSize(dim, dim);
 
-    const auto* ir = GetIntegrationRule(trial_fe, test_fe, Trans);
+    const auto* ir = GetIntegrationRule(el, Trans);
+    if (ir == NULL)
+    {
+        int order = order = 2 * el.GetOrder() + Trans.OrderW() - 1; //
+        ir = &IntRules.Get(el.GetGeomType(), order);
+    }
 
     for (auto i = 0; i < ir->GetNPoints(); i++) {
         const auto& ip = ir->IntPoint(i);
         Trans.SetIntPoint(&ip);
         auto w = Trans.Weight() * ip.weight;
 
-        trial_fe.CalcShape(ip, trial_shape);
-        test_fe.CalcShape(ip, test_shape);
-        test_fe.CalcPhysDShape(Trans, test_dshape);
+        el.CalcShape(ip, shape);
+        el.CalcPhysDShape(Trans, dshape);
 
         QV->Eval(g, Trans, ip);
         QM->Eval(dg, Trans, ip);
         w *= Q->Eval(Trans, ip); 
-        MultVWt(test_shape, trial_shape, pelmats_r);
+        MultVWt(shape, shape, pelmat_r);
         for (auto k = 0; k < dim; k++) {
             for (auto l = 0; l < dim; l++) {
-                auto test_dshape_column = Vector(test_dshape.GetColumn(l), Nm);
-                MultVWt(test_dshape_column, trial_shape, pelmats_l);
+                auto dshape_column = Vector(dshape.GetColumn(l), N);
+                MultVWt(dshape_column, shape, pelmat_l);
                 real_t w_l = g(k) * w; 
-                elmat.AddMatrix(w_l, pelmats_l, k * Nm, l * Nn);
+                elmat.AddMatrix(w_l, pelmat_l, k * N, l * N);
                 real_t w_r = dg(k, l) * w;
-                elmat.AddMatrix(w_r, pelmats_r, k * Nm, l * Nn);
+                elmat.AddMatrix(w_r, pelmat_r, k * N, l * N);
             }
         }
     }
 }
 
 
-const IntegrationRule& DivVecIntegrator::GetRule(
-    const FiniteElement &trial_fe, const FiniteElement &test_fe,
-    const ElementTransformation &Trans) {
-    const auto order = trial_fe.GetOrder() + test_fe.GetOrder() + Trans.OrderW() - 1;
-    return IntRules.Get(trial_fe.GetGeomType(), order);
-}
-
-void DivVecIntegrator::AssembleElementMatrix2(
-    const FiniteElement &trial_fe, const FiniteElement &test_fe,
-    ElementTransformation &Trans, DenseMatrix &elmat) 
+void DivergenceVectorIntegrator::AssembleElementMatrix(const FiniteElement &el, ElementTransformation &Trans, DenseMatrix &elmat) 
 {
     auto dim = Trans.GetSpaceDim();
-    auto Nn = trial_fe.GetDof();
-    auto Nm = test_fe.GetDof();
+    auto N = el.GetDof();
 
-    elmat.SetSize(dim * Nm, dim * Nn);
+    elmat.SetSize(dim * N);
     elmat = 0.0;
 
 #ifdef MFEM_THREAD_SAFE
-    Vector test_shape, g;
-    DenseMatrix trial_dshape, pelmats;
+    Vector shape, g;
+    DenseMatrix dshape, pelmat;
 #endif
-    trial_dshape.SetSize(Nn, dim);
-    test_shape.SetSize(Nm);
-    pelmats.SetSize(Nm, Nn);
+    dshape.SetSize(N, dim);
+    shape.SetSize(N);
+    pelmat.SetSize(N);
     g.SetSize(dim);
 
-    const auto* ir = GetIntegrationRule(trial_fe, test_fe, Trans);
+    const auto* ir = GetIntegrationRule(el, Trans);
+    if (ir == NULL)
+    {
+        int order = order = 2 * el.GetOrder() + Trans.OrderW() - 1; //
+        ir = &IntRules.Get(el.GetGeomType(), order);
+    }
 
     for (auto i = 0; i < ir->GetNPoints(); i++) {
         const auto& ip = ir->IntPoint(i);
         Trans.SetIntPoint(&ip);
         auto w = Trans.Weight() * ip.weight;
 
-        trial_fe.CalcPhysDShape(Trans, trial_dshape);
-        test_fe.CalcShape(ip, test_shape);
+        el.CalcShape(ip, shape);
+        el.CalcPhysDShape(Trans, dshape);
 
         QV->Eval(g, Trans, ip);
         w *= Q->Eval(Trans, ip); 
         for (auto k = 0; k < dim; k++) {
             for (auto l = 0; l < dim; l++) {
-                auto trial_dshape_column = Vector(trial_dshape.GetColumn(l), Nn);
-                MultVWt(test_shape, trial_dshape_column, pelmats);
-                w *= g(k);
-                elmat.AddMatrix(w, pelmats, k * Nm, l * Nn);
+                auto dshape_column = Vector(dshape.GetColumn(l), N);
+                MultVWt(shape, dshape_column, pelmat);
+                real_t _w = w * g(k);
+                elmat.AddMatrix(_w, pelmat, k * N, l * N);
             }
         }
     }
 }
 
 
+void ProjectionDivergenceIntegrator::AssembleElementMatrix(const FiniteElement &el, ElementTransformation &Trans, DenseMatrix &elmat) 
+{
+    auto dim = Trans.GetSpaceDim();
+    auto N = el.GetDof();
+
+    elmat.SetSize(dim * N);
+    elmat = 0.0;
+
+#ifdef MFEM_THREAD_SAFE
+    Vector shape, g;
+    DenseMatrix dshape, pelmat;
+#endif
+    dshape.SetSize(N, dim);
+    shape.SetSize(N);
+    pelmat.SetSize(N);
+    g.SetSize(dim);
+
+    const auto* ir = GetIntegrationRule(el, Trans);
+    if (ir == NULL)
+    {
+        int order = order = 2 * el.GetOrder() + Trans.OrderW() - 1; //
+        ir = &IntRules.Get(el.GetGeomType(), order);
+    }
+
+    for (auto i = 0; i < ir->GetNPoints(); i++) {
+        const auto& ip = ir->IntPoint(i);
+        Trans.SetIntPoint(&ip);
+        auto w = Trans.Weight() * ip.weight;
+
+                el.CalcShape(ip, shape);
+        el.CalcPhysDShape(Trans, dshape);
+
+        QV->Eval(g, Trans, ip);
+        w *= Q->Eval(Trans, ip); 
+        for (auto k = 0; k < dim; k++) {
+            auto dshape_column = Vector(dshape.GetColumn(k), N);
+            MultVWt(dshape_column, shape, pelmat);
+            for (auto l = 0; l < dim; l++) {
+                real_t _w = w * g(l);
+                elmat.AddMatrix(_w, pelmat, k * N, l * N);
+            }
+        }
+    }
+}
+
+
+/*
 const IntegrationRule& ProjDivIntegrator::GetRule(
     const FiniteElement &trial_fe, const FiniteElement &test_fe,
     const ElementTransformation &Trans) {
@@ -684,7 +863,7 @@ void ProjDivIntegrator::AssembleElementMatrix2(
         }
     }
 }
-
+*/
 
 
 

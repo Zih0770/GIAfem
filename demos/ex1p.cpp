@@ -128,9 +128,9 @@ int main(int argc, char *argv[])
 
     auto S = SumOperator(A.Ptr(), 1, &DtN, 1, false, false);
 
-    OperatorJacobiSmoother prec(a, ess_tdof_list);;
+    //OperatorJacobiSmoother prec(a, ess_tdof_list);;
     //prec.SetOperator(S);
-    //HypreBoomerAMG prec((HypreParMatrix &)(*A));
+    HypreBoomerAMG prec((HypreParMatrix &)(*A));
     //HypreBoomerAMG prec;
 
     CGSolver solver(MPI_COMM_WORLD);
