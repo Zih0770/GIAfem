@@ -565,9 +565,76 @@ public:
 struct Constants {
     public:
         static constexpr real_t G = 6.6743e-11;
+        static constexpr real_t c = 2.99792458e8;
+        static constexpr real_t h = 6.62607015e-34;
+        static constexpr real_t _h = 1.054571817e-34; 
+        static constexpr real_t kB = 1.380649e-23;
+        static constexpr real_t NA = 6.02214076e23;
+        static constexpr real_t e = 1.602176634e-19;
+        static constexpr real_t epi0 = 8.854187817e-12;
+        static constexpr real_t mu0 = 1.25663706212e-6;
+
+
         static constexpr real_t R = 6371e3;
         static constexpr real_t R_ext = 8e6;
 };
+
+
+class Nondimensionalisation {
+private:
+    real_t L;   // Length scale [m]
+    real_t T;   // Time scale [s]
+    real_t RHO; // Density scale [kg/m^3]
+
+public:
+    Nondimensionalisation(real_t length_scale, real_t time_scale, real_t density_scale)
+        : L(length_scale), T(time_scale), RHO(density_scale) {}
+
+    // Accessors
+    real_t Length() const { return L; }
+    real_t Time() const { return T; }
+    real_t Density() const { return RHO; }
+
+    // Derived scales
+    real_t Velocity() const { return L / T; }
+    real_t Acceleration() const { return L / (T*T); }
+    real_t Pressure() const { return RHO * L*L / (T*T); } // [Pa]
+    real_t Gravity() const { return L / (T*T); }
+    real_t Potential() const { return L*L / (T*T); }
+
+    // Scaling functions for scalars
+    real_t ScaleLength(real_t x) const { return x / L; }
+    real_t UnscaleLength(real_t x_nd) const { return x_nd * L; }
+
+    real_t ScaleDensity(real_t rho) const { return rho / RHO; }
+    real_t UnscaleDensity(real_t rho_nd) const { return rho_nd * RHO; }
+
+    real_t ScaleGravityPotential(real_t phi) const { return phi / Potential(); }
+    real_t UnscaleGravityPotential(real_t phi_nd) const { return phi_nd * Potential(); }
+
+    real_t ScaleStress(real_t sigma) const { return sigma / Pressure(); }
+    real_t UnscaleStress(real_t sigma_nd) const { return sigma_nd * Pressure(); }
+
+    // Scaling for GridFunction fields
+    void UnscaleGravityPotential(GridFunction &phi_gf) const { phi_gf *= Potential(); }
+    void UnscaleDisplacement(GridFunction &u_gf) const { u_gf *= L; }
+    void UnscaleStress(GridFunction &sigma_gf) const { sigma_gf *= Pressure(); }
+
+    // Create a scaled density coefficient from a dimensional one
+    Coefficient *MakeScaledDensityCoefficient(Coefficient &rho_coeff) const {
+        return new ProductCoefficient(1.0 / RHO, rho_coeff);
+    }
+
+    void Print() const {
+        cout << "Scaling parameters:\n";
+        cout << "  Length scale: " << L << " m\n";
+        cout << "  Time scale: " << T << " s\n";
+        cout << "  Density scale: " << RHO << " kg/m^3\n";
+        cout << "  Gravity potential scale: " << Potential() << " m^2/s^2\n";
+    }
+};
+
+
 
 
 //Solver-related
@@ -921,12 +988,13 @@ class BlockRigidBodySolver : public Solver {
 #endif
         }
 
-        real_t BlockDot(const Vector &x, const Vector &y) const {
+        /*real_t BlockDot(const Vector &x, const Vector &y) const {
 #ifdef MFEM_USE_MPI
             if (!_parallel)
             {
                 real_t alpha_u = 1.0;
-                real_t alpha_phi = 1.0 / (9.8 * 9.8);  // example scaling
+                //real_t alpha_phi = 1.0 / (9.8 * 9.8);  // example scaling
+                real_t alpha_phi = 1.0;
                 Vector x_u(const_cast<Vector&>(x), _block_offsets[0], _fes_u->GetTrueVSize()); 
                 Vector y_u(const_cast<Vector&>(y), _block_offsets[0], _fes_u->GetTrueVSize());
                 Vector x_phi(const_cast<Vector&>(x), _block_offsets[1], _fes_phi->GetTrueVSize());
@@ -937,7 +1005,8 @@ class BlockRigidBodySolver : public Solver {
             else
             {
                 real_t alpha_u = 1.0;
-                real_t alpha_phi = 1.0 / (9.8 * 9.8);  // example scaling
+                //real_t alpha_phi = 1.0 / (9.8 * 9.8);  // example scaling
+                real_t alpha_phi = 1.0;
                 Vector x_u(const_cast<Vector&>(x), _block_offsets[0], _fes_u->GetTrueVSize()); 
                 Vector y_u(const_cast<Vector&>(y), _block_offsets[0], _fes_u->GetTrueVSize());
                 Vector x_phi(const_cast<Vector&>(x), _block_offsets[1], _fes_phi->GetTrueVSize());
@@ -948,7 +1017,8 @@ class BlockRigidBodySolver : public Solver {
             }
 #else
             real_t alpha_u = 1.0;
-            real_t alpha_phi = 1.0 / (9.8 * 9.8);  // example scaling
+            //real_t alpha_phi = 1.0 / (9.8 * 9.8);  // example scaling
+            real_t alpha_phi = 1.0;
             Vector x_u(const_cast<Vector&>(x), _block_offsets[0], _fes_u->GetTrueVSize()); 
             Vector y_u(const_cast<Vector&>(y), _block_offsets[0], _fes_u->GetTrueVSize());
             Vector x_phi(const_cast<Vector&>(x), _block_offsets[1], _fes_phi->GetTrueVSize());
@@ -956,45 +1026,47 @@ class BlockRigidBodySolver : public Solver {
 
             return alpha_u * InnerProduct(x_u, y_u) + alpha_phi * InnerProduct(x_phi, y_phi);
 #endif
-        }
+        }*/
 
         real_t Norm(const Vector &x) const {
             return std::sqrt(Dot(x, x));
         }
 
-        real_t BlockNorm(const Vector &x) const {
+        /*real_t BlockNorm(const Vector &x) const {
             return std::sqrt(BlockDot(x, x));
-        }
+        }*/
 
         void GramSchmidt() {
             for (auto i = 0; i < GetNullDim(); i++) {
                 auto &nv1 = *_ns[i];
                 for (auto j = 0; j < i; j++) {
                     auto &nv2 = *_ns[j];
-                    auto product = BlockDot(nv1, nv2);
+                    auto product = Dot(nv1, nv2);
                     nv1.Add(-product, nv2);
                 }
-                auto norm = BlockNorm(nv1);
+                auto norm = Norm(nv1);
                 nv1 /= norm;
             }
         }
 
         int GetNullDim() const {
             auto vDim = _fes_u->GetVDim();
-            return vDim * (vDim + 1) / 2 + 1; //
+            //return vDim * (vDim + 1) / 2 + 1; //
+            return vDim * (vDim + 1) / 2;
         }
 
         void ProjectOrthogonalToRigidBody(const Vector &x, Vector &y) const {
             y = x;
             for (auto i = 0; i < GetNullDim(); i++) {
                 auto &nv = *_ns[i];
-                auto product = BlockDot(y, nv);
+                auto product = Dot(y, nv);
                 y.Add(-product, nv);
             }
         }
 
     public:
-        BlockRigidBodySolver(FiniteElementSpace *fes_u, FiniteElementSpace *fes_phi) : Solver(0, false), _fes_u{fes_u}, _fes_phi{fes_phi}, _parallel{false} {
+        BlockRigidBodySolver(FiniteElementSpace *fes_u, FiniteElementSpace *fes_phi, VectorCoefficient *dphi0_coeff) 
+            : Solver(0, false), _fes_u{fes_u}, _fes_phi{fes_phi}, _parallel{false} {
             auto vDim = _fes_u->GetVDim();
             MFEM_ASSERT(vDim == 2 || vDim == 3, "Dimensions must be two or three");
 
@@ -1015,64 +1087,83 @@ class BlockRigidBodySolver : public Solver {
 
             // Set the translations.
             for (auto component = 0; component < vDim; component++) {
-                auto v = RigidTranslation(vDim, component);
-                u_gf.ProjectCoefficient(v);
+                auto u_coeff = RigidTranslation(vDim, component);
+                u_gf.ProjectCoefficient(u_coeff);
+                InnerProductCoefficient phi_coeff(u_coeff, *dphi0_coeff);
+                phi_gf.ProjectCoefficient(phi_coeff);
+                phi_gf.Neg();
 
                 Vector *nv = new Vector(height);
                 //nv->SetSize(height);
                 *nv = 0.0;
 
-                Vector tv;
-                u_gf.GetTrueDofs(tv);
+                Vector tu;
+                u_gf.GetTrueDofs(tu);
+                Vector tphi;
+                phi_gf.GetTrueDofs(tphi);
 
-                nv->AddSubVector(tv, _block_offsets[0]);
+
+                nv->AddSubVector(tu, _block_offsets[0]);
+                nv->AddSubVector(tphi, _block_offsets[1]);
                 _ns.push_back(nv);
             }
 
             // Set the rotations.
             if (vDim == 2) {
-                auto v = RigidRotation(vDim, 2);
-                u_gf.ProjectCoefficient(v);
+                auto u_coeff = RigidRotation(vDim, 2);
+                u_gf.ProjectCoefficient(u_coeff);
+                InnerProductCoefficient phi_coeff(u_coeff, *dphi0_coeff);
+                phi_gf.ProjectCoefficient(phi_coeff);
+                phi_gf.Neg();
 
                 Vector *nv = new Vector(height);
                 *nv = 0.0;
 
-                Vector tv;
-                u_gf.GetTrueDofs(tv);
+                Vector tu;
+                u_gf.GetTrueDofs(tu);
+                Vector tphi;
+                phi_gf.GetTrueDofs(tphi);
 
-                nv->AddSubVector(tv, _block_offsets[0]);
+                nv->AddSubVector(tu, _block_offsets[0]);
+                nv->AddSubVector(tphi, _block_offsets[1]);
                 _ns.push_back(nv);
             } else {
                 for (auto component = 0; component < vDim; component++) {
-                    auto v = RigidRotation(vDim, component);
-                    u_gf.ProjectCoefficient(v);
+                    auto u_coeff = RigidRotation(vDim, component);
+                    u_gf.ProjectCoefficient(u_coeff);
+                    InnerProductCoefficient phi_coeff(u_coeff, *dphi0_coeff);
+                    phi_gf.ProjectCoefficient(phi_coeff);
+                    phi_gf.Neg();
 
                     Vector *nv = new Vector(height);
                     *nv = 0.0;
 
-                    Vector tv;
-                    u_gf.GetTrueDofs(tv);
+                    Vector tu;
+                    u_gf.GetTrueDofs(tu);
+                    Vector tphi;
+                    phi_gf.GetTrueDofs(tphi);
 
-                    nv->AddSubVector(tv, _block_offsets[0]);
+                    nv->AddSubVector(tu, _block_offsets[0]);
+                    nv->AddSubVector(tphi, _block_offsets[1]);
                     _ns.push_back(nv);
                 }
             }
 
             // Constant mode in phi
-            phi_gf = 0.0;
+            /*phi_gf = 0.0;
             Vector tphi;
             phi_gf.GetTrueDofs(tphi);
             tphi = 1.0 / std::sqrt(tphi.Size()); 
             Vector *nv = new Vector(height);
             *nv = 0.0;
             nv->AddSubVector(tphi, _block_offsets[1]);
-            _ns.push_back(nv);
+            _ns.push_back(nv);*/
 
             GramSchmidt();
         }
 
 #ifdef MFEM_USE_MPI
-        BlockRigidBodySolver(MPI_Comm comm, ParFiniteElementSpace *fes_u, ParFiniteElementSpace *fes_phi) : Solver(0, false),
+        BlockRigidBodySolver(MPI_Comm comm, ParFiniteElementSpace *fes_u, ParFiniteElementSpace *fes_phi, VectorCoefficient *dphi0_coeff) : Solver(0, false),
             //_fes_u{fes_u},
             _pfes_u{fes_u},
             //_fes_phi{fes_phi},
@@ -1099,45 +1190,66 @@ class BlockRigidBodySolver : public Solver {
 
                 // Set the translations.
                 for (auto component = 0; component < vDim; component++) {
-                    auto v = RigidTranslation(vDim, component);
-                    u_gf.ProjectCoefficient(v);
+                    auto u_coeff = RigidTranslation(vDim, component);
+                    u_gf.ProjectCoefficient(u_coeff);
+                    InnerProductCoefficient phi_coeff(u_coeff, *dphi0_coeff);
+                    phi_gf.ProjectCoefficient(phi_coeff);
+                    phi_gf.Neg();
 
                     Vector *nv = new Vector(height);
-                    nv->SetSize(height);
+                    //nv->SetSize(height);
                     *nv = 0.0;
 
-                    Vector tv;
-                    u_gf.GetTrueDofs(tv);
+                    Vector tu;
+                    u_gf.GetTrueDofs(tu);
+                    Vector tphi;
+                    phi_gf.GetTrueDofs(tphi);
 
-                    nv->AddSubVector(tv, _block_offsets[0]);
+
+                    nv->AddSubVector(tu, _block_offsets[0]);
+                    nv->AddSubVector(tphi, _block_offsets[1]);
                     _ns.push_back(nv);
                 }
 
                 // Set the rotations.
                 if (vDim == 2) {
-                    auto v = RigidRotation(vDim, 2);
-                    u_gf.ProjectCoefficient(v);
+                    auto u_coeff = RigidRotation(vDim, 2);
+                    u_gf.ProjectCoefficient(u_coeff);
+                    InnerProductCoefficient phi_coeff(u_coeff, *dphi0_coeff);
+                    phi_gf.ProjectCoefficient(phi_coeff);
+                    phi_gf.Neg();
 
                     Vector *nv = new Vector(height);
                     *nv = 0.0;
 
-                    Vector tv;
-                    u_gf.GetTrueDofs(tv);
+                    Vector tu;
+                    u_gf.GetTrueDofs(tu);
+                    Vector tphi;
+                    phi_gf.GetTrueDofs(tphi);
 
-                    nv->AddSubVector(tv, _block_offsets[0]);
+
+                    nv->AddSubVector(tu, _block_offsets[0]);
+                    nv->AddSubVector(tphi, _block_offsets[1]);
                     _ns.push_back(nv);
                 } else {
                     for (auto component = 0; component < vDim; component++) {
-                        auto v = RigidRotation(vDim, component);
-                        u_gf.ProjectCoefficient(v);
+                        auto u_coeff = RigidRotation(vDim, component);
+                        u_gf.ProjectCoefficient(u_coeff);
+                        InnerProductCoefficient phi_coeff(u_coeff, *dphi0_coeff);
+                        phi_gf.ProjectCoefficient(phi_coeff);
+                        phi_gf.Neg();
 
                         Vector *nv = new Vector(height);
                         *nv = 0.0;
 
-                        Vector tv;
-                        u_gf.GetTrueDofs(tv);
+                        Vector tu;
+                        u_gf.GetTrueDofs(tu);
+                        Vector tphi;
+                        phi_gf.GetTrueDofs(tphi);
 
-                        nv->AddSubVector(tv, _block_offsets[0]);
+
+                        nv->AddSubVector(tu, _block_offsets[0]);
+                        nv->AddSubVector(tphi, _block_offsets[1]);
                         _ns.push_back(nv);
                     }
                 }
@@ -1145,14 +1257,14 @@ class BlockRigidBodySolver : public Solver {
                 // Constant mode in phi
                 //ConstantCoefficient one(1.0);
                 //phi_gf.ProjectCoefficient(one);
-                phi_gf = 0.0;
+                /*phi_gf = 0.0;
                 Vector tphi;
                 phi_gf.GetTrueDofs(tphi);
                 tphi = 1.0 / std::sqrt(tphi.Size()); 
                 Vector *nv = new Vector(height);
                 *nv = 0.0;
                 nv->AddSubVector(tphi, _block_offsets[1]);
-                _ns.push_back(nv);
+                _ns.push_back(nv);*/
 
                 GramSchmidt();
             }
