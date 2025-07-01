@@ -107,6 +107,8 @@ int main(int argc, char *argv[])
 
     MemoryType mt = device.GetMemoryType();
     BlockVector X(block_offsets, mt), Rhs(block_offsets, mt);
+    X = 0.0;
+    Rhs = 0.0;
 
     Array<int> ess_tdof_list;
 
@@ -175,6 +177,7 @@ int main(int argc, char *argv[])
     //Grad.Mult(phi0_gf, dphi0_gf);
     //VectorGridFunctionCoefficient dphi0_coeff(&dphi0_gf);
     GridFunctionCoefficient phi0_coeff(&phi0_gf);
+    GradientGridFunctionCoefficient dphi0_coeff(&phi0_gf);
     mesh_cond.Transfer(phi0_gf, phi0_gf_cond);
     Grad.Mult(phi0_gf_cond, dphi0_gf_cond);
     VectorGridFunctionCoefficient dphi0_cond_coeff(&dphi0_gf_cond);
@@ -276,10 +279,14 @@ int main(int argc, char *argv[])
     solver.SetOperator(EGOp);
     solver.SetPreconditioner(EGPrec);
     solver.SetPrintLevel(1);
-    X = 0.0;
     //solver.Mult(Rhs, X);
     
-    BlockRigidBodySolver rigid_solver(&fes_u, &fes_phi);
+    //BlockRigidBodySolver rigid_solver(&fes_u, &fes_phi);
+    Vector zero_vec(3);
+    zero_vec = 0.0;
+    VectorConstantCoefficient zero_vec_coeff(zero_vec);
+    //BlockRigidBodySolver rigid_solver(&fes_u, &fes_phi, &zero_vec_coeff);
+    BlockRigidBodySolver rigid_solver(&fes_u, &fes_phi, &dphi0_coeff);
     rigid_solver.SetSolver(solver);
     rigid_solver.Mult(Rhs, X);
 

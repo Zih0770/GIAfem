@@ -74,6 +74,9 @@ target_link_libraries(ex1 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARI
 add_executable(ex1p demos/ex1p.cpp)
 target_link_libraries(ex1p PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
+add_executable(ex1p_nd demos/ex1p_nd.cpp)
+target_link_libraries(ex1p_nd PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
 add_executable(ex2 demos/ex2.cpp)
 target_link_libraries(ex2 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
@@ -85,6 +88,9 @@ target_link_libraries(ex2p PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRAR
 
 add_executable(ex3p demos/ex3p.cpp)
 target_link_libraries(ex3p PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(ex4 demos/ex4.cpp)
+target_link_libraries(ex4 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
 add_executable(test_interp tests/test_interp.cpp)
 target_link_libraries(test_interp PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
