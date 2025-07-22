@@ -968,10 +968,11 @@ class BlockRigidBodySolver : public Solver {
     private:
         FiniteElementSpace *_fes_u;
         FiniteElementSpace *_fes_phi;
-        Array<int> _block_offsets;
-        std::vector<Vector *> _ns; //block?
+        Array<int> *_block_offsets;
+        VectorCoefficient *_dphi0_coeff; //
+        std::vector<BlockVector *> _ns; //block?
         Solver *_solver = nullptr;
-        mutable Vector _b;
+        mutable BlockVector _b;
         const bool _parallel; //
 
 #ifdef MFEM_USE_MPI
@@ -1039,13 +1040,32 @@ class BlockRigidBodySolver : public Solver {
         void GramSchmidt() {
             for (auto i = 0; i < GetNullDim(); i++) {
                 auto &nv1 = *_ns[i];
+                //auto &nv1 = *_ns_ext[i];
                 for (auto j = 0; j < i; j++) {
                     auto &nv2 = *_ns[j];
+                    //auto &nv2 = *_ns_ext[j];
+                    //auto product = Dot(nv1.GetBlock(0), nv2.GetBlock(0));
                     auto product = Dot(nv1, nv2);
+                    //nv1.GetBlock(0).Add(-product, nv2.GetBlock(0));
                     nv1.Add(-product, nv2);
                 }
+                //auto norm = Norm(nv1.GetBlock(0));
                 auto norm = Norm(nv1);
+                //nv1.GetBlock(0) /= norm;
                 nv1 /= norm;
+                /*//auto u_gf = GridFunction(_fes_u);
+                auto phi_gf = GridFunction(_fes_phi);
+                //u_gf.SetFromTrueDofs(nv1.GetBlock(0));
+                //VectorGridFunctionCoefficient u_coeff(&u_gf);
+                VectorGridFunctionCoefficient u_coeff(&nv1);
+                InnerProductCoefficient phi_coeff(u_coeff, *_dphi0_coeff);
+                phi_gf.ProjectCoefficient(phi_coeff);
+                phi_gf.Neg();
+                phi_gf.GetTrueDofs(nv1_.GetBlock(1));
+                auto u_gf = new GridFunction(_fes_u);
+                _mesh_cond->Transfer(nv1, *u_gf);
+                u_gf->GetTrueDofs(nv1_.GetBlock(0));
+                delete u_gf;*/
             }
         }
 
@@ -1055,36 +1075,41 @@ class BlockRigidBodySolver : public Solver {
             return vDim * (vDim + 1) / 2;
         }
 
-        void ProjectOrthogonalToRigidBody(const Vector &x, Vector &y) const {
+        void ProjectOrthogonalToRigidBody(const BlockVector &x, BlockVector &y) const {
+            //const BlockVector &x_bv = static_cast<const BlockVector&>(x);
+            //BlockVector &y_bv = static_cast<BlockVector&>(y);
+            
+            //BlockVector x_bv(x, _block_offsets); //
+            //auto y_bv = x_bv; 
             y = x;
+            //MFEM_VERIFY(x_bv.NumBlocks() == y_bv.NumBlocks(), "Block count mismatch");
             for (auto i = 0; i < GetNullDim(); i++) {
                 auto &nv = *_ns[i];
                 auto product = Dot(y, nv);
-                y.Add(-product, nv);
+                y.Add(-product, nv); //
+                //for (auto k = 0; k < _block_offsets->Size() - 1; k++) {
+                //    auto product = Dot(y.GetBlock(k), nv.GetBlock(k));
+                //    y.GetBlock(k).Add(-product, nv.GetBlock(k)); //
+                //}
             }
         }
 
     public:
-        BlockRigidBodySolver(FiniteElementSpace *fes_u, FiniteElementSpace *fes_phi, VectorCoefficient *dphi0_coeff) 
-            : Solver(0, false), _fes_u{fes_u}, _fes_phi{fes_phi}, _parallel{false} {
+        BlockRigidBodySolver(FiniteElementSpace *fes_u, FiniteElementSpace *fes_phi, Array<int> *block_offsets, VectorCoefficient *dphi0_coeff) 
+            : Solver(0, false), _fes_u{fes_u}, _fes_phi{fes_phi}, _block_offsets{block_offsets}, _dphi0_coeff{dphi0_coeff}, _b(*block_offsets), _parallel{false} {
             auto vDim = _fes_u->GetVDim();
             MFEM_ASSERT(vDim == 2 || vDim == 3, "Dimensions must be two or three");
 
-            int size_u = _fes_u->GetTrueVSize();
-            int size_phi = _fes_phi->GetTrueVSize();
+            //int size_u = _fes_u->GetTrueVSize();
+            //int size_phi = _fes_phi->GetTrueVSize();
 
-            _block_offsets.SetSize(3);
-            _block_offsets[0] = 0;
-            _block_offsets[1] = size_u;
-            _block_offsets[2] = size_u + size_phi;
-
-            height = width = _block_offsets[2];
-            _b.SetSize(height);
+            width = (*_block_offsets)[2];
+            height = width;
 
             // Set up a temporary gridfunction.
-            auto u_gf = GridFunction(_fes_u);
+            auto u_gf = GridFunction(_fes_u); 
             auto phi_gf = GridFunction(_fes_phi);
-
+    
             // Set the translations.
             for (auto component = 0; component < vDim; component++) {
                 auto u_coeff = RigidTranslation(vDim, component);
@@ -1092,19 +1117,16 @@ class BlockRigidBodySolver : public Solver {
                 InnerProductCoefficient phi_coeff(u_coeff, *dphi0_coeff);
                 phi_gf.ProjectCoefficient(phi_coeff);
                 phi_gf.Neg();
-
-                Vector *nv = new Vector(height);
+                auto nv = new BlockVector(*_block_offsets);
                 //nv->SetSize(height);
                 *nv = 0.0;
 
-                Vector tu;
-                u_gf.GetTrueDofs(tu);
-                Vector tphi;
-                phi_gf.GetTrueDofs(tphi);
-
-
-                nv->AddSubVector(tu, _block_offsets[0]);
-                nv->AddSubVector(tphi, _block_offsets[1]);
+                //u_gf.MakeRef(_fes_u, nv->GetBlock(0), 0);
+                //phi_gf.MakeRef(_fes_phi, nv->GetBlock(1), 0);
+                u_gf.GetTrueDofs(nv->GetBlock(0));
+                phi_gf.GetTrueDofs(nv->GetBlock(1));
+                //nv->AddSubVector(tu, _block_offsets[0]);
+                //nv->AddSubVector(tphi, _block_offsets[1]);
                 _ns.push_back(nv);
             }
 
@@ -1116,16 +1138,11 @@ class BlockRigidBodySolver : public Solver {
                 phi_gf.ProjectCoefficient(phi_coeff);
                 phi_gf.Neg();
 
-                Vector *nv = new Vector(height);
+                auto nv = new BlockVector(*_block_offsets);
                 *nv = 0.0;
 
-                Vector tu;
-                u_gf.GetTrueDofs(tu);
-                Vector tphi;
-                phi_gf.GetTrueDofs(tphi);
-
-                nv->AddSubVector(tu, _block_offsets[0]);
-                nv->AddSubVector(tphi, _block_offsets[1]);
+                u_gf.GetTrueDofs(nv->GetBlock(0));
+                phi_gf.GetTrueDofs(nv->GetBlock(1));
                 _ns.push_back(nv);
             } else {
                 for (auto component = 0; component < vDim; component++) {
@@ -1135,16 +1152,11 @@ class BlockRigidBodySolver : public Solver {
                     phi_gf.ProjectCoefficient(phi_coeff);
                     phi_gf.Neg();
 
-                    Vector *nv = new Vector(height);
+                    auto nv = new BlockVector(*_block_offsets);
                     *nv = 0.0;
 
-                    Vector tu;
-                    u_gf.GetTrueDofs(tu);
-                    Vector tphi;
-                    phi_gf.GetTrueDofs(tphi);
-
-                    nv->AddSubVector(tu, _block_offsets[0]);
-                    nv->AddSubVector(tphi, _block_offsets[1]);
+                    u_gf.GetTrueDofs(nv->GetBlock(0));
+                    phi_gf.GetTrueDofs(nv->GetBlock(1));
                     _ns.push_back(nv);
                 }
             }
@@ -1163,26 +1175,17 @@ class BlockRigidBodySolver : public Solver {
         }
 
 #ifdef MFEM_USE_MPI
-        BlockRigidBodySolver(MPI_Comm comm, ParFiniteElementSpace *fes_u, ParFiniteElementSpace *fes_phi, VectorCoefficient *dphi0_coeff) : Solver(0, false),
-            //_fes_u{fes_u},
-            _pfes_u{fes_u},
-            //_fes_phi{fes_phi},
-            _pfes_phi{fes_phi},
-            _comm{comm},
-            _parallel{true} {
+        BlockRigidBodySolver(MPI_Comm comm, ParFiniteElementSpace *fes_u, ParFiniteElementSpace *fes_phi, 
+                             Array<int> *block_offsets, VectorCoefficient *dphi0_coeff) : Solver(0, false),
+            _pfes_u{fes_u}, _pfes_phi{fes_phi}, _comm{comm}, 
+            _block_offsets(block_offsets), _dphi0_coeff(dphi0_coeff), _b(*block_offsets), _parallel{true} {
                 auto vDim = _pfes_u->GetVDim();
                 MFEM_ASSERT(vDim == 2 || vDim == 3, "Dimensions must be two or three");
 
                 int size_u = _pfes_u->GetTrueVSize();
                 int size_phi = _pfes_phi->GetTrueVSize();
 
-                _block_offsets.SetSize(3);
-                _block_offsets[0] = 0;
-                _block_offsets[1] = size_u;
-                _block_offsets[2] = size_u + size_phi;
-
-                height = width = _block_offsets[2];
-                _b.SetSize(height);
+                height = width = (*_block_offsets)[2];
 
                 // Set up a temporary ParGridfunction.
                 auto u_gf = ParGridFunction(_pfes_u);
@@ -1196,18 +1199,12 @@ class BlockRigidBodySolver : public Solver {
                     phi_gf.ProjectCoefficient(phi_coeff);
                     phi_gf.Neg();
 
-                    Vector *nv = new Vector(height);
+                    auto nv = new BlockVector(*_block_offsets);
                     //nv->SetSize(height);
                     *nv = 0.0;
 
-                    Vector tu;
-                    u_gf.GetTrueDofs(tu);
-                    Vector tphi;
-                    phi_gf.GetTrueDofs(tphi);
-
-
-                    nv->AddSubVector(tu, _block_offsets[0]);
-                    nv->AddSubVector(tphi, _block_offsets[1]);
+                    u_gf.GetTrueDofs(nv->GetBlock(0));
+                    phi_gf.GetTrueDofs(nv->GetBlock(1));
                     _ns.push_back(nv);
                 }
 
@@ -1219,17 +1216,12 @@ class BlockRigidBodySolver : public Solver {
                     phi_gf.ProjectCoefficient(phi_coeff);
                     phi_gf.Neg();
 
-                    Vector *nv = new Vector(height);
+                    auto nv = new BlockVector(*_block_offsets);
                     *nv = 0.0;
 
-                    Vector tu;
-                    u_gf.GetTrueDofs(tu);
-                    Vector tphi;
-                    phi_gf.GetTrueDofs(tphi);
 
-
-                    nv->AddSubVector(tu, _block_offsets[0]);
-                    nv->AddSubVector(tphi, _block_offsets[1]);
+                    u_gf.GetTrueDofs(nv->GetBlock(0));
+                    phi_gf.GetTrueDofs(nv->GetBlock(1));
                     _ns.push_back(nv);
                 } else {
                     for (auto component = 0; component < vDim; component++) {
@@ -1239,17 +1231,12 @@ class BlockRigidBodySolver : public Solver {
                         phi_gf.ProjectCoefficient(phi_coeff);
                         phi_gf.Neg();
 
-                        Vector *nv = new Vector(height);
+                        auto nv = new BlockVector(*_block_offsets);
                         *nv = 0.0;
 
-                        Vector tu;
-                        u_gf.GetTrueDofs(tu);
-                        Vector tphi;
-                        phi_gf.GetTrueDofs(tphi);
 
-
-                        nv->AddSubVector(tu, _block_offsets[0]);
-                        nv->AddSubVector(tphi, _block_offsets[1]);
+                        u_gf.GetTrueDofs(nv->GetBlock(0));
+                        phi_gf.GetTrueDofs(nv->GetBlock(1));
                         _ns.push_back(nv);
                     }
                 }
@@ -1291,16 +1278,197 @@ class BlockRigidBodySolver : public Solver {
             MFEM_VERIFY(height == width, "Solver must be a square operator");
         }
 
-        void Mult(const Vector &b, Vector &x) const { //override
+        void Mult(const Vector &b, Vector &x) const {
+            _solver->Mult(b, x);
+        }
+
+        void BlockMult(const BlockVector &b, BlockVector &x) const { //override
             ProjectOrthogonalToRigidBody(b, _b);
             //_solver->iterative_mode = iterative_mode;
-            Vector _x(x.Size());
-            _solver->Mult(_b, _x);
-            ProjectOrthogonalToRigidBody(const_cast<Vector&>(_x), x); //
-            //_solver->Mult(_b, x);
-            //ProjectOrthogonalToRigidBody(x, x); //
+
+            //BlockVector _x(*_block_offsets);
+            //_solver->Mult(_b, _x);
+            //ProjectOrthogonalToRigidBody(const_cast<BlockVector&>(_x), x); //
+            _solver->Mult(_b, x);
+            ProjectOrthogonalToRigidBody(x, x); //
         }
 };
+
+
+class _BlockRigidBodySolver : public Solver {
+    private:
+        FiniteElementSpace *_fes_u;
+        FiniteElementSpace *_fes_phi;
+        Array<int> *_block_offsets;
+        VectorCoefficient *_dphi0_coeff; //
+        std::vector<BlockVector *> _ns; //block?
+        DenseMatrix Z_mat;
+        DenseMatrix P_mat;
+        DenseMatrix Dinv_mat;
+        DenseMatrix temp;
+        Solver *_solver = nullptr;
+        mutable Vector _b;
+
+        real_t Dot(const Vector &x, const Vector &y) const {
+            return InnerProduct(x, y);
+        }
+
+        real_t Norm(const Vector &x) const {
+            return std::sqrt(Dot(x, x));
+        }
+
+        void GramSchmidt() {
+            for (auto i = 0; i < GetNullDim(); i++) {
+                auto &nv1 = *_ns[i];
+                for (auto j = 0; j < i; j++) {
+                    auto &nv2 = *_ns[j];
+                    //auto product = Dot(nv1.GetBlock(0), nv2.GetBlock(0));
+                    auto product = Dot(nv1, nv2);
+                    //nv1.GetBlock(0).Add(-product, nv2.GetBlock(0));
+                    nv1.Add(-product, nv2);
+                }
+                //auto norm = Norm(nv1.GetBlock(0));
+                auto norm = Norm(nv1);
+                //nv1.GetBlock(0) /= norm;
+                nv1 /= norm;
+            }
+        }
+
+        int GetNullDim() const {
+            auto vDim = _fes_u->GetVDim();
+            //return vDim * (vDim + 1) / 2 + 1; //
+            return vDim * (vDim + 1) / 2;
+        }
+
+        void ProjectOrthogonalToRigidBody(const BlockVector &x, BlockVector &y) const {
+            y = x;
+            for (auto i = 0; i < GetNullDim(); i++) {
+                auto &nv = *_ns[i];
+                auto product = Dot(y, nv);
+                y.Add(-product, nv); //
+            }
+        }
+
+    public:
+        _BlockRigidBodySolver(FiniteElementSpace *fes_u, FiniteElementSpace *fes_phi, Array<int> *block_offsets, VectorCoefficient *dphi0_coeff) 
+            : Solver(0, false), _fes_u{fes_u}, _fes_phi{fes_phi}, _block_offsets{block_offsets}, _dphi0_coeff{dphi0_coeff}
+        {
+            auto vDim = _fes_u->GetVDim();
+            MFEM_ASSERT(vDim == 2 || vDim == 3, "Dimensions must be two or three");
+
+            height = width = (*_block_offsets)[2];
+
+            auto u_gf = GridFunction(_fes_u); 
+            auto phi_gf = GridFunction(_fes_phi);
+    
+            // Set the translations.
+            for (auto component = 0; component < vDim; component++) {
+                auto u_coeff = RigidTranslation(vDim, component);
+                u_gf.ProjectCoefficient(u_coeff);
+                InnerProductCoefficient phi_coeff(u_coeff, *dphi0_coeff);
+                phi_gf.ProjectCoefficient(phi_coeff);
+                phi_gf.Neg();
+                auto nv = new BlockVector(*_block_offsets);
+                *nv = 0.0;
+
+                u_gf.GetTrueDofs(nv->GetBlock(0));
+                phi_gf.GetTrueDofs(nv->GetBlock(1));
+                _ns.push_back(nv);
+            }
+
+            // Set the rotations.
+            if (vDim == 2) {
+                auto u_coeff = RigidRotation(vDim, 2);
+                u_gf.ProjectCoefficient(u_coeff);
+                InnerProductCoefficient phi_coeff(u_coeff, *dphi0_coeff);
+                phi_gf.ProjectCoefficient(phi_coeff);
+                phi_gf.Neg();
+
+                auto nv = new BlockVector(*_block_offsets);
+                *nv = 0.0;
+
+                u_gf.GetTrueDofs(nv->GetBlock(0));
+                phi_gf.GetTrueDofs(nv->GetBlock(1));
+                _ns.push_back(nv);
+            } else {
+                for (auto component = 0; component < vDim; component++) {
+                    auto u_coeff = RigidRotation(vDim, component);
+                    u_gf.ProjectCoefficient(u_coeff);
+                    InnerProductCoefficient phi_coeff(u_coeff, *dphi0_coeff);
+                    phi_gf.ProjectCoefficient(phi_coeff);
+                    phi_gf.Neg();
+
+                    auto nv = new BlockVector(*_block_offsets);
+                    *nv = 0.0;
+
+                    u_gf.GetTrueDofs(nv->GetBlock(0));
+                    phi_gf.GetTrueDofs(nv->GetBlock(1));
+                    _ns.push_back(nv);
+                }
+            }
+
+            GramSchmidt();
+
+            Z_mat.SetSize(height, GetNullDim());
+            Z_mat = 0.0;
+            
+            for (int i = 0; i < GetNullDim(); ++i) {
+                const BlockVector &col = *_ns[i];
+                Z_mat.SetCol(i, col);
+            }
+           
+            //DenseMatrix D_mat(GetNullDim(), GetNullDim());
+            //MultAtB(Z_mat, Z_mat, D_mat);
+            //Dinv_mat.SetSize(GetNullDim(), GetNullDim());
+            //CalcInverse(D_mat, Dinv_mat);
+            //temp.SetSize(Z_mat.Height(), Z_mat.Width());
+            //mfem::Mult(Z_mat, Dinv_mat, temp);
+
+            //MultABt(temp, Z_mat, P_mat);
+ 
+        }
+
+
+        ~_BlockRigidBodySolver() {
+            for (auto i = 0; i < GetNullDim(); i++) {
+                delete _ns[i];
+            }
+        }
+
+        void SetSolver(Solver &solver) {
+            _solver = &solver;
+            height = _solver->Height();
+            width = _solver->Width();
+            MFEM_VERIFY(height == width, "Solver must be a square operator");
+        }
+
+        void SetOperator(const Operator &op) { //override
+            MFEM_VERIFY(_solver, "Solver hasn't been set, call SetSolver() first.");
+            _solver->SetOperator(op);
+            height = _solver->Height();
+            width = _solver->Width();
+            MFEM_VERIFY(height == width, "Solver must be a square operator");
+        }
+
+        void Mult(const Vector &b, Vector &x) const {
+            //_b = b;
+            _b.SetSize(Z_mat.Width());
+            Z_mat.MultTranspose(b, _b);
+            Vector __b;
+            __b = b;
+            Z_mat.AddMult(_b, __b, -1.0);
+            //P_mat.AddMult(b, _b, -1.0);
+            Vector x_(x.Size());
+            _solver->Mult(__b, x_);
+            Vector dummy(Z_mat.Width());
+            Z_mat.MultTranspose(x_, dummy);
+            Z_mat.AddMult(dummy, x_, -1.0);
+            x = x_;
+            //P_mat.AddMult(x, x, -1.0);
+        }
+
+};
+
 
 
 

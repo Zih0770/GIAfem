@@ -92,6 +92,9 @@ target_link_libraries(ex3p PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRAR
 add_executable(ex4 demos/ex4.cpp)
 target_link_libraries(ex4 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
+add_executable(ex5 demos/ex5.cpp)
+target_link_libraries(ex5 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
 add_executable(test_interp tests/test_interp.cpp)
 target_link_libraries(test_interp PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
