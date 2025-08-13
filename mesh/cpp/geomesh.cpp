@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <cmath>
+#include <algorithm>
 
 
 void createConcentricSphericalLayers(const std::vector<double> &radii, double meshSizeMin, double meshSizeMax, int elementOrder, int algorithm, const std::string &outputFileName) {
@@ -80,8 +82,8 @@ void createConcentricSphericalLayers(const std::vector<double> &radii, double me
     gmsh::model::mesh::field::setNumber(2, "SizeMax", meshSizeMax);  
     gmsh::model::mesh::field::setNumber(2, "DistMin", 0.0);
     //gmsh::model::mesh::field::setNumber(2, "DistMax", meshSizeMax * 10);
-    gmsh::model::mesh::field::setNumber(2, "DistMax", meshSizeMin * 10);
-
+    double fac = 10.0;
+    gmsh::model::mesh::field::setNumber(2, "DistMax", meshSizeMin * fac);
     gmsh::model::mesh::field::setAsBackgroundMesh(2);
 
     gmsh::option::setNumber("Mesh.Algorithm3D", algorithm); //1-Delaunay, 4-Frontal, 7-MMG3D, 9-R-tree Delaunay, 10-HXT (Frontal-Delaunay), 11-Automatic
