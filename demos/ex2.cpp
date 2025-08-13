@@ -151,7 +151,7 @@ class BlockRigidBodySolver_test : public Solver {
                 //RestrictedCoefficient phi_coeff(phi_coeff_ext, _Earth_body_marker);
                 phi_gf.ProjectCoefficient(phi_coeff);
                 phi_gf.Neg();
-                phi_gf = 0.0;
+                //phi_gf = 0.0;
                 auto nv = new BlockVector(*_block_offsets);
                 //nv->SetSize(height);
                 *nv = 0.0;
@@ -188,7 +188,7 @@ class BlockRigidBodySolver_test : public Solver {
                     //RestrictedCoefficient phi_coeff(phi_coeff_ext, _Earth_body_marker);
                     phi_gf.ProjectCoefficient(phi_coeff);
                     phi_gf.Neg();
-                    phi_gf = 0.0;
+                    //phi_gf = 0.0;
 
                     auto nv = new BlockVector(*_block_offsets);
                     *nv = 0.0;
@@ -443,12 +443,23 @@ int main(int argc, char *argv[])
     ProductCoefficient half_rho_coeff(0.5, rho_coeff);
     ProductCoefficient minus_half_rho_coeff(-0.5, rho_coeff);
 
+    auto a11_integ_0 = ElasticityIntegrator(lamb_coeff, mu_coeff);
+    auto a11_integ_1 = AdvectionProjectionIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff);
+    //auto a11_integ_1 = mfemElasticity::DomainVectorGradVectorIntegrator(dphi0_cond_coeff, half_rho_coeff);
+    auto a11_integ_2 = ProjectionDivergenceIntegrator(minus_half_rho_coeff, dphi0_cond_coeff);
+    auto a11_integ_1_t = TransposeIntegrator(&a11_integ_1);
+    auto a11_integ_2_t = TransposeIntegrator(&a11_integ_2);
+    a11->AddDomainIntegrator(&a11_integ_0);
+    a11->AddDomainIntegrator(&a11_integ_1);
+    a11->AddDomainIntegrator(&a11_integ_2);
+    a11->AddDomainIntegrator(&a11_integ_1_t);
+    a11->AddDomainIntegrator(&a11_integ_2_t);
     //if (pa) { a11->SetAssemblyLevel(AssemblyLevel::PARTIAL); }
-    a11->AddDomainIntegrator(new ElasticityIntegrator(lamb_coeff, mu_coeff));
-    a11->AddDomainIntegrator(new ProjectionGradientIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
-    a11->AddDomainIntegrator(new AdvectionProjectionIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
-    a11->AddDomainIntegrator(new DivergenceVectorIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
-    a11->AddDomainIntegrator(new ProjectionDivergenceIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
+    //a11->AddDomainIntegrator(new ElasticityIntegrator(lamb_coeff, mu_coeff));
+    //a11->AddDomainIntegrator(new ProjectionGradientIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
+    //a11->AddDomainIntegrator(new AdvectionProjectionIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
+    //a11->AddDomainIntegrator(new DivergenceVectorIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
+    //a11->AddDomainIntegrator(new ProjectionDivergenceIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
     a11->Assemble();
     a11->Finalize();
 
@@ -482,6 +493,77 @@ int main(int argc, char *argv[])
     TransposeOperator A21(&A12);
     SparseMatrix &A22_0(a22->SpMat());
     auto A22 = SumOperator(&A22_0, 1.0, &DtN, 1.0 / (4.0 * M_PI * Constants::G), false, false);
+
+    cout<<"Asymmetry tests: A11: "<<A11.IsSymmetric()<<", A12: "<<A12.IsSymmetric()
+        <<", A22_0: "<<A22_0.IsSymmetric()<<endl;
+
+    BilinearForm a11_0(&fes_u);
+    a11_0.AddDomainIntegrator(&a11_integ_0);
+    a11_0.Assemble();
+    a11_0.Finalize();
+    SparseMatrix &A11_0(a11_0.SpMat());
+
+    //Testing the null space
+    for (int i = 0; i < 3; i++)
+    {
+        auto u_null = GridFunction(&fes_u);
+        auto phi_null = GridFunction(&fes_phi);
+        auto u_null_coeff = RigidTranslation_test(3, i);
+        u_null.ProjectCoefficient(u_null_coeff);
+        InnerProductCoefficient phi_null_coeff(u_null_coeff, dphi0_coeff);
+        phi_null.ProjectCoefficient(phi_null_coeff);
+        //phi_null.Neg();
+        //phi_gf = 0.0;
+        //auto nv = BlockVector(*_block_offsets);
+        //nv = 0.0;
+        //u_null.GetTrueDofs(nv->GetBlock(0));
+        //phi_null.GetTrueDofs(nv->GetBlock(1));
+        
+        Vector vec_11(u_size), vec_12(u_size), vec_21(phi_size), vec_22(phi_size);
+        Vector diff_1(u_size), diff_2(phi_size);
+        A11.Mult(u_null, vec_11); A12.Mult(phi_null, vec_12); 
+        A21.Mult(u_null, vec_21); A22.Mult(phi_null, vec_22);
+        diff_1 = vec_11; diff_1 -= vec_12;
+        diff_2 = vec_21; diff_2 -= vec_22;
+
+        cout<<"For the "<<i<<"th translational mode, the relative error between A11 u and A12 p is "<<diff_1.Norml2()/vec_11.Norml2()
+            <<", the relative error between A21 u and A22 p is "<<diff_2.Norml2()/vec_22.Norml2()<<endl;
+
+        Vector vec_00(u_size);
+        A11_0.Mult(u_null, vec_00);
+        cout<<"For pure elasticity, the l2-norm of A_11 u is "<<vec_00.Norml2()<<endl;
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        auto u_null = GridFunction(&fes_u);
+        auto phi_null = GridFunction(&fes_phi);
+        auto u_null_coeff = RigidRotation_test(3, i);
+        u_null.ProjectCoefficient(u_null_coeff);
+        InnerProductCoefficient phi_null_coeff(u_null_coeff, dphi0_coeff);
+        phi_null.ProjectCoefficient(phi_null_coeff);
+        //phi_null.Neg();
+        //phi_gf = 0.0;
+        //auto nv = BlockVector(*_block_offsets);
+        //nv = 0.0;
+        //u_null.GetTrueDofs(nv->GetBlock(0));
+        //phi_null.GetTrueDofs(nv->GetBlock(1));
+        
+        Vector vec_11(u_size), vec_12(u_size), vec_21(phi_size), vec_22(phi_size);
+        Vector diff_1(u_size), diff_2(phi_size);
+        A11.Mult(u_null, vec_11); A12.Mult(phi_null, vec_12); 
+        A21.Mult(u_null, vec_21); A22.Mult(phi_null, vec_22);
+        diff_1 = vec_11; diff_1 -= vec_12;
+        diff_2 = vec_21; diff_2 -= vec_22;
+
+        cout<<"For the "<<i<<"th rotational mode, the relative error between A11 u and A12 p is "<<diff_1.Norml2()/vec_11.Norml2()
+            <<", the relative error between A21 u and A22 p is "<<diff_2.Norml2()/vec_22.Norml2()<<endl;
+
+        Vector vec_00(u_size);
+        A11_0.Mult(u_null, vec_00);
+        cout<<"For pure elasticity, the l2-norm of A_11 u is "<<vec_00.Norml2()<<endl;
+    }
+
 
 
     EGOp.SetBlock(0,0, &A11);
@@ -618,6 +700,7 @@ real_t mu_func(const Vector &coord)
     real_t base_mu =  mu_center + (mu_surface - mu_center) * r_norm;
     real_t polar_perturb = 0.015 * (1.0 + cos(2.0 * theta));
     real_t azimuthal_perturb = 0.05 * sin(2.0 * phi);
+    //return mu_surface;
     return base_mu * (1.0 + polar_perturb) * (1.0 + azimuthal_perturb);
 }
 
@@ -632,6 +715,7 @@ real_t lamb_func(const Vector &coord)
     real_t base_lamb = lamb_center + (lamb_surface - lamb_center) * r_norm;
     real_t polar_perturb = 0.015 * (1.0 + cos(2.0 * theta));
     real_t azimuthal_perturb = 0.05 * sin(2.0 * phi);
+    //return lamb_surface;
     return base_lamb * (1.0 + polar_perturb) * (1.0 + azimuthal_perturb);
 }
 

@@ -1,5 +1,6 @@
 #include <mfem.hpp>
 #include <giafem.hpp>
+#include <mfemElasticity.hpp>
 #include <cmath>
 
 using namespace std;
@@ -178,12 +179,24 @@ int main(int argc, char *argv[])
     ConstantCoefficient c0(1.0 / (4.0 * M_PI * Constants::G));
     ProductCoefficient half_rho_coeff(0.5, rho_coeff);
     ProductCoefficient minus_half_rho_coeff(-0.5, rho_coeff);
+    ProductCoefficient minus_rho_coeff(-1.0, rho_coeff);
     
-    a11->AddDomainIntegrator(new ElasticityIntegrator(lamb_coeff, mu_coeff));
-    a11->AddDomainIntegrator(new ProjectionGradientIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
-    a11->AddDomainIntegrator(new AdvectionProjectionIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
-    a11->AddDomainIntegrator(new DivergenceVectorIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
-    a11->AddDomainIntegrator(new ProjectionDivergenceIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
+    auto a11_integ_0 = ElasticityIntegrator(lamb_coeff, mu_coeff);
+    auto a11_integ_1 = AdvectionProjectionIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff);
+    //auto a11_integ_1 = mfemElasticity::DomainVectorGradVectorIntegrator(dphi0_cond_coeff, half_rho_coeff);
+    auto a11_integ_2 = ProjectionDivergenceIntegrator(minus_half_rho_coeff, dphi0_cond_coeff);
+    auto a11_integ_1_t = TransposeIntegrator(&a11_integ_1);
+    auto a11_integ_2_t = TransposeIntegrator(&a11_integ_2);
+    a11->AddDomainIntegrator(&a11_integ_0);
+    a11->AddDomainIntegrator(&a11_integ_1);
+    a11->AddDomainIntegrator(&a11_integ_2);
+    a11->AddDomainIntegrator(&a11_integ_1_t);
+    a11->AddDomainIntegrator(&a11_integ_2_t);
+    //a11->AddDomainIntegrator(new ElasticityIntegrator(lamb_coeff, mu_coeff));
+    //a11->AddDomainIntegrator(new ProjectionGradientIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
+    //a11->AddDomainIntegrator(new AdvectionProjectionIntegrator(half_rho_coeff, dphi0_cond_coeff, ddphi0_cond_coeff));
+    //a11->AddDomainIntegrator(new DivergenceVectorIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
+    //a11->AddDomainIntegrator(new ProjectionDivergenceIntegrator(minus_half_rho_coeff, dphi0_cond_coeff));
     a11->Assemble();
     a11->Finalize();
     
@@ -197,15 +210,19 @@ int main(int argc, char *argv[])
     
     SparseMatrix &A11(a11->SpMat());
     SparseMatrix &A12(a12->SpMat());
-    TransposeOperator A21(&A12);
     SparseMatrix &A22_0(a22->SpMat());
+    TransposeOperator A21(&A12);
     auto A22 = SumOperator(&A22_0, 1.0, &DtN, 1.0 / (4.0 * M_PI * Constants::G), false, false);
+
+    cout<<"Max Norm of A11: "<<A11.MaxNorm()<<", A12: "<<A12.MaxNorm()<<", A22_0: "<<A22_0.MaxNorm()<<endl;
+    cout<<"Asymmetry tests: A11: "<<A11.IsSymmetric()<<", A12: "<<A12.IsSymmetric()
+        <<", A22_0: "<<A22_0.IsSymmetric()<<endl;
     
     GSSmoother prec11(A11);
     GSSmoother prec22(A22_0);
     
-    //MINRESSolver solver;
-    CGSolver solver1;
+    MINRESSolver solver1;
+    //CGSolver solver1;
     solver1.SetRelTol(rel_tol);
     solver1.SetMaxIter(3000);
     solver1.SetOperator(A11);
@@ -227,15 +244,19 @@ int main(int argc, char *argv[])
     real_t rel_tol_coup = 1e-6;
     LinearForm b1_ext(&fes_u);
     LinearForm b2_ext(&fes_phi);
+    Vector Phi_temp(Phi.Size()), Phi_diff(Phi.Size());
+    Phi_temp = 0.0; Phi_diff = 0.0;
     for (int i = 0; i < max_iter; i++)
     {
         iter++;
-        b1_ext.Update(&fes_u, *b1, 0);
-        b2_ext.Update(&fes_phi, *b2, 0);
+        cout<<"Iteration "<<iter<<":"<<endl;
+        //b1_ext.Update(&fes_u, *b1, 0);
+        //b2_ext.Update(&fes_phi, *b2, 0);
+        b1_ext = *b1;
+        b2_ext = *b2;
         A12.AddMult(Phi, b1_ext, -1.0);
         rigid_solver.Mult(b1_ext, U);
 
-        Vector Phi_temp(Phi.Size()), Phi_diff(Phi.Size());
         A21.AddMult(U, b2_ext, -1.0);
         solver2.Mult(b2_ext, Phi_temp);
         Phi_diff = Phi_temp; Phi_diff -= Phi;
@@ -273,7 +294,7 @@ int main(int argc, char *argv[])
     delete mesh; 
     delete b1;
     delete b2;
-    delete a11;
+    delete a11; 
     delete a12;
     delete a21;
     delete a22;

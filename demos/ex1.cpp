@@ -1,6 +1,7 @@
 //Self-gravitation computation with the Dirichlet-to-Neumann approach
 #include <mfem.hpp>
 #include <giafem.hpp>
+#include <mfemElasticity.hpp>
 #include <iostream>
 #include <cmath>
 
@@ -19,6 +20,7 @@ int main(int argc, char *argv[])
     int ref_levels = -1;
     bool static_cond = false;
     bool visualization = false;
+    StopWatch chrono;
 
     //Parsing
     OptionsParser args(argc, argv);
@@ -62,7 +64,17 @@ int main(int argc, char *argv[])
     Array<int> ess_tdof_list;
 
     //DtN
+    chrono.Clear();
+    chrono.Start();
     auto DtN = DirichletToNeumannOperator(&fes_phi, lMax);
+    chrono.Stop();
+    cout << "Constructing the DtN operator (vectors) took " << chrono.RealTime() << "s.\n";
+
+    chrono.Clear();
+    chrono.Start();
+    auto DtN_mat = mfemElasticity::PoissonDtNOperator(&fes_phi, lMax);
+    chrono.Stop();
+    cout << "Constructing the DtN operator (matrix) took " << chrono.RealTime() << "s.\n";
 
     //Construct the linear system
     FunctionCoefficient rho_coeff(rho_func);
@@ -82,7 +94,7 @@ int main(int argc, char *argv[])
     a.FormLinearSystem(ess_tdof_list, phi_gf, b, A, Phi, B);
     cout << "Size of linear system: " << A->Height() << endl;
 
-    auto S = SumOperator(A.Ptr(), 1, &DtN, 1, false, false);
+    auto S = SumOperator(A.Ptr(), 1.0, &DtN, 1.0, false, false);
 
     GSSmoother M((SparseMatrix &)(*A));
     //DSmoother M((SparseMatrix &)(*A));

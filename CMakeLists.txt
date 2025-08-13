@@ -95,6 +95,12 @@ target_link_libraries(ex4 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARI
 add_executable(ex5 demos/ex5.cpp)
 target_link_libraries(ex5 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
+add_executable(ex6 demos/ex6.cpp)
+target_link_libraries(ex6 PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
+add_executable(ex6p demos/ex6p.cpp)
+target_link_libraries(ex6p PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
+
 add_executable(test_interp tests/test_interp.cpp)
 target_link_libraries(test_interp PRIVATE giafem_lib ${MFEM_LIBRARIES} ${MPI_CXX_LIBRARIES})
 
@@ -169,7 +175,10 @@ link_directories(/home/sssou/local/gmsh/lib)
 set(MESH_GENERATORS
     mesh/cpp/geomesh.cpp
     mesh/cpp/geomesh_Earth.cpp
-    mesh/cpp/geomesh_f.cpp
+    mesh/cpp/geomesh_prem.cpp
+    mesh/cpp/geomesh_prem_crust.cpp
+    mesh/cpp/geomesh_prem_crust_2.cpp
+    mesh/cpp/geomesh_prem_crust_vis.cpp
 )
 
 foreach(mesh_src ${MESH_GENERATORS})
