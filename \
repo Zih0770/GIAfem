@@ -1,0 +1,493 @@
+// geomesh_prem_crust2.cpp  —  GEO-only (discrete->GEO) build with sequential physical IDs
+// Build spheres from PREM, add Moho/Top from CRUST-1.0, convert to GEO and create volumes,
+// then label surfaces and volumes 1..K from inner to outer (Moho=N-1, Top=N, outer=N+1).
+
+#include <gmsh.h>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <cmath>
+#include <algorithm>
+#include <iomanip>
+#include <numeric>
+#include <map>
+#include <functional>
+#include <stdexcept>
+
+// --------------------------- PREM radii ---------------------------
+std::vector<double> extractLayerBoundaries(const std::string &fileName, double& R) {
+    std::vector<double> radii;
+    std::ifstream file(fileName);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open file " << fileName << std::endl;
+        return radii;
+    }
+    std::string line;
+    double previousRadius = -1.0;
+    int lineCount = 0;
+    while (std::getline(file, line)) {
+        if (lineCount < 3) { lineCount++; continue; }
+        std::istringstream iss(line);
+        double radius, density, pWave, sWave, bulkM, shearM;
+        if (iss >> radius >> density >> pWave >> sWave >> bulkM >> shearM) {
+            if (std::abs(radius - previousRadius) < 1e-3) radii.push_back(radius);
+            previousRadius = radius;
+        }
+    }
+    radii.push_back(previousRadius);
+    R = radii.back();
+    double fac = 1.2;
+    double radius_max = fac * R;
+    radii.push_back(radius_max);
+    for (double& r : radii) r /= R; // normalize by R
+    file.close();
+    return radii;
+}
+
+// --------------------------- CRUST grid ---------------------------
+struct CrustGrid {
+    int nlon = 0, nlat = 0;
+    double lon0 = -180.0, lat0 = -90.0;
+    double dlon = 1.0, dlat = 1.0;
+    std::vector<double> d1; // nlat * nlon (positive)
+    std::vector<double> d2; // nlat * nlon (negative)
+    inline int idx(int i, int j) const { return j * nlon + i; }
+};
+
+static bool loadXYZ(const std::string &fname, std::vector<double> &lon, std::vector<double> &lat, std::vector<double> &val) {
+    std::ifstream f(fname);
+    if(!f) return false;
+    lon.clear(); lat.clear(); val.clear();
+    double a,b,c;
+    while(f >> a >> b >> c) { lon.push_back(a); lat.push_back(b); val.push_back(c); }
+    return !lon.empty();
+}
+
+static bool buildCrustGrid(const std::string &file1_d1, const std::string &file2_d2, CrustGrid &G) {
+    std::vector<double> lon1, lat1, v1, lon2, lat2, v2;
+    if(!loadXYZ(file1_d1, lon1, lat1, v1)) { std::cerr << "Error: cannot read " << file1_d1 << "\n"; return false; }
+    if(!loadXYZ(file2_d2, lon2, lat2, v2)) { std::cerr << "Error: cannot read " << file2_d2 << "\n"; return false; }
+    if(lon1.size() != lon2.size()) { std::cerr << "Error: CRUST xyz sizes differ.\n"; return false; }
+
+    std::vector<double> ulon = lon1, ulat = lat1;
+    std::sort(ulon.begin(), ulon.end()); ulon.erase(std::unique(ulon.begin(), ulon.end()), ulon.end());
+    std::sort(ulat.begin(), ulat.end()); ulat.erase(std::unique(ulat.begin(), ulat.end()), ulat.end());
+
+    G.nlon = (int)ulon.size(); G.nlat = (int)ulat.size();
+    G.lon0 = ulon.front(); G.lat0 = ulat.front();
+    G.dlon = (ulon.back() - ulon.front()) / (G.nlon - 1);
+    G.dlat = (ulat.back() - ulat.front()) / (G.nlat - 1);
+
+    G.d1.assign(G.nlon * G.nlat, 0.0);
+    G.d2.assign(G.nlon * G.nlat, 0.0);
+
+    auto normLon = [](double L){ double x = std::fmod(L + 180.0, 360.0); if(x < 0) x += 360.0; return x - 180.0; };
+
+    std::map<std::pair<int,int>, int> ij;
+    for(size_t k=0; k<lon1.size(); ++k) {
+        double L = normLon(lon1[k]), B = std::max(-90.0, std::min(90.0, lat1[k]));
+        int i = (int)std::llround((L - G.lon0) / G.dlon);
+        int j = (int)std::llround((B - G.lat0) / G.dlat);
+        if(i>=0 && i<G.nlon && j>=0 && j<G.nlat) ij[{i,j}] = (int)k;
+    }
+    for(int j=0; j<G.nlat; ++j) for(int i=0; i<G.nlon; ++i) {
+        auto it = ij.find({i,j}); if(it==ij.end()) continue; int k = it->second; G.d1[G.idx(i,j)] = v1[(size_t)k];
+    }
+    ij.clear();
+    for(size_t k=0; k<lon2.size(); ++k) {
+        double L = normLon(lon2[k]), B = std::max(-90.0, std::min(90.0, lat2[k]));
+        int i = (int)std::llround((L - G.lon0) / G.dlon);
+        int j = (int)std::llround((B - G.lat0) / G.dlat);
+        if(i>=0 && i<G.nlon && j>=0 && j<G.nlat) ij[{i,j}] = (int)k;
+    }
+    for(int j=0; j<G.nlat; ++j) for(int i=0; i<G.nlon; ++i) {
+        auto it = ij.find({i,j}); if(it==ij.end()) continue; int k = it->second; G.d2[G.idx(i,j)] = v2[(size_t)k];
+    }
+    return true;
+}
+
+static double bilinear(const CrustGrid &G, const std::vector<double> &A, double lonDeg, double latDeg) {
+    double lon = std::fmod(lonDeg + 180.0, 360.0); if(lon < 0) lon += 360.0; lon -= 180.0;
+    double lat = std::max(-90.0, std::min(90.0, latDeg));
+    double u = (lon - G.lon0) / G.dlon, v = (lat - G.lat0) / G.dlat;
+    int i = (int)std::floor(u); double a = u - i; int j = (int)std::floor(v); double b = v - j;
+    auto wrapI = [&](int ii){ ii%=G.nlon; if(ii<0) ii+=G.nlon; return ii; };
+    auto clampJ = [&](int jj){ return std::max(0, std::min(G.nlat-1, jj)); };
+    int i0=wrapI(i), i1=wrapI(i+1), j0=clampJ(j), j1=clampJ(j+1);
+    double f00=A[G.idx(i0,j0)], f10=A[G.idx(i1,j0)], f01=A[G.idx(i0,j1)], f11=A[G.idx(i1,j1)];
+    return (1-a)*(1-b)*f00 + a*(1-b)*f10 + (1-a)*b*f01 + a*b*f11;
+}
+
+// ---------------- discrete triangulated unit sphere ----------------
+struct DiscreteTriSphere {
+    int nLon, nLat;
+    std::vector<double> UX, UY, UZ;
+    std::vector<int>    triA, triB, triC;
+    int nVerts() const { return 2 + (nLat - 1) * nLon; }
+};
+
+static DiscreteTriSphere buildUnitTriSphere(int nLon, int nLat)
+{
+    if(nLon < 48) nLon = 48;    // reasonable default surface resolution
+    if(nLat < 24) nLat = 24;
+
+    DiscreteTriSphere S; S.nLon = nLon; S.nLat = nLat;
+    int NV = S.nVerts();
+    S.UX.resize(NV); S.UY.resize(NV); S.UZ.resize(NV);
+
+    auto vertIndex = [&](int j, int i)->int {
+        if(j == 0) return 0;
+        if(j == nLat) return NV-1;
+        return 1 + (j-1) * nLon + i;
+    };
+
+    S.UX[0] = 0; S.UY[0] = 0; S.UZ[0] = 1;
+    for(int j=1; j<nLat; ++j) {
+        double lat = 90.0 - 180.0 * (double)j / (double)nLat;
+        double phi = lat * M_PI / 180.0;
+        double cphi = std::cos(phi), sphi = std::sin(phi);
+        for(int i=0; i<nLon; ++i) {
+            double lon = -180.0 + 360.0 * (double)i / (double)nLon;
+            double lam = lon * M_PI / 180.0;
+            double clam = std::cos(lam), slam = std::sin(lam);
+            int k = vertIndex(j,i);
+            S.UX[k] = cphi * clam;
+            S.UY[k] = cphi * slam;
+            S.UZ[k] = sphi;
+        }
+    }
+    S.UX[NV-1] = 0; S.UY[NV-1] = 0; S.UZ[NV-1] = -1;
+
+    auto addTri = [&](int a,int b,int c){ S.triA.push_back(a); S.triB.push_back(b); S.triC.push_back(c); };
+
+    for(int i=0; i<nLon; ++i) {
+        int i2 = (i+1)%nLon;
+        addTri(0, vertIndex(1,i), vertIndex(1,i2));
+    }
+    for(int j=1; j<nLat-1; ++j) {
+        for(int i=0; i<nLon; ++i) {
+            int i2 = (i+1)%nLon;
+            int a = vertIndex(j,   i);
+            int b = vertIndex(j,   i2);
+            int c = vertIndex(j+1, i);
+            int d = vertIndex(j+1, i2);
+            addTri(a,b,d);
+            addTri(a,d,c);
+        }
+    }
+    for(int i=0; i<nLon; ++i) {
+        int i2 = (i+1)%nLon;
+        addTri(vertIndex(nLat-1,i), vertIndex(nLat-1,i2), S.nVerts()-1);
+    }
+
+    return S;
+}
+
+// ------------- create discrete surfaces and convert later --------------
+static long long nextNodeTag = 1000000000LL;
+
+static int addDiscreteSurfaceFromCoords(const std::vector<double> &X,
+                                        const std::vector<double> &Y,
+                                        const std::vector<double> &Z,
+                                        const DiscreteTriSphere &S)
+{
+    const int NV = (int)S.UX.size();
+    if((int)X.size()!=NV || (int)Y.size()!=NV || (int)Z.size()!=NV)
+        throw std::runtime_error("addDiscreteSurfaceFromCoords: size mismatch");
+
+    std::vector<std::size_t> nodeTags(NV);
+    for(int k=0;k<NV;++k) nodeTags[k] = (std::size_t)(nextNodeTag++);
+
+    std::vector<double> xyz(3*NV);
+    for(int k=0;k<NV;++k){ xyz[3*k]=X[k]; xyz[3*k+1]=Y[k]; xyz[3*k+2]=Z[k]; }
+
+    const int NT = (int)S.triA.size();
+    std::vector<std::size_t> triTags(NT);
+    std::vector<std::size_t> triConn(3*NT);
+    for(int t=0;t<NT;++t){
+        triTags[t] = (std::size_t)(t+1);
+        int a = S.triA[t], b = S.triB[t], c = S.triC[t];
+        triConn[3*t+0] = nodeTags[a];
+        triConn[3*t+1] = nodeTags[b];
+        triConn[3*t+2] = nodeTags[c];
+    }
+
+    int surfTag = gmsh::model::addDiscreteEntity(2);
+    gmsh::model::mesh::addNodes(2, surfTag, nodeTags, xyz);
+    std::vector<int> etypes = {2}; // 3-node triangles
+    std::vector<std::vector<std::size_t>> eTags(1), eConn(1);
+    eTags[0] = triTags; eConn[0] = triConn;
+    gmsh::model::mesh::addElements(2, surfTag, etypes, eTags, eConn);
+    return surfTag;
+}
+
+static int buildSphericalDiscreteSurface(double r, const DiscreteTriSphere &S)
+{
+    const int NV = (int)S.UX.size();
+    std::vector<double> X(NV),Y(NV),Z(NV);
+    for(int k=0;k<NV;++k){ X[k]=r*S.UX[k]; Y[k]=r*S.UY[k]; Z[k]=r*S.UZ[k]; }
+    return addDiscreteSurfaceFromCoords(X,Y,Z,S);
+}
+
+static void buildMohoTopSurfaces(const CrustGrid &G, double R_meter,
+                                 const DiscreteTriSphere &S,
+                                 int &surfMoho, int &surfTop,
+                                 double &rMohoRep, double &rTopRep)
+{
+    const int NV = (int)S.UX.size();
+    std::vector<double> Xmo(NV),Ymo(NV),Zmo(NV), Xtp(NV),Ytp(NV),Ztp(NV);
+
+    for(int k=0;k<NV;++k){
+        double x=S.UX[k], y=S.UY[k], z=S.UZ[k];
+        double lon = std::atan2(y,x)*180.0/M_PI;
+        double lat = std::asin(z)*180.0/M_PI;
+        double d1 = bilinear(G, G.d1, lon, lat);
+        double d2 = bilinear(G, G.d2, lon, lat);
+        double rMo = 1.0 + d2 / R_meter;
+        double rTp = 1.0 + (d1 + d2) / R_meter;
+        Xmo[k]=rMo*x; Ymo[k]=rMo*y; Zmo[k]=rMo*z;
+        Xtp[k]=rTp*x; Ytp[k]=rTp*y; Ztp[k]=rTp*z;
+    }
+
+    // representative radii (first vertex is fine—surfaces are close to spherical)
+    rMohoRep = std::sqrt(Xmo[0]*Xmo[0]+Ymo[0]*Ymo[0]+Zmo[0]*Zmo[0]);
+    rTopRep  = std::sqrt(Xtp[0]*Xtp[0]+Ytp[0]*Ytp[0]+Ztp[0]*Ztp[0]);
+
+    surfMoho = addDiscreteSurfaceFromCoords(Xmo,Ymo,Zmo,S);
+    surfTop  = addDiscreteSurfaceFromCoords(Xtp,Ytp,Ztp,S);
+}
+
+// ------------------------- GEO helpers --------------------------
+static int addSolidFromGeoSurface(int geoSurfTag) {
+    int sl = gmsh::model::geo::addSurfaceLoop({geoSurfTag});
+    int v  = gmsh::model::geo::addVolume({sl});
+    gmsh::model::geo::synchronize();
+    return v;
+}
+
+static int addShellFromGeoSurfaces(int geoSurfOuter, int geoSurfInner) {
+    int slo = gmsh::model::geo::addSurfaceLoop({geoSurfOuter});
+    int sli = gmsh::model::geo::addSurfaceLoop({geoSurfInner});
+    int v   = gmsh::model::geo::addVolume({slo, sli});
+    gmsh::model::geo::synchronize();
+    return v;
+}
+
+static double geoSurfaceRadius(int geoSurfTag) {
+    double x, y, z;
+    // 4.14 places this in the OCC namespace (there's no model::getCenterOfMass)
+    gmsh::model::occ::getCenterOfMass(2, geoSurfTag, x, y, z);
+    return std::sqrt(x * x + y * y + z * z);
+}
+
+static int findClosestGeoSurfaceByRadius(const std::vector<int> &geoAll, double targetR) {
+    double best = 1e300; int bestTag = -1;
+    for(int s : geoAll) {
+        double r = geoSurfaceRadius(s);
+        double d = std::abs(r - targetR);
+        if(d < best) { best = d; bestTag = s; }
+    }
+    return bestTag;
+}
+
+// ------------------------- CLI helpers --------------------------
+std::vector<double> parseDoubles(const std::string &radiiStr) {
+    std::vector<double> radii;
+    std::istringstream iss(radiiStr);
+    std::string token;
+    while (std::getline(iss, token, '-')) {
+        token.erase(std::remove_if(token.begin(), token.end(), ::isspace), token.end());
+        radii.push_back(std::stod(token));
+    }
+    return radii;
+}
+
+// ================================ main ================================
+int main(int argc, char **argv) {
+    double meshSizeMin = 30e3;
+    double meshSizeMax = 300e3;
+    int algorithm = 1;
+    int elementOrder = 1;
+    std::string inputFileName = "data/prem.nocrust";
+    std::string outputFileName = "mesh/prem_with_crust";
+    std::string crustFile_d1 = "data/crust-1.0/crsthk.xyz";      // (lon lat d1, positive)
+    std::string crustFile_d2 = "data/crust-1.0/depthtomoho.xyz"; // (lon lat d2, negative)
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "-i" && i + 1 < argc) {
+            inputFileName = argv[++i];
+        } else if (arg == "-s" && i + 1 < argc) {
+            auto meshSizes = parseDoubles(argv[++i]);
+            if (meshSizes.size() == 2) { meshSizeMin = meshSizes[0]; meshSizeMax = meshSizes[1]; }
+            else { std::cerr << "Error: mesh sizes should have two values.\n"; return 1; }
+        } else if (arg == "-o" && i + 1 < argc) {
+            outputFileName = argv[++i];
+        } else if (arg == "-order" && i + 1 < argc) {
+            elementOrder = std::stoi(argv[++i]);
+        } else if (arg == "-alg" && i + 1 < argc) {
+            algorithm = std::stoi(argv[++i]);
+        }
+    }
+
+    gmsh::initialize();
+    gmsh::option::setNumber("General.Verbosity", 2);
+    gmsh::model::add("Earth_PREM_CRUST_GEO");
+
+    double R;
+    std::vector<double> radii = extractLayerBoundaries(inputFileName, R);
+    meshSizeMin /= R; meshSizeMax /= R;
+
+    std::cout << "Detected radii of " << radii.size() << " layers (without crust): ";
+    for (const double r : radii) std::cout << std::fixed << std::setprecision(8) << r << " ";
+    std::cout << std::fixed << std::setprecision(2) << "(The length scale is " << R << " meters.)" << std::endl;
+
+    const int N = (int)radii.size();
+
+    // Build a triangulated unit sphere that controls discrete surface resolution
+    const int nLon = 180, nLat = 90;
+    DiscreteTriSphere S = buildUnitTriSphere(nLon, nLat);
+
+    // 1) Create discrete spherical surfaces for all PREM radii (no physical groups yet)
+    std::vector<int> discSph(N, -1);
+    for(int i=0;i<N;++i) discSph[i] = buildSphericalDiscreteSurface(radii[i], S);
+
+    // 2) Create discrete Moho/Top if CRUST is available
+    CrustGrid G; bool haveCrust = buildCrustGrid(crustFile_d1, crustFile_d2, G);
+    int discMoho=-1, discTop=-1; double rMohoRep=0, rTopRep=0;
+    if(haveCrust) {
+        buildMohoTopSurfaces(G, R, S, discMoho, discTop, rMohoRep, rTopRep);
+    } else {
+        std::cerr << "Warning: could not build CRUST grid; proceeding without variable crust.\n";
+    }
+
+    // 3) Convert ALL discrete surfaces to GEO (single pass)
+    double angle = 40.0 * M_PI/180.0;
+    gmsh::model::mesh::classifySurfaces(angle, /*boundary*/ true, /*forReparam*/ true, /*curvThr*/ 0.5);
+    gmsh::model::mesh::createGeometry();
+
+    // Collect all GEO surfaces
+    std::vector<std::pair<int,int>> ents2; gmsh::model::getEntities(ents2, 2);
+    std::vector<int> geoAll;
+    for(auto &p : ents2) if(p.first==2) geoAll.push_back(p.second);
+
+    // Map each spherical radius to the closest GEO surface by center-of-mass radius
+    std::vector<int> geoSph(N, -1);
+    for(int i=0;i<N;++i) {
+        geoSph[i] = findClosestGeoSurfaceByRadius(geoAll, radii[i]);
+        if(geoSph[i] < 0) throw std::runtime_error("Failed to map spherical surface i=" + std::to_string(i));
+    }
+
+    // Map Moho/Top (if present)
+    int geoMoho=-1, geoTop=-1;
+    if(haveCrust) {
+        geoMoho = findClosestGeoSurfaceByRadius(geoAll, rMohoRep);
+        geoTop  = findClosestGeoSurfaceByRadius(geoAll, rTopRep);
+        if(geoMoho < 0 || geoTop < 0) throw std::runtime_error("Failed to map Moho/Top to GEO surfaces");
+    }
+
+    // 4) Build volumes from GEO surfaces
+    // Inner solid (inside first spherical)
+    int vInnerSolid = addSolidFromGeoSurface(geoSph[0]);
+
+    // Shells between inner spherical surfaces (exclude the second-outermost sea-level sphere at index N-2)
+    std::vector<int> shellVols; shellVols.reserve(N); // enough space
+    for(int i=1;i<=N-3; ++i) {
+        int v = addShellFromGeoSurfaces(geoSph[i], geoSph[i-1]);
+        shellVols.push_back(v);
+    }
+
+    // Mantle shell between last inner spherical and Moho, crust and outer shell (if crust available)
+    int vMantleTop=-1, vCrust=-1, vOuterShell=-1;
+    if(haveCrust) {
+        vMantleTop = addShellFromGeoSurfaces(geoMoho,       geoSph[N-3]); // between N-3 and Moho
+        vCrust     = addShellFromGeoSurfaces(geoTop,        geoMoho);     // crust
+        vOuterShell= addShellFromGeoSurfaces(geoSph[N-1],   geoTop);      // top->outermost
+    } else {
+        // No crust: keep the original last two spherical shells
+        // Between N-2 and N-3:
+        int v1 = addShellFromGeoSurfaces(geoSph[N-2], geoSph[N-3]);
+        // Between N-1 and N-2:
+        int v2 = addShellFromGeoSurfaces(geoSph[N-1], geoSph[N-2]);
+        shellVols.push_back(v1);
+        shellVols.push_back(v2);
+    }
+
+    // 5) Create final physical groups with YOUR sequential IDs
+    // Surfaces: 1..N-3 = geoSph[0..N-3], then N-1=Moho, N=Top, N+1=outermost
+    {
+        int pg;
+        // inner spherical surfaces
+        for(int i=0;i<=N-3;++i) {
+            int id = i + 1;
+            pg = gmsh::model::addPhysicalGroup(2, {geoSph[i]}, id);
+            gmsh::model::setPhysicalName(2, id, ("surface_" + std::to_string(id)).c_str());
+        }
+        if(haveCrust) {
+            // Moho = N-1
+            pg = gmsh::model::addPhysicalGroup(2, {geoMoho}, N-1);
+            gmsh::model::setPhysicalName(2, N-1, "surface_moho");
+            // Top = N
+            pg = gmsh::model::addPhysicalGroup(2, {geoTop},  N);
+            gmsh::model::setPhysicalName(2, N, "surface_top");
+        } else {
+            // If no crust, we keep the second-outermost spherical as "surface_(N-1)"
+            pg = gmsh::model::addPhysicalGroup(2, {geoSph[N-2]}, N-1);
+            gmsh::model::setPhysicalName(2, N-1, ("surface_" + std::to_string(N-1)).c_str());
+            // And set "surface_N" as the same (legacy), but better to move on:
+            pg = gmsh::model::addPhysicalGroup(2, {geoSph[N-2]}, N);
+            gmsh::model::setPhysicalName(2, N, ("surface_" + std::to_string(N)).c_str());
+        }
+        // Outermost = N+1
+        pg = gmsh::model::addPhysicalGroup(2, {geoSph[N-1]}, N+1);
+        gmsh::model::setPhysicalName(2, N+1, "surface_outer");
+    }
+
+    // Volumes: from inner to outer, sequential IDs 1..K
+    {
+        int id = 1;
+        // inner solid
+        gmsh::model::addPhysicalGroup(3, {vInnerSolid}, id);
+        gmsh::model::setPhysicalName(3, id, "layer_1");
+        ++id;
+        // inner shells up to N-3
+        for(size_t k=0;k<shellVols.size();++k) {
+            gmsh::model::addPhysicalGroup(3, {shellVols[k]}, id);
+            gmsh::model::setPhysicalName(3, id, ("layer_" + std::to_string(id)).c_str());
+            ++id;
+        }
+        if(haveCrust) {
+            // mantle top shell (N-3 -> Moho)
+            gmsh::model::addPhysicalGroup(3, {vMantleTop}, id);
+            gmsh::model::setPhysicalName(3, id, ("layer_" + std::to_string(id)).c_str());
+            ++id;
+            // crust
+            gmsh::model::addPhysicalGroup(3, {vCrust}, id);
+            gmsh::model::setPhysicalName(3, id, "crust");
+            ++id;
+            // outer shell
+            gmsh::model::addPhysicalGroup(3, {vOuterShell}, id);
+            gmsh::model::setPhysicalName(3, id, "outer_shell");
+            ++id;
+        }
+    }
+
+    // 6) Mesh
+    gmsh::option::setNumber("Mesh.ElementOrder", elementOrder);
+    gmsh::option::setNumber("Mesh.Algorithm3D", algorithm);
+    gmsh::option::setNumber("Mesh.MeshSizeMin", meshSizeMin);
+    gmsh::option::setNumber("Mesh.MeshSizeMax", meshSizeMax);
+    gmsh::option::setNumber("Mesh.Optimize", 1);
+    gmsh::option::setNumber("Mesh.OptimizeNetgen", 1);
+
+    gmsh::model::mesh::generate(3);
+    gmsh::option::setNumber("Mesh.MshFileVersion", 2.2);
+    gmsh::write(outputFileName + ".msh");
+    std::cout << "Wrote " << outputFileName << ".msh\n";
+
+    gmsh::finalize();
+    return 0;
+}
+
